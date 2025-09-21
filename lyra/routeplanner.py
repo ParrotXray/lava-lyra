@@ -26,9 +26,7 @@ class RoutePlanner:
 
     async def free_address(self, ip: str) -> None:
         """Frees an address using the route planner API"""
-        await self.node.send(
-            method="POST", path="routeplanner/free/address", data={"address": ip}
-        )
+        await self.node.send(method="POST", path="routeplanner/free/address", data={"address": ip})
 
     async def free_all_addresses(self) -> None:
         """Frees all available addresses using the route planner api"""

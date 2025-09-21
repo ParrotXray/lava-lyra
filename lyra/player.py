@@ -2,44 +2,31 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import TYPE_CHECKING
-from typing import Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-from discord import Client
-from discord import Guild
-from discord import VoiceChannel
-from discord import VoiceProtocol
+from discord import Client, Guild, VoiceChannel, VoiceProtocol
 from discord.ext import commands
 
 from . import events
 from .enums import SearchType
-from .events import LyraEvent
-from .events import TrackEndEvent
-from .events import TrackStartEvent
-from .exceptions import FilterInvalidArgument
-from .exceptions import FilterTagAlreadyInUse
-from .exceptions import FilterTagInvalid
-from .exceptions import TrackInvalidPosition
-from .exceptions import TrackLoadError
-from .exceptions import NodeNotAvailable
-from .exceptions import NodeRestException
-from .filters import Filter
-from .filters import Timescale
-from .objects import Playlist
-from .objects import Track
-from .pool import Node
-from .pool import NodePool
+from .events import LyraEvent, TrackEndEvent, TrackStartEvent
+from .exceptions import (
+    FilterInvalidArgument,
+    FilterTagAlreadyInUse,
+    FilterTagInvalid,
+    NodeNotAvailable,
+    NodeRestException,
+    TrackInvalidPosition,
+    TrackLoadError,
+)
+from .filters import Filter, Timescale
+from .lyrics import LyricsManager
+from .objects import Playlist, Track
+from .pool import Node, NodePool
 from .utils import LavalinkVersion
 
-from .lyrics import LyricsManager
-
 if TYPE_CHECKING:
-    from discord.types.voice import VoiceServerUpdate
-    from discord.types.voice import GuildVoiceState
+    from discord.types.voice import GuildVoiceState, VoiceServerUpdate
 
 __all__ = ("Filters", "Player")
 
@@ -96,9 +83,7 @@ class Filters:
                         "Edited filter is not the same type as the current filter.",
                     )
                 if self._filters[index] == to_apply:
-                    raise FilterInvalidArgument(
-                        "Edited filter is the same as the current filter."
-                    )
+                    raise FilterInvalidArgument("Edited filter is the same as the current filter.")
 
                 if to_apply.tag != filter_tag:
                     raise FilterInvalidArgument(
@@ -227,9 +212,7 @@ class Player(VoiceProtocol):
     @property
     def rate(self) -> float:
         """Property which returns the player's current rate"""
-        if _filter := next(
-            (f for f in self._filters._filters if isinstance(f, Timescale)), None
-        ):
+        if _filter := next((f for f in self._filters._filters if isinstance(f, Timescale)), None):
             return _filter.speed or _filter.rate
         return 1.0
 
@@ -348,9 +331,7 @@ class Player(VoiceProtocol):
         if self._log:
             self._log.debug(f"Got player update state with data {state}")
 
-    async def _dispatch_voice_update(
-        self, voice_data: Optional[Dict[str, Any]] = None
-    ) -> None:
+    async def _dispatch_voice_update(self, voice_data: Optional[Dict[str, Any]] = None) -> None:
         if {"sessionId", "event"} != self._voice_state.keys():
             return
 
@@ -425,7 +406,9 @@ class Player(VoiceProtocol):
             old_uri = self._player_endpoint_uri
             self._player_endpoint_uri = f"sessions/{session_id}/players"
             if self._log:
-                self._log.debug(f"Updated player endpoint URI from {old_uri} to {self._player_endpoint_uri}")
+                self._log.debug(
+                    f"Updated player endpoint URI from {old_uri} to {self._player_endpoint_uri}"
+                )
         else:
             if self._log:
                 self._log.warning("Cannot refresh endpoint URI: no session ID provided")
@@ -439,7 +422,7 @@ class Player(VoiceProtocol):
                 "encodedTrack": self.current.track_id,
                 "volume": self._volume,
                 "paused": self._paused,
-                "filters": self.filters.get_all_payloads() if not self.filters.empty else None
+                "filters": self.filters.get_all_payloads() if not self.filters.empty else None,
             }
 
         del self._node._players[self._guild.id]
@@ -461,13 +444,17 @@ class Player(VoiceProtocol):
                     data=data,
                 )
                 if self._log:
-                    self._log.info(f"Successfully restored player state on new node {new_node._identifier}")
+                    self._log.info(
+                        f"Successfully restored player state on new node {new_node._identifier}"
+                    )
             except Exception as e:
                 if self._log:
                     self._log.error(f"Failed to restore player state on new node: {e}")
 
         if self._log:
-            self._log.info(f"Swapped player from node {old_node._identifier} to {new_node._identifier}")
+            self._log.info(
+                f"Swapped player from node {old_node._identifier} to {new_node._identifier}"
+            )
 
     async def get_tracks(
         self,
@@ -489,13 +476,9 @@ class Player(VoiceProtocol):
         You may also pass in a List of filters
         to be applied to your track once it plays.
         """
-        return await self._node.get_tracks(
-            query, ctx=ctx, search_type=search_type, filters=filters
-        )
+        return await self._node.get_tracks(query, ctx=ctx, search_type=search_type, filters=filters)
 
-    async def build_track(
-        self, identifier: str, ctx: Optional[commands.Context] = None
-    ) -> Track:
+    async def build_track(self, identifier: str, ctx: Optional[commands.Context] = None) -> Track:
         """
         Builds a track using a valid track identifier
 
@@ -603,9 +586,7 @@ class Player(VoiceProtocol):
                     # We have to bare raise here because theres no other way to skip this block feasibly
                     raise
                 search = (
-                    await self._node.get_tracks(
-                        f"{track._search_type}:{track.isrc}", ctx=track.ctx
-                    )
+                    await self._node.get_tracks(f"{track._search_type}:{track.isrc}", ctx=track.ctx)
                 )[
                     0
                 ]  # type: ignore
@@ -704,8 +685,10 @@ class Player(VoiceProtocol):
                 raise
 
         return self._current
-    
-    async def _send_player_request(self, data: dict, method: str = "PATCH", query: Optional[str] = None) -> Any:
+
+    async def _send_player_request(
+        self, data: dict, method: str = "PATCH", query: Optional[str] = None
+    ) -> Any:
         """Auxiliary method for sending player requests, including error handling"""
         try:
             return await self._node.send(
@@ -817,9 +800,7 @@ class Player(VoiceProtocol):
             data={"filters": payload},
         )
         if self._log:
-            self._log.debug(
-                f"Filter has been removed from player with tag {filter_tag}"
-            )
+            self._log.debug(f"Filter has been removed from player with tag {filter_tag}")
         if fast_apply:
             if self._log:
                 self._log.debug(f"Fast apply passed, now removing filter instantly.")
@@ -852,9 +833,7 @@ class Player(VoiceProtocol):
             data={"filters": payload},
         )
         if self._log:
-            self._log.debug(
-                f"Filter with tag {filter_tag} has been edited to {edited_filter!r}"
-            )
+            self._log.debug(f"Filter with tag {filter_tag} has been edited to {edited_filter!r}")
         if fast_apply:
             if self._log:
                 self._log.debug(f"Fast apply passed, now editing filter instantly.")
@@ -886,7 +865,5 @@ class Player(VoiceProtocol):
 
         if fast_apply:
             if self._log:
-                self._log.debug(
-                    f"Fast apply passed, now removing all filters instantly."
-                )
+                self._log.debug(f"Fast apply passed, now removing all filters instantly.")
             await self.seek(self.position)

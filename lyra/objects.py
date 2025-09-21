@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import List, Optional, Union
 
-from discord import ClientUser
-from discord import Member
-from discord import User
+from discord import ClientUser, Member, User
 from discord.ext import commands
 
-from .enums import PlaylistType
-from .enums import SearchType
-from .enums import TrackType
+from .enums import PlaylistType, SearchType, TrackType
 from .filters import Filter
 
 __all__ = (
@@ -66,10 +60,7 @@ class Track:
         self.filters: Optional[List[Filter]] = filters
         self.timestamp: Optional[float] = timestamp
 
-        if (
-            self.track_type == TrackType.SPOTIFY
-            or self.track_type == TrackType.APPLE_MUSIC
-        ):
+        if self.track_type == TrackType.SPOTIFY or self.track_type == TrackType.APPLE_MUSIC:
             self.original: Optional[Track] = None
         else:
             self.original = self
@@ -82,14 +73,10 @@ class Track:
         self.uri: str = info.get("uri", "")
         self.identifier: str = info.get("identifier", "")
         self.isrc: Optional[str] = info.get("isrc", None)
-        self.thumbnail: Optional[str] = info.get("artworkUrl", None) or info.get(
-            "thumbnail", None
-        )
+        self.thumbnail: Optional[str] = info.get("artworkUrl", None) or info.get("thumbnail", None)
 
         if not self.thumbnail and self.uri and self.track_type is TrackType.YOUTUBE:
-            self.thumbnail = (
-                f"https://img.youtube.com/vi/{self.identifier}/mqdefault.jpg"
-            )
+            self.thumbnail = f"https://img.youtube.com/vi/{self.identifier}/mqdefault.jpg"
 
         self.length: int = info.get("length", 0)
         self.is_stream: bool = info.get("isStream", False)

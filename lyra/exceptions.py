@@ -17,7 +17,7 @@ __all__ = (
     "QueueEmpty",
     "LavalinkVersionIncompatible",
     # Removed in v4: Platform-specific client exceptions
-    # "InvalidSpotifyClientAuthorization", 
+    # "InvalidSpotifyClientAuthorization",
     # "AppleMusicNotEnabled",
 )
 
@@ -70,7 +70,7 @@ class TrackInvalidPosition(LyraException):
 
 class TrackLoadError(LyraException):
     """There was an error while loading a track.
-    
+
     In Lavalink v4, this could be due to:
     - Missing server-side plugins (LavaSrc, YouTube plugin, etc.)
     - Invalid API credentials configured on the Lavalink server
@@ -117,8 +117,8 @@ class QueueEmpty(QueueException):
 
 
 class LavalinkVersionIncompatible(LyraException):
-    """Lavalink version is incompatible. 
-    
+    """Lavalink version is incompatible.
+
     Lyra v3.0+ requires Lavalink v4.0 or higher.
     For Lavalink v3.x support, use an older version of Lyra.
     """

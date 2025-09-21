@@ -4,15 +4,9 @@ import time
 from datetime import datetime
 from itertools import zip_longest
 from timeit import default_timer as timer
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Iterable
-from typing import NamedTuple
-from typing import Optional
+from typing import Any, Callable, Dict, Iterable, NamedTuple, Optional
 
-from .enums import RouteIPType
-from .enums import RouteStrategy
+from .enums import RouteIPType, RouteStrategy
 
 __all__ = (
     "ExponentialBackoff",
@@ -238,9 +232,7 @@ class LavalinkVersion(NamedTuple):
             return False
 
         return (
-            (self.major == other.major)
-            and (self.minor == other.minor)
-            and (self.fix == other.fix)
+            (self.major == other.major) and (self.minor == other.minor) and (self.fix == other.fix)
         )
 
     def __ne__(self, other: object) -> bool:

@@ -1,9 +1,5 @@
 import collections
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .exceptions import FilterInvalidArgument
 
@@ -196,9 +192,7 @@ class Timescale(Filter):
 
     __slots__ = ("speed", "pitch", "rate")
 
-    def __init__(
-        self, *, tag: str, speed: float = 1.0, pitch: float = 1.0, rate: float = 1.0
-    ):
+    def __init__(self, *, tag: str, speed: float = 1.0, pitch: float = 1.0, rate: float = 1.0):
         super().__init__(tag=tag)
 
         if speed < 0:

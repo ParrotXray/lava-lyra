@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, TYPE_CHECKING
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from .player import Player
@@ -48,8 +48,7 @@ class Lyrics:
                 if isinstance(line_data, dict):
                     lyric_line = LyricLine(
                         text=line_data.get("line", ""),
-                        time=line_data.get("timestamp", 0)
-                        / 1000.0,  # Convert to seconds
+                        time=line_data.get("timestamp", 0) / 1000.0,  # Convert to seconds
                         duration=line_data.get("duration"),
                     )
                     self.lines.append(lyric_line)
@@ -130,9 +129,7 @@ class LyricsManager:
         if self._log:
             self._log.debug("Marked lyrics as not found")
 
-    async def fetch_lyrics(
-        self, track=None, skip_track_source: bool = False
-    ) -> Optional[Lyrics]:
+    async def fetch_lyrics(self, track=None, skip_track_source: bool = False) -> Optional[Lyrics]:
         """Fetch lyrics"""
         if not self.enabled:
             if self._log:
@@ -161,9 +158,7 @@ class LyricsManager:
             query = "&".join(query_params) if query_params else None
 
             # Send request
-            data = await self.player._node.send(
-                method="GET", path=path, query=query, guild_id=None
-            )
+            data = await self.player._node.send(method="GET", path=path, query=query, guild_id=None)
 
             if data:
                 lyrics = Lyrics(data)

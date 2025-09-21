@@ -8,7 +8,7 @@ This version has been completely refactored to work with Lavalink v4,
 removing client-side parsing in favor of server-side plugins.
 
 Key improvements in Lyra:
-- Full Lavalink v4 REST API support  
+- Full Lavalink v4 REST API support
 - Server-side plugin integration (LavaSrc, YouTube plugin, etc.)
 - Simplified node creation (no more API credentials needed)
 - Better error handling and plugin support
@@ -47,9 +47,9 @@ from .enums import *
 from .events import *
 from .exceptions import *
 from .filters import *
-from .objects import *
-from .trackqueue import *
-from .player import *
 from .lyrics import *
+from .objects import *
+from .player import *
 from .pool import *
 from .routeplanner import *
+from .trackqueue import *

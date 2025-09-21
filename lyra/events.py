@@ -1,19 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any
-from typing import Optional
-from typing import Tuple
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional, Tuple
 
-from discord import Client
-from discord import Guild
+from discord import Client, Guild
 from discord.ext import commands
 
+from .lyrics import LyricLine, Lyrics
 from .objects import Track
 from .pool import NodePool
-from .lyrics import Lyrics
-from .lyrics import LyricLine
 
 if TYPE_CHECKING:
     from .player import Player
@@ -151,9 +146,7 @@ class WebSocketClosedPayload:
     __slots__ = ("guild", "code", "reason", "by_remote")
 
     def __init__(self, data: dict):
-        self.guild: Optional[Guild] = NodePool.get_node().bot.get_guild(
-            int(data["guildId"])
-        )
+        self.guild: Optional[Guild] = NodePool.get_node().bot.get_guild(int(data["guildId"]))
         self.code: int = data["code"]
         self.reason: str = data["code"]
         self.by_remote: bool = data["byRemote"]
@@ -238,9 +231,7 @@ class LyricsNotFoundEvent(LyraEvent):
         self.handler_args = self.player, self.track
 
     def __repr__(self) -> str:
-        return (
-            f"<Lyra.LyricsNotFoundEvent player={self.player!r} track={self.track!r}>"
-        )
+        return f"<Lyra.LyricsNotFoundEvent player={self.player!r} track={self.track!r}>"
 
 
 class LyricsLineEvent(LyraEvent):

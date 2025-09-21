@@ -2,16 +2,10 @@ from __future__ import annotations
 
 import random
 from copy import copy
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Iterable, Iterator, List, Optional, Union
 
 from .enums import LoopMode
-from .exceptions import QueueEmpty
-from .exceptions import QueueException
-from .exceptions import QueueFull
+from .exceptions import QueueEmpty, QueueException, QueueFull
 from .objects import Track
 
 __all__ = ("Queue",)
@@ -46,9 +40,7 @@ class Queue(Iterable[Track]):
 
     def __repr__(self) -> str:
         """Official representation with max_size and member count."""
-        return (
-            f"<{self.__class__.__name__} max_size={self.max_size} members={self.count}>"
-        )
+        return f"<{self.__class__.__name__} max_size={self.max_size} members={self.count}>"
 
     def __bool__(self) -> bool:
         """Treats the queue as a bool, with it evaluating True when it contains members."""
@@ -366,9 +358,7 @@ class Queue(Iterable[Track]):
         """
 
         if self._loop_mode == LoopMode.TRACK:
-            raise QueueException(
-                "Jumping the queue whilst looping a track is not allowed."
-            )
+            raise QueueException("Jumping the queue whilst looping a track is not allowed.")
 
         index = self.find_position(item)
         if self._loop_mode == LoopMode.QUEUE:

@@ -1,6 +1,5 @@
 import re
-from enum import Enum
-from enum import IntEnum
+from enum import Enum, IntEnum
 
 __all__ = (
     "SearchType",
@@ -37,7 +36,7 @@ class SearchType(Enum):
     amsearch = "amsearch"
     spsearch = "spsearch"
     bilisearch = "bilisearch"
-    sprec = "sprec" 
+    sprec = "sprec"
 
     @classmethod
     def none(cls, _: object) -> None:

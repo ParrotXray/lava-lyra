@@ -7,13 +7,7 @@ import re
 import time
 from os import path
 from pathlib import Path
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import TYPE_CHECKING
-from typing import Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 from urllib.parse import quote
 
 import aiohttp
@@ -21,28 +15,25 @@ import orjson as json
 from discord import Client
 from discord.ext import commands
 from discord.utils import MISSING
-from websockets import client
-from websockets import exceptions
+from websockets import client, exceptions
 from websockets import typing as wstype
 
 from . import __version__
 from .enums import *
 from .enums import LogLevel
-from .exceptions import LavalinkVersionIncompatible
-from .exceptions import NodeConnectionFailure
-from .exceptions import NodeCreationError
-from .exceptions import NodeNotAvailable
-from .exceptions import NodeRestException
-from .exceptions import NoNodesAvailable
-from .exceptions import TrackLoadError
+from .exceptions import (
+    LavalinkVersionIncompatible,
+    NodeConnectionFailure,
+    NodeCreationError,
+    NodeNotAvailable,
+    NodeRestException,
+    NoNodesAvailable,
+    TrackLoadError,
+)
 from .filters import Filter
-from .objects import Playlist
-from .objects import Track
+from .objects import Playlist, Track
 from .routeplanner import RoutePlanner
-from .utils import ExponentialBackoff
-from .utils import LavalinkVersion
-from .utils import NodeStats
-from .utils import Ping
+from .utils import ExponentialBackoff, LavalinkVersion, NodeStats, Ping
 
 if TYPE_CHECKING:
     from .player import Player
@@ -57,13 +48,13 @@ VERSION_REGEX = re.compile(r"(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:[a-zA-Z0-9_-]+)?")
 
 class Node:
     """The base class for a node.
-    
+
     This node object represents a Lavalink v4 node.
-    
+
     In Lavalink v4, all platform support (Spotify, Apple Music, Deezer, etc.)
     is handled by server-side plugins. You no longer need to provide API credentials
     to the client - configure them in your Lavalink server's application.yml instead.
-    
+
     For lyrics support, ensure the LavaLyrics plugin is installed on your Lavalink server.
     """
 
@@ -133,12 +124,8 @@ class Node:
         self._secure: bool = secure
         self._fallback: bool = fallback
 
-        self._websocket_uri: str = (
-            f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}"
-        )
-        self._rest_uri: str = (
-            f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
-        )
+        self._websocket_uri: str = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}"
+        self._rest_uri: str = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
 
         self._session: aiohttp.ClientSession = session  # type: ignore
         self._loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
@@ -284,7 +271,8 @@ class Node:
 
     async def _handle_node_switch(self) -> None:
         nodes = [
-            node for node in self.pool._nodes.copy().values() 
+            node
+            for node in self.pool._nodes.copy().values()
             if node._available and node != self and node._session_id
         ]
 
@@ -292,7 +280,7 @@ class Node:
             if self._log:
                 self._log.warning(f"No available backup nodes for {self._identifier}")
             return
-        
+
         new_node = random.choice(nodes)
 
         for player in self.players.copy().values():
@@ -341,10 +329,10 @@ class Node:
             except exceptions.ConnectionClosed:
                 if self._log:
                     self._log.warning(f"WebSocket connection to node {self._identifier} closed")
-                    
+
                 self._session_id = None
                 self._available = False
-                
+
                 if self.player_count > 0:
                     for _player in self.players.values():
                         self._loop.create_task(_player.destroy())
@@ -377,16 +365,18 @@ class Node:
         if op == "ready":
             old_session_id = self._session_id
             self._session_id = data["sessionId"]
-            
+
             if self._log:
                 self._log.info(f"Node {self._identifier} ready with session {self._session_id}")
 
             if old_session_id and old_session_id != self._session_id:
                 if self._log:
-                    self._log.info(f"Session ID changed from {old_session_id} to {self._session_id}, updating players")
+                    self._log.info(
+                        f"Session ID changed from {old_session_id} to {self._session_id}, updating players"
+                    )
                 for player in self._players.values():
                     await player._refresh_endpoint_uri(self._session_id)
-                    
+
             await self._configure_resuming()
             self._available = True
 
@@ -420,7 +410,9 @@ class Node:
 
         if not ignore_if_available and not self._session_id and "sessions/" in path:
             if self._log:
-                self._log.warning(f"No session ID available for node {self._identifier}, waiting for reconnection")
+                self._log.warning(
+                    f"No session ID available for node {self._identifier}, waiting for reconnection"
+                )
             raise NodeNotAvailable(
                 f"The node '{self._identifier}' has no active session.",
             )
@@ -440,21 +432,23 @@ class Node:
                 headers=self._headers,
                 json=data or {},
             )
-            
+
             if self._log:
                 self._log.debug(
                     f"Making REST request to Node {self._identifier} with method {method} to {uri}",
                 )
-                
+
             if resp.status >= 300:
                 resp_data: dict = await resp.json()
 
                 if resp.status == 404 and "session" in resp_data.get("message", "").lower():
                     if self._log:
-                        self._log.warning(f"Session not found error from {self._identifier}, marking as unavailable")
+                        self._log.warning(
+                            f"Session not found error from {self._identifier}, marking as unavailable"
+                        )
                     self._available = False
                     self._session_id = None
-                    
+
                 raise NodeRestException(
                     f'Error from Node {self._identifier} fetching from Lavalink REST api: {resp.status} {resp.reason}: {resp_data["message"]}',
                 )
@@ -478,7 +472,7 @@ class Node:
                     f"REST request to Node {self._identifier} with method {method} to {uri} completed sucessfully and returned JSON with body {await resp.json()}",
                 )
             return await resp.json()
-            
+
         except aiohttp.ClientError as e:
             if self._log:
                 self._log.error(f"HTTP client error when connecting to {self._identifier}: {e}")
@@ -583,9 +577,7 @@ class Node:
                 f"Successfully disconnected from node {self._identifier} and closed all sessions. Took {end - start:.3f}s",
             )
 
-    async def build_track(
-        self, identifier: str, ctx: Optional[commands.Context] = None
-    ) -> Track:
+    async def build_track(self, identifier: str, ctx: Optional[commands.Context] = None) -> Track:
         """
         Builds a track using a valid track identifier
 
@@ -637,15 +629,15 @@ class Node:
 
         # In Lavalink v4, we simply pass URLs directly to Lavalink
         # The server-side plugins (LavaSrc, etc.) handle the parsing
-        
+
         # Check if this is a platform URL that should be passed directly
 
         is_platform_url = (
-            URLRegex.SPOTIFY_URL.match(query) or
-            URLRegex.AM_URL.match(query) or
-            URLRegex.SOUNDCLOUD_URL.match(query) or
-            URLRegex.YOUTUBE_URL.match(query) or
-            URLRegex.BILIBILI_URL.match(query)
+            URLRegex.SPOTIFY_URL.match(query)
+            or URLRegex.AM_URL.match(query)
+            or URLRegex.SOUNDCLOUD_URL.match(query)
+            or URLRegex.YOUTUBE_URL.match(query)
+            or URLRegex.BILIBILI_URL.match(query)
         )
 
         if not is_platform_url:
@@ -694,7 +686,7 @@ class Node:
             else:
                 track_list = data[data_type]
                 playlist_info = data["playlistInfo"]
-            
+
             tracks = [
                 Track(
                     track_id=track["encoded"],
@@ -704,7 +696,7 @@ class Node:
                 )
                 for track in track_list
             ]
-            
+
             return Playlist(
                 playlist_info=playlist_info,
                 tracks=tracks,
@@ -784,15 +776,15 @@ class Node:
     ) -> Optional[Union[List[Track], Playlist]]:
         """
         Gets recommendations for a track.
-        
+
         In Lavalink v4, recommendations are handled by plugins.
         For Spotify tracks, use the 'sprec:' search prefix.
         For YouTube tracks, use the autoplay/radio playlist.
-        
+
         Args:
             track: The track to get recommendations for
             ctx: Discord context for recommended tracks
-            
+
         Returns:
             List of recommended tracks or None if not supported
         """
@@ -854,9 +846,7 @@ class NodePool:
         based on how players it has. This method will return a node with
         the least amount of players
         """
-        available_nodes: List[Node] = [
-            node for node in cls._nodes.values() if node._available
-        ]
+        available_nodes: List[Node] = [node for node in cls._nodes.values() if node._available]
 
         if not available_nodes:
             raise NoNodesAvailable("There are no nodes available.")
@@ -880,9 +870,7 @@ class NodePool:
         If no identifier is provided, it will choose a node at random.
         """
         available_nodes = {
-            identifier: node
-            for identifier, node in cls._nodes.items()
-            if node._available
+            identifier: node for identifier, node in cls._nodes.items() if node._available
         }
 
         if not available_nodes:
@@ -913,7 +901,7 @@ class NodePool:
         logger: Optional[logging.Logger] = None,
     ) -> Node:
         """Creates a Node object to be then added into the node pool.
-        
+
         In Lavalink v4, platform support (Spotify, Apple Music, etc.) is handled
         by server-side plugins. Configure these in your Lavalink server's
         application.yml file instead of passing credentials to the client.
@@ -949,9 +937,7 @@ class NodePool:
     async def disconnect(cls) -> None:
         """Disconnects all available nodes from the node pool."""
 
-        available_nodes: List[Node] = [
-            node for node in cls._nodes.values() if node._available
-        ]
+        available_nodes: List[Node] = [node for node in cls._nodes.values() if node._available]
 
         for node in available_nodes:
             await node.disconnect()
