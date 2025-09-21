@@ -1,0 +1,55 @@
+"""
+Lyra
+~~~~
+A modern Lavalink v4 wrapper designed for discord.py.
+Based on the original Pomice library by cloudwithax.
+
+This version has been completely refactored to work with Lavalink v4,
+removing client-side parsing in favor of server-side plugins.
+
+Key improvements in Lyra:
+- Full Lavalink v4 REST API support  
+- Server-side plugin integration (LavaSrc, YouTube plugin, etc.)
+- Simplified node creation (no more API credentials needed)
+- Better error handling and plugin support
+- Removed deprecated client-side parsing modules
+
+Platform support (Spotify, Apple Music, Bilibili, etc.) is now handled
+entirely by Lavalink server plugins. Configure these in your Lavalink
+server's application.yml file instead of the client.
+
+Original Pomice Copyright (c) 2023, cloudwithax
+Lavalink v4 refactoring Copyright (c) 2025, ParrotXray
+
+Licensed under GPL-3.0
+"""
+
+import discord
+
+if not discord.version_info.major >= 2:
+
+    class DiscordPyOutdated(Exception):
+        pass
+
+    raise DiscordPyOutdated(
+        "You must have discord.py (v2.0 or greater) to use this library. "
+        "Uninstall your current version and install discord.py 2.0 "
+        "using 'pip install discord.py'",
+    )
+
+__version__ = "1.0.0"
+__title__ = "lyra"
+__author__ = "ParrotXray"
+__license__ = "GPL-3.0"
+__copyright__ = "Copyright (c) 2025, ParrotXray. Based on Pomice by cloudwithax"
+
+from .enums import *
+from .events import *
+from .exceptions import *
+from .filters import *
+from .objects import *
+from .trackqueue import *
+from .player import *
+from .lyrics import *
+from .pool import *
+from .routeplanner import *
