@@ -25,6 +25,7 @@ Licensed under GPL-3.0
 """
 
 import discord
+from typing import NamedTuple
 
 if not discord.version_info.major >= 2:
 
@@ -37,7 +38,18 @@ if not discord.version_info.major >= 2:
         "using 'pip install discord.py'",
     )
 
+class _VersionInfo(NamedTuple):
+    major: int
+    minor: int
+    micro: int
+    release: str
+    serial: int
+
 __version__ = "1.0.0"
+__version_info__ = _VersionInfo(1, 0, 0, "final", 0)
+
+version = __version__
+version_info = __version_info__
 __title__ = "lyra"
 __author__ = "ParrotXray"
 __license__ = "GPL-3.0"
