@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lyra"
+name = "lava-lyra"
 dynamic = ["version"]
 description = "A modern Lavalink v4 wrapper for py-cord, based on Pomice"
 readme = "README.md"

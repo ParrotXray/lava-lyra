@@ -121,14 +121,14 @@ else:
     long_description_content_type = "text/plain"
 
 setuptools.setup(
-    name="lyra",
+    name="lava-lyra",
     version=version,
     author="ParrotXray",
     author_email="",
     description="A modern Lavalink v4 wrapper for py-cord, based on Pomice",
     long_description=long_description,
     long_description_content_type=long_description_content_type,
-    url="https://github.com/ParrotXray/lyra",
+    url="https://github.com/ParrotXray/lava-lyra",
     project_urls=project_urls,
     packages=packages,
     classifiers=classifiers,
