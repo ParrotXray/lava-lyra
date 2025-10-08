@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
 [![Python](https://img.shields.io/pypi/pyversions/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
-[![License](https://img.shields.io/github/license/ParrotXray/Lyra.svg)](https://github.com/ParrotXray/Lyra/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/ParrotXray/lava-lyra.svg)](https://github.com/ParrotXray/Lyra/blob/main/LICENSE)
 
 A modern Lavalink v4 wrapper designed for py-cord, based on the excellent [Pomice](https://github.com/cloudwithax/pomice) library by cloudwithax.
 
