@@ -296,7 +296,7 @@ class Node:
         if not self._resume_key:
             return
 
-        data = {"timeout": self._resume_timeout}
+        data: Dict[str, Union[int, str, bool]] = {"timeout": self._resume_timeout}
 
         if self._version.major == 3:
             data["resumingKey"] = self._resume_key
@@ -490,7 +490,17 @@ class Node:
         start = time.perf_counter()
 
         if not self._session:
-            self._session = aiohttp.ClientSession()
+            # Configure connection pooling for optimal concurrent request performance
+            connector = aiohttp.TCPConnector(
+                limit=100,  # Total connection limit
+                limit_per_host=30,  # Per-host connection limit
+                ttl_dns_cache=300,  # DNS cache TTL in seconds
+            )
+            timeout = aiohttp.ClientTimeout(total=30, connect=10)
+            self._session = aiohttp.ClientSession(
+                connector=connector,
+                timeout=timeout,
+            )
 
         try:
             if not reconnect:
@@ -605,7 +615,7 @@ class Node:
         query: str,
         *,
         ctx: Optional[commands.Context] = None,
-        search_type: SearchType | None = SearchType.ytsearch,
+        search_type: Optional[SearchType] = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
     ) -> Optional[Union[Playlist, List[Track]]]:
         """Fetches tracks from the node's REST api to parse into Lavalink.

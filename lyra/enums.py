@@ -37,10 +37,11 @@ class SearchType(Enum):
     spsearch = "spsearch"
     bilisearch = "bilisearch"
     sprec = "sprec"
+    other = "other"
 
     @classmethod
-    def none(cls, _: object) -> None:
-        return None
+    def _missing_(cls, value: object) -> "SearchType":
+        return cls.other
 
     def __str__(self) -> str:
         return self.value
@@ -79,7 +80,7 @@ class TrackType(Enum):
     OTHER = "other"
 
     @classmethod
-    def _missing_(cls, _: object) -> "TrackType":
+    def _missing_(cls, value: object) -> "TrackType":
         return cls.OTHER
 
     def __str__(self) -> str:
@@ -113,7 +114,7 @@ class PlaylistType(Enum):
     OTHER = "other"
 
     @classmethod
-    def _missing_(cls, _: object) -> "PlaylistType":
+    def _missing_(cls, value: object) -> "PlaylistType":
         return cls.OTHER
 
     def __str__(self) -> str:
@@ -249,7 +250,7 @@ class URLRegex:
     )
 
     SPOTIFY_URL = re.compile(
-        r"https?://open.spotify.com/(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)",
+        r"https?://open\.spotify\.com/(?:intl-[a-zA-Z-]+/)?(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)(?:/)?(?:\?.*)?$",
     )
 
     DISCORD_MP3_URL = re.compile(
@@ -271,13 +272,13 @@ class URLRegex:
     )
 
     AM_URL = re.compile(
-        r"https?://music.apple.com/(?P<country>[a-zA-Z]{2})/"
-        r"(?P<type>album|playlist|song|artist)/(?P<name>.+)/(?P<id>[^?]+)",
+        r"https?://music\.apple\.com/(?P<country>[a-zA-Z]{2})/"
+        r"(?P<type>album|playlist|song|artist)/(?P<name>.+?)/(?P<id>[^/?]+?)(?:/)?(?:\?.*)?$",
     )
 
     AM_SINGLE_IN_ALBUM_REGEX = re.compile(
-        r"https?://music.apple.com/(?P<country>[a-zA-Z]{2})/(?P<type>album|playlist|song|artist)/"
-        r"(?P<name>.+)/(?P<id>.+)(\?i=)(?P<id2>.+)",
+        r"https?://music\.apple\.com/(?P<country>[a-zA-Z]{2})/(?P<type>album|playlist|song|artist)/"
+        r"(?P<name>.+)/(?P<id>[^/?]+)(\?i=)(?P<id2>[^&]+)(?:&.*)?$",
     )
 
     SOUNDCLOUD_URL = re.compile(
