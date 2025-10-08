@@ -24,8 +24,9 @@ Lavalink v4 refactoring Copyright (c) 2025, ParrotXray
 Licensed under GPL-3.0
 """
 
-import discord
 from typing import NamedTuple
+
+import discord
 
 if not discord.version_info.major >= 2:
 
@@ -38,12 +39,14 @@ if not discord.version_info.major >= 2:
         "using 'pip install discord.py'",
     )
 
+
 class _VersionInfo(NamedTuple):
     major: int
     minor: int
     micro: int
     release: str
     serial: int
+
 
 __version__ = "1.0.0"
 __version_info__ = _VersionInfo(1, 0, 0, "final", 0)
