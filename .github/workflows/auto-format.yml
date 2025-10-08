@@ -41,12 +41,12 @@ jobs:
 
     - name: Run black formatter
       run: |
-        black lyra
+        black lava_lyra
         echo "Black formatting completed"
 
     - name: Run isort import sorter
       run: |
-        isort lyra
+        isort lava_lyra
         echo "Import sorting completed"
 
     - name: Check for changes
@@ -63,18 +63,18 @@ jobs:
     - name: Format check with black
       run: |
         echo "Checking code formatting with black..."
-        black --check lyra
+        black --check lava_lyra
 
     - name: Import sorting check with isort
       run: |
         echo "Checking import sorting with isort..."
-        isort --check-only lyra
+        isort --check-only lava_lyra
 
     - name: Lint with flake8
       run: |
         echo "Running flake8 syntax checks..."
-        flake8 lyra --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 lyra --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 lava_lyra --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 lava_lyra --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Verify code quality after formatting
       run: |

@@ -34,14 +34,14 @@ Lyra is a complete refactor of Pomice for **Lavalink v4**, bringing significant 
 ### Installation
 
 ```bash
-pip install lyra
+pip install lava_lyra
 ```
 
 ### Basic Usage
 
 ```python
 import discord
-import lyra
+import lava_lyra
 
 class Bot(discord.Bot):
     def __init__(self):
@@ -52,7 +52,7 @@ class Bot(discord.Bot):
         print(f'Logged in as {self.user}')
         
         # Create Lavalink nodes - much simpler than before!
-        nodes = await lyra.NodePool.create_nodes(
+        nodes = await lava_lyra.NodePool.create_nodes(
           self, 
           host='http://localhost:2333', 
           port=3030, 
@@ -76,7 +76,7 @@ async def play(ctx, query: str):
     if not ctx.author.voice:
         return await ctx.respond("You need to be in a voice channel!")
     
-    player = await ctx.author.voice.channel.connect(cls=lyra.Player)
+    player = await ctx.author.voice.channel.connect(cls=lava_lyra.Player)
     
     # Search for tracks (supports Spotify, YouTube, Apple Music via plugins!)
     results = await player.get_tracks(query)

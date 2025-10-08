@@ -60,7 +60,7 @@ install_requires = [
     "py-cord>=2.0.0",
 ]
 
-packages = setuptools.find_packages(include=["lyra", "lyra.*"])
+packages = setuptools.find_packages(include=["lava_lyra", "lava_lyra.*"])
 
 project_urls = {
     "Homepage": "https://github.com/ParrotXray/lava-lyra",
@@ -73,7 +73,7 @@ project_urls = {
 
 _version_regex = r"^__version__ = ['\"]([^'\"]*)['\"]$"
 
-init_file = Path("lyra/__init__.py")
+init_file = Path("lava_lyra/__init__.py")
 if init_file.exists():
     with open(init_file, encoding="utf-8") as stream:
         match = re.search(_version_regex, stream.read(), re.MULTILINE)
@@ -140,6 +140,6 @@ setuptools.setup(
     include_package_data=True,
     zip_safe=False,
     package_data={
-        "lyra": ["py.typed"],
+        "lava_lyra": ["py.typed"],
     },
 )
