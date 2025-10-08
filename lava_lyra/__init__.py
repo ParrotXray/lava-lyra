@@ -48,12 +48,12 @@ class _VersionInfo(NamedTuple):
     serial: int
 
 
-__version__ = "1.0.3"
-__version_info__ = _VersionInfo(1, 0, 3, "final", 0)
+__version__ = "1.1.0"
+__version_info__ = _VersionInfo(1, 1, 0, "final", 0)
 
 version = __version__
 version_info = __version_info__
-__title__ = "lyra"
+__title__ = "lava_lyra"
 __author__ = "ParrotXray"
 __license__ = "GPL-3.0"
 __copyright__ = "Copyright (c) 2025, ParrotXray. Based on Pomice by cloudwithax"
