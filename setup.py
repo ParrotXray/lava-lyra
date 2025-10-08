@@ -60,9 +60,7 @@ install_requires = [
     "py-cord>=2.0.0",
 ]
 
-packages = [
-    "lyra",
-]
+packages = setuptools.find_packages(include=["lyra", "lyra.*"])
 
 project_urls = {
     "Homepage": "https://github.com/ParrotXray/lyra",

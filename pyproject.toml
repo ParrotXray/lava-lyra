@@ -78,7 +78,7 @@ Changelog = "https://github.com/ParrotXray/lyra/blob/main/CHANGELOG.md"
 "Original Pomice" = "https://github.com/cloudwithax/pomice"
 
 [tool.setuptools]
-packages = ["lyra"]
+packages = {find = {where = ["."], include = ["pycord*"]}}
 include-package-data = true
 zip-safe = false
 
