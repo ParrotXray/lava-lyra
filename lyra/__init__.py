@@ -1,7 +1,7 @@
 """
 Lyra
 ~~~~
-A modern Lavalink v4 wrapper designed for discord.py.
+A modern Lavalink v4 wrapper designed for py-cord.
 Based on the original Pomice library by cloudwithax.
 
 This version has been completely refactored to work with Lavalink v4,
@@ -34,9 +34,9 @@ if not discord.version_info.major >= 2:
         pass
 
     raise DiscordPyOutdated(
-        "You must have discord.py (v2.0 or greater) to use this library. "
-        "Uninstall your current version and install discord.py 2.0 "
-        "using 'pip install discord.py'",
+        "You must have py-cord (v2.0 or greater) to use this library. "
+        "Uninstall your current version and install py-cord 2.0 "
+        "using 'pip install py-cord'",
     )
 
 
@@ -48,8 +48,8 @@ class _VersionInfo(NamedTuple):
     serial: int
 
 
-__version__ = "1.0.2"
-__version_info__ = _VersionInfo(1, 0, 2, "final", 0)
+__version__ = "1.0.3"
+__version_info__ = _VersionInfo(1, 0, 3, "final", 0)
 
 version = __version__
 version_info = __version_info__
