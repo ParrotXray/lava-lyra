@@ -63,11 +63,11 @@ install_requires = [
 packages = setuptools.find_packages(include=["lyra", "lyra.*"])
 
 project_urls = {
-    "Homepage": "https://github.com/ParrotXray/lyra",
-    "Documentation": "https://lyra.readthedocs.io/",
-    "Issue Tracker": "https://github.com/ParrotXray/lyra/issues",
-    "Source": "https://github.com/ParrotXray/lyra",
-    "Changelog": "https://github.com/ParrotXray/lyra/blob/main/CHANGELOG.md",
+    "Homepage": "https://github.com/ParrotXray/lava-lyra",
+    # "Documentation": "https://lava-lyra.readthedocs.io/",
+    "Issue Tracker": "https://github.com/ParrotXray/lava-lyra/issues",
+    "Source": "https://github.com/ParrotXray/lava-lyra",
+    "Changelog": "https://github.com/ParrotXray/lava-lyra/blob/main/CHANGELOG.md",
     "Original Pomice": "https://github.com/cloudwithax/pomice",
 }
 

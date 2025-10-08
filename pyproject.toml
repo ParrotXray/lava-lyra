@@ -69,12 +69,11 @@ speed = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ParrotXray/lyra"
-Repository = "https://github.com/ParrotXray/lyra"
-"Issue Tracker" = "https://github.com/ParrotXray/lyra/issues"
-Source = "https://github.com/ParrotXray/lyra"
-Documentation = "https://lyra.readthedocs.io/"
-Changelog = "https://github.com/ParrotXray/lyra/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/ParrotXray/lava-lyra"
+Repository = "https://github.com/ParrotXray/lava-lyra"
+"Issue Tracker" = "https://github.com/ParrotXray/lava-lyra/issues"
+Source = "https://github.com/ParrotXray/lava-lyra"
+Changelog = "https://github.com/ParrotXray/lava-lyra/blob/main/CHANGELOG.md"
 "Original Pomice" = "https://github.com/cloudwithax/pomice"
 
 [tool.setuptools]
