@@ -52,10 +52,15 @@ class Bot(discord.Bot):
         print(f'Logged in as {self.user}')
         
         # Create Lavalink nodes - much simpler than before!
-        nodes = await lyra.NodePool.create_nodes(self, [
-            ('http://localhost:2333', 'youshallnotpass', 'main'),
-            ('http://backup.com:2333', 'backuppass', 'backup'),
-        ])
+        nodes = await lyra.NodePool.create_nodes(
+          self, 
+          host='http://localhost:2333', 
+          port=3030, 
+          password='youshallnotpass', 
+          identifier='MAIN', 
+          lyrics=False, 
+          fallback=True
+        )
         print(f"Created {len(nodes)} nodes")
 
 bot = Bot()
