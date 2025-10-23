@@ -149,8 +149,6 @@ class WebSocketClosedPayload:
     __slots__ = ("guild", "code", "reason", "by_remote")
 
     def __init__(self, data: dict):
-        # Import at runtime to avoid circular import
-        from .pool import NodePool
 
         self.guild: Optional[Guild] = NodePool.get_node().bot.get_guild(int(data["guildId"]))
         self.code: int = data["code"]
