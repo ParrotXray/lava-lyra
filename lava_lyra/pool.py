@@ -373,7 +373,9 @@ class Node:
                     try:
                         await self.connect(reconnect=True)
                         if self._log:
-                            self._log.warning(f"Successfully reconnected to node {self._identifier}")
+                            self._log.warning(
+                                f"Successfully reconnected to node {self._identifier}"
+                            )
                         # Continue the loop to start listening for messages
                         continue
                     except Exception as e:
