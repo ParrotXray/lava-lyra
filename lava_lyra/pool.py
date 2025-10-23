@@ -21,6 +21,7 @@ from websockets import typing as wstype
 from . import __version__
 from .enums import *
 from .enums import LogLevel
+from .events import NodeConnectedEvent, NodeDisconnectedEvent, NodeReconnectingEvent
 from .exceptions import (
     LavalinkVersionIncompatible,
     NodeConnectionFailure,
@@ -87,6 +88,7 @@ class Node:
         "_route_planner",
         "_log",
         "_stats",
+        "_backoff",
         "available",
     )
 
@@ -139,6 +141,7 @@ class Node:
         self._route_planner = RoutePlanner(self)
         self._log = logger
         self._lyrics_enabled: bool = lyrics
+        self._backoff = ExponentialBackoff(base=7)
 
         if not self._bot.user:
             raise NodeCreationError("Bot user is not ready yet.")
@@ -290,7 +293,11 @@ class Node:
                 if self._log:
                     self._log.error(f"Failed to switch player {player._guild.id}: {e}")
 
-        await self.disconnect()
+        if self._log:
+            self._log.info(
+                f"All players switched from {self._identifier} to {new_node._identifier}, "
+                f"node will attempt reconnection"
+            )
 
     async def _configure_resuming(self) -> None:
         if not self._resume_key:
@@ -333,25 +340,49 @@ class Node:
                 self._session_id = None
                 self._available = False
 
-                if self.player_count > 0:
-                    for _player in self.players.values():
+                # Dispatch node disconnected event
+                player_count = self.player_count
+                event = NodeDisconnectedEvent(self._identifier, player_count)
+                event.dispatch(self._bot)
+
+                # If fallback is enabled, switch players to another node
+                # Otherwise, destroy them
+                if self._fallback and self.player_count > 0:
+                    await self._handle_node_switch()
+                elif self.player_count > 0:
+                    for _player in self.players.copy().values():
                         self._loop.create_task(_player.destroy())
 
-                if self._fallback:
-                    self._loop.create_task(self._handle_node_switch())
+                # Close the websocket if it's not already closed
+                if self._websocket and not self._websocket.closed:
+                    self._loop.create_task(self._websocket.close())
 
-                self._loop.create_task(self._websocket.close())
-
-                backoff = ExponentialBackoff(base=7)
-                retry = backoff.delay()
+                retry = self._backoff.delay()
                 if self._log:
-                    self._log.debug(
-                        f"Retrying connection to Node {self._identifier} in {retry} secs",
+                    self._log.warning(
+                        f"Retrying connection to Node {self._identifier} in {retry:.1f} secs",
                     )
+
+                # Dispatch node reconnecting event
+                event = NodeReconnectingEvent(self._identifier, retry)
+                event.dispatch(self._bot)
+
                 await asyncio.sleep(retry)
 
                 if not self.is_connected:
-                    self._loop.create_task(self.connect(reconnect=True))
+                    try:
+                        await self.connect(reconnect=True)
+                        if self._log:
+                            self._log.warning(
+                                f"Successfully reconnected to node {self._identifier}"
+                            )
+                        # Continue the loop to start listening for messages
+                        continue
+                    except Exception as e:
+                        if self._log:
+                            self._log.error(f"Failed to reconnect to node {self._identifier}: {e}")
+                        # Continue the loop to retry again
+                        continue
 
     async def _handle_ws_msg(self, data: dict) -> None:
         if self._log:
@@ -542,6 +573,10 @@ class Node:
                 self._task = self._loop.create_task(self._listen())
 
             end = time.perf_counter()
+
+            # Dispatch node connected event
+            event = NodeConnectedEvent(self._identifier, reconnect)
+            event.dispatch(self._bot)
 
             if self._log:
                 self._log.info(f"Connected to node {self._identifier}. Took {end - start:.3f}s")
