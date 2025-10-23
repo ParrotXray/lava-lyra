@@ -87,6 +87,7 @@ class Node:
         "_route_planner",
         "_log",
         "_stats",
+        "_backoff",
         "available",
     )
 
@@ -139,6 +140,7 @@ class Node:
         self._route_planner = RoutePlanner(self)
         self._log = logger
         self._lyrics_enabled: bool = lyrics
+        self._backoff = ExponentialBackoff(base=7)
 
         if not self._bot.user:
             raise NodeCreationError("Bot user is not ready yet.")
@@ -342,8 +344,7 @@ class Node:
 
                 self._loop.create_task(self._websocket.close())
 
-                backoff = ExponentialBackoff(base=7)
-                retry = backoff.delay()
+                retry = self._backoff.delay()
                 if self._log:
                     self._log.debug(
                         f"Retrying connection to Node {self._identifier} in {retry} secs",
@@ -351,7 +352,17 @@ class Node:
                 await asyncio.sleep(retry)
 
                 if not self.is_connected:
-                    self._loop.create_task(self.connect(reconnect=True))
+                    try:
+                        await self.connect(reconnect=True)
+                        if self._log:
+                            self._log.info(f"Successfully reconnected to node {self._identifier}")
+                        # Exit this listen loop - connect() will create a new _listen task
+                        return
+                    except Exception as e:
+                        if self._log:
+                            self._log.error(f"Failed to reconnect to node {self._identifier}: {e}")
+                        # Continue the loop to retry again
+                        continue
 
     async def _handle_ws_msg(self, data: dict) -> None:
         if self._log:
