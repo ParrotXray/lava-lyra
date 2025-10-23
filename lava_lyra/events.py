@@ -11,7 +11,6 @@ from .objects import Track
 
 if TYPE_CHECKING:
     from .player import Player
-    from .pool import NodePool
 
 __all__ = (
     "LyraEvent",
@@ -146,14 +145,23 @@ class TrackExceptionEvent(LyraEvent):
 
 
 class WebSocketClosedPayload:
-    __slots__ = ("guild", "code", "reason", "by_remote")
+    __slots__ = ("code", "reason", "by_remote", "_guild_id", "_bot")
 
-    def __init__(self, data: dict):
-
-        self.guild: Optional[Guild] = NodePool.get_node().bot.get_guild(int(data["guildId"]))
+    def __init__(self, data: dict, bot: Optional[Client] = None):
+        self._bot: Optional[Client] = bot
+        self._guild_id: int = int(data["guildId"])
         self.code: int = data["code"]
-        self.reason: str = data["code"]
+        self.reason: str = data["reason"]
         self.by_remote: bool = data["byRemote"]
+
+    @property
+    def guild(self) -> Optional[Guild]:
+        """Returns the guild associated with this event.
+        Lazily fetches the guild to avoid circular imports.
+        """
+        if self._bot is None:
+            return None
+        return self._bot.get_guild(self._guild_id)
 
     def __repr__(self) -> str:
         return (
@@ -171,8 +179,10 @@ class WebSocketClosedEvent(LyraEvent):
 
     __slots__ = ("payload",)
 
-    def __init__(self, data: dict, _: Any) -> None:
-        self.payload: WebSocketClosedPayload = WebSocketClosedPayload(data)
+    def __init__(self, data: dict, player: Any) -> None:
+        # Extract bot from player to avoid circular import with NodePool
+        bot = getattr(player, "_bot", None)
+        self.payload: WebSocketClosedPayload = WebSocketClosedPayload(data, bot)
 
         # on_lyra_websocket_closed(payload)
         self.handler_args = (self.payload,)
