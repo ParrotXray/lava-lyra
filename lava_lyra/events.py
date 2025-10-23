@@ -25,6 +25,9 @@ __all__ = (
     "LyricsFoundEvent",
     "LyricsNotFoundEvent",
     "LyricsLineEvent",
+    "NodeConnectedEvent",
+    "NodeDisconnectedEvent",
+    "NodeReconnectingEvent",
 )
 
 
@@ -258,3 +261,63 @@ class LyricsLineEvent(LyraEvent):
 
     def __repr__(self) -> str:
         return f"<Lyra.LyricsLineEvent player={self.player!r} line={self.line!r}>"
+
+
+class NodeConnectedEvent(LyraEvent):
+    """Fired when a node successfully connects to Lavalink.
+    Returns the node identifier and whether this is a reconnection.
+    """
+
+    name = "node_connected"
+
+    __slots__ = ("node_id", "reconnect")
+
+    def __init__(self, node_id: str, reconnect: bool = False):
+        self.node_id: str = node_id
+        self.reconnect: bool = reconnect
+
+        # on_lyra_node_connected(node_id, reconnect)
+        self.handler_args = self.node_id, self.reconnect
+
+    def __repr__(self) -> str:
+        return f"<Lyra.NodeConnectedEvent node_id={self.node_id!r} reconnect={self.reconnect!r}>"
+
+
+class NodeDisconnectedEvent(LyraEvent):
+    """Fired when a node disconnects from Lavalink.
+    Returns the node identifier and the number of players that were affected.
+    """
+
+    name = "node_disconnected"
+
+    __slots__ = ("node_id", "player_count")
+
+    def __init__(self, node_id: str, player_count: int):
+        self.node_id: str = node_id
+        self.player_count: int = player_count
+
+        # on_lyra_node_disconnected(node_id, player_count)
+        self.handler_args = self.node_id, self.player_count
+
+    def __repr__(self) -> str:
+        return f"<Lyra.NodeDisconnectedEvent node_id={self.node_id!r} player_count={self.player_count!r}>"
+
+
+class NodeReconnectingEvent(LyraEvent):
+    """Fired when a node is attempting to reconnect to Lavalink.
+    Returns the node identifier and the retry delay in seconds.
+    """
+
+    name = "node_reconnecting"
+
+    __slots__ = ("node_id", "retry_in")
+
+    def __init__(self, node_id: str, retry_in: float):
+        self.node_id: str = node_id
+        self.retry_in: float = retry_in
+
+        # on_lyra_node_reconnecting(node_id, retry_in)
+        self.handler_args = self.node_id, self.retry_in
+
+    def __repr__(self) -> str:
+        return f"<Lyra.NodeReconnectingEvent node_id={self.node_id!r} retry_in={self.retry_in!r}>"

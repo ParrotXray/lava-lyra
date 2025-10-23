@@ -21,6 +21,7 @@ from websockets import typing as wstype
 from . import __version__
 from .enums import *
 from .enums import LogLevel
+from .events import NodeConnectedEvent, NodeDisconnectedEvent, NodeReconnectingEvent
 from .exceptions import (
     LavalinkVersionIncompatible,
     NodeConnectionFailure,
@@ -339,6 +340,11 @@ class Node:
                 self._session_id = None
                 self._available = False
 
+                # Dispatch node disconnected event
+                player_count = self.player_count
+                event = NodeDisconnectedEvent(self._identifier, player_count)
+                event.dispatch(self._bot)
+
                 # If fallback is enabled, switch players to another node
                 # Otherwise, destroy them
                 if self._fallback and self.player_count > 0:
@@ -356,6 +362,11 @@ class Node:
                     self._log.warning(
                         f"Retrying connection to Node {self._identifier} in {retry:.1f} secs",
                     )
+
+                # Dispatch node reconnecting event
+                event = NodeReconnectingEvent(self._identifier, retry)
+                event.dispatch(self._bot)
+
                 await asyncio.sleep(retry)
 
                 if not self.is_connected:
@@ -560,6 +571,10 @@ class Node:
                 self._task = self._loop.create_task(self._listen())
 
             end = time.perf_counter()
+
+            # Dispatch node connected event
+            event = NodeConnectedEvent(self._identifier, reconnect)
+            event.dispatch(self._bot)
 
             if self._log:
                 self._log.info(f"Connected to node {self._identifier}. Took {end - start:.3f}s")
