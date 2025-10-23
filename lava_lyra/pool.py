@@ -363,8 +363,8 @@ class Node:
                         await self.connect(reconnect=True)
                         if self._log:
                             self._log.info(f"Successfully reconnected to node {self._identifier}")
-                        # Exit this listen loop - connect() will create a new _listen task
-                        return
+                        # Continue the loop to start listening for messages
+                        continue
                     except Exception as e:
                         if self._log:
                             self._log.error(f"Failed to reconnect to node {self._identifier}: {e}")
