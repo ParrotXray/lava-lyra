@@ -292,7 +292,11 @@ class Node:
                 if self._log:
                     self._log.error(f"Failed to switch player {player._guild.id}: {e}")
 
-        await self.disconnect()
+        if self._log:
+            self._log.info(
+                f"All players switched from {self._identifier} to {new_node._identifier}, "
+                f"node will attempt reconnection"
+            )
 
     async def _configure_resuming(self) -> None:
         if not self._resume_key:
@@ -335,14 +339,17 @@ class Node:
                 self._session_id = None
                 self._available = False
 
-                if self.player_count > 0:
-                    for _player in self.players.values():
+                # If fallback is enabled, switch players to another node
+                # Otherwise, destroy them
+                if self._fallback and self.player_count > 0:
+                    await self._handle_node_switch()
+                elif self.player_count > 0:
+                    for _player in self.players.copy().values():
                         self._loop.create_task(_player.destroy())
 
-                if self._fallback:
-                    self._loop.create_task(self._handle_node_switch())
-
-                self._loop.create_task(self._websocket.close())
+                # Close the websocket if it's not already closed
+                if self._websocket and not self._websocket.closed:
+                    self._loop.create_task(self._websocket.close())
 
                 retry = self._backoff.delay()
                 if self._log:
