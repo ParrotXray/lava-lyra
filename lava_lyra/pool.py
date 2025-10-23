@@ -353,8 +353,8 @@ class Node:
 
                 retry = self._backoff.delay()
                 if self._log:
-                    self._log.debug(
-                        f"Retrying connection to Node {self._identifier} in {retry} secs",
+                    self._log.warning(
+                        f"Retrying connection to Node {self._identifier} in {retry:.1f} secs",
                     )
                 await asyncio.sleep(retry)
 
@@ -362,7 +362,7 @@ class Node:
                     try:
                         await self.connect(reconnect=True)
                         if self._log:
-                            self._log.info(f"Successfully reconnected to node {self._identifier}")
+                            self._log.warning(f"Successfully reconnected to node {self._identifier}")
                         # Continue the loop to start listening for messages
                         continue
                     except Exception as e:

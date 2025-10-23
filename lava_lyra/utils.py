@@ -211,15 +211,27 @@ class Ping:
         return self.Socket(family, type_, self._timeout)
 
     def get_ping(self) -> float:
+        """
+        Get ping latency in milliseconds.
+        Returns -1.0 if the connection fails (node is unreachable).
+        """
         s = self._create_socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        cost_time = self.timer.cost(
-            (s.connect, s.shutdown),
-            ((self._host, self._port), None),
-        )
-        s_runtime = 1000 * (cost_time)
-
-        return s_runtime
+        try:
+            cost_time = self.timer.cost(
+                (s.connect, s.shutdown),
+                ((self._host, self._port), None),
+            )
+            s_runtime = 1000 * (cost_time)
+            s.close()
+            return s_runtime
+        except (ConnectionRefusedError, OSError, socket.timeout, socket.error):
+            # Node is unreachable or offline
+            try:
+                s.close()
+            except Exception:
+                pass
+            return -1.0
 
 
 class LavalinkVersion(NamedTuple):
