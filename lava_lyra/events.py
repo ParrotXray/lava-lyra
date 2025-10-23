@@ -8,10 +8,10 @@ from discord.ext import commands
 
 from .lyrics import LyricLine, Lyrics
 from .objects import Track
-from .pool import NodePool
 
 if TYPE_CHECKING:
     from .player import Player
+    from .pool import NodePool
 
 __all__ = (
     "LyraEvent",
@@ -149,6 +149,9 @@ class WebSocketClosedPayload:
     __slots__ = ("guild", "code", "reason", "by_remote")
 
     def __init__(self, data: dict):
+        # Import at runtime to avoid circular import
+        from .pool import NodePool
+
         self.guild: Optional[Guild] = NodePool.get_node().bot.get_guild(int(data["guildId"]))
         self.code: int = data["code"]
         self.reason: str = data["code"]
