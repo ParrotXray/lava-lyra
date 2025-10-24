@@ -117,6 +117,9 @@ class Node:
         lyrics: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
+        health_check_interval: float = 30.0,
+        circuit_breaker_threshold: int = 5,
+        circuit_timeout: float = 60.0,
     ):
         if not isinstance(port, int):
             raise TypeError("Port must be an integer")
@@ -150,9 +153,9 @@ class Node:
         self._lyrics_enabled: bool = lyrics
         self._backoff = ExponentialBackoff(base=7)
         self._health_monitor = NodeHealthMonitor(
-            health_check_interval=30.0,
-            circuit_breaker_threshold=5,
-            circuit_timeout=60.0,
+            health_check_interval=health_check_interval,
+            circuit_breaker_threshold=circuit_breaker_threshold,
+            circuit_timeout=circuit_timeout,
         )
 
         if not self._bot.user:
@@ -1010,12 +1013,22 @@ class NodePool:
         lyrics: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
+        health_check_interval: float = 30.0,
+        circuit_breaker_threshold: int = 5,
+        circuit_timeout: float = 60.0,
     ) -> Node:
         """Creates a Node object to be then added into the node pool.
 
         In Lavalink v4, platform support (Spotify, Apple Music, etc.) is handled
         by server-side plugins. Configure these in your Lavalink server's
         application.yml file instead of passing credentials to the client.
+
+        Health Monitor Parameters:
+            health_check_interval (float): Interval in seconds between health checks. Default: 30.0
+            circuit_breaker_threshold (int): Number of consecutive failures before circuit opens. Default: 5
+                For foreign/unstable nodes, consider increasing to 10-20.
+            circuit_timeout (float): Seconds to keep circuit open before retry. Default: 60.0
+                For foreign nodes, consider increasing to 120.0 or more.
         """
         if identifier in cls._nodes.keys():
             raise NodeCreationError(
@@ -1038,6 +1051,9 @@ class NodePool:
             lyrics=lyrics,
             fallback=fallback,
             logger=logger,
+            health_check_interval=health_check_interval,
+            circuit_breaker_threshold=circuit_breaker_threshold,
+            circuit_timeout=circuit_timeout,
         )
 
         await node.connect()
