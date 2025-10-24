@@ -34,7 +34,13 @@ from .exceptions import (
 from .filters import Filter
 from .objects import Playlist, Track
 from .routeplanner import RoutePlanner
-from .utils import ExponentialBackoff, LavalinkVersion, NodeStats, Ping
+from .utils import (
+    ExponentialBackoff,
+    LavalinkVersion,
+    NodeHealthMonitor,
+    NodeStats,
+    Ping,
+)
 
 if TYPE_CHECKING:
     from .player import Player
@@ -89,6 +95,7 @@ class Node:
         "_log",
         "_stats",
         "_backoff",
+        "_health_monitor",
         "available",
     )
 
@@ -142,6 +149,11 @@ class Node:
         self._log = logger
         self._lyrics_enabled: bool = lyrics
         self._backoff = ExponentialBackoff(base=7)
+        self._health_monitor = NodeHealthMonitor(
+            health_check_interval=30.0,
+            circuit_breaker_threshold=5,
+            circuit_timeout=60.0,
+        )
 
         if not self._bot.user:
             raise NodeCreationError("Bot user is not ready yet.")
@@ -151,7 +163,7 @@ class Node:
         self._headers = {
             "Authorization": self._password,
             "User-Id": str(self._bot_user.id),
-            "Client-Name": f"Lyra/{__version__}",
+            "Client-Name": f"lava-lyra/{__version__}",
         }
 
         self._players: Dict[int, Player] = {}
@@ -208,6 +220,17 @@ class Node:
     def lyrics_enabled(self) -> bool:
         """Property which returns whether lyrics support is enabled for this node"""
         return self._lyrics_enabled
+
+    @property
+    def health_monitor(self) -> NodeHealthMonitor:
+        """Property which returns the node's health monitor"""
+        return self._health_monitor
+
+    @property
+    def health_score(self) -> float:
+        """Property which returns the current health score of the node"""
+        current_latency = self.latency
+        return self._health_monitor.get_health_score(current_latency, self.player_count)
 
     async def _handle_version_check(self, version: str) -> None:
         if version.endswith("-SNAPSHOT"):
@@ -284,7 +307,16 @@ class Node:
                 self._log.warning(f"No available backup nodes for {self._identifier}")
             return
 
-        new_node = random.choice(nodes)
+        # Select best node based on health score instead of random selection
+        # This ensures players migrate to the healthiest available node
+        node_scores = {node: node.health_score for node in nodes}
+        new_node = max(node_scores, key=node_scores.get)  # type: ignore
+
+        if self._log:
+            self._log.info(
+                f"Selected node {new_node._identifier} for failover "
+                f"(health score: {new_node.health_score:.1f})"
+            )
 
         for player in self.players.copy().values():
             try:
@@ -340,6 +372,9 @@ class Node:
                 self._session_id = None
                 self._available = False
 
+                # Record connection failure in health monitor
+                self._health_monitor.record_failure()
+
                 # Dispatch node disconnected event
                 player_count = self.player_count
                 event = NodeDisconnectedEvent(self._identifier, player_count)
@@ -372,6 +407,11 @@ class Node:
                 if not self.is_connected:
                     try:
                         await self.connect(reconnect=True)
+
+                        # Record successful reconnection in health monitor
+                        self._health_monitor.record_reconnection()
+                        self._health_monitor.record_success()
+
                         if self._log:
                             self._log.warning(
                                 f"Successfully reconnected to node {self._identifier}"
@@ -381,6 +421,8 @@ class Node:
                     except Exception as e:
                         if self._log:
                             self._log.error(f"Failed to reconnect to node {self._identifier}: {e}")
+                        # Record failure in health monitor
+                        self._health_monitor.record_failure()
                         # Continue the loop to retry again
                         continue
 
@@ -578,19 +620,26 @@ class Node:
             event = NodeConnectedEvent(self._identifier, reconnect)
             event.dispatch(self._bot)
 
+            # Record successful connection in health monitor
+            if not reconnect:
+                self._health_monitor.record_success()
+
             if self._log:
                 self._log.info(f"Connected to node {self._identifier}. Took {end - start:.3f}s")
             return self
 
         except (aiohttp.ClientConnectorError, OSError, ConnectionRefusedError) as e:
+            self._health_monitor.record_failure()
             raise NodeConnectionFailure(
                 f"The connection to node '{self._identifier}' failed: {e}",
             ) from None
         except exceptions.InvalidHandshake:
+            self._health_monitor.record_failure()
             raise NodeConnectionFailure(
                 f"The password for node '{self._identifier}' is invalid: {e}",
             ) from None
         except exceptions.InvalidURI:
+            self._health_monitor.record_failure()
             raise NodeConnectionFailure(
                 f"The URI for node '{self._identifier}' is invalid: {e}",
             ) from None
@@ -880,29 +929,46 @@ class NodePool:
     def get_best_node(cls, *, algorithm: NodeAlgorithm) -> Node:
         """Fetches the best node based on an NodeAlgorithm.
         This option is preferred if you want to choose the best node
-        from a multi-node setup using either the node's latency
-        or the node's voice region.
+        from a multi-node setup using either the node's latency,
+        player count, or overall health score.
 
         Use NodeAlgorithm.by_ping if you want to get the best node
         based on the node's latency.
 
-
         Use NodeAlgorithm.by_players if you want to get the best node
-        based on how players it has. This method will return a node with
-        the least amount of players
+        based on how many players it has. This method will return a node with
+        the least amount of players.
+
+        Use NodeAlgorithm.by_health if you want to get the best node
+        based on overall health score (latency, uptime, load, stability).
+        This is recommended for production multi-node setups.
         """
         available_nodes: List[Node] = [node for node in cls._nodes.values() if node._available]
 
         if not available_nodes:
             raise NoNodesAvailable("There are no nodes available.")
 
+        # Filter out nodes with open circuit breaker
+        healthy_nodes = [
+            node for node in available_nodes if not node._health_monitor.is_circuit_open
+        ]
+
+        # If all nodes have open circuit breakers, use all available nodes
+        # (emergency fallback)
+        nodes_to_consider = healthy_nodes if healthy_nodes else available_nodes
+
         if algorithm == NodeAlgorithm.by_ping:
-            tested_nodes = {node: node.latency for node in available_nodes}
+            tested_nodes = {node: node.latency for node in nodes_to_consider}
             return min(tested_nodes, key=tested_nodes.get)  # type: ignore
 
         elif algorithm == NodeAlgorithm.by_players:
-            tested_nodes = {node: len(node.players.keys()) for node in available_nodes}
+            tested_nodes = {node: len(node.players.keys()) for node in nodes_to_consider}
             return min(tested_nodes, key=tested_nodes.get)  # type: ignore
+
+        elif algorithm == NodeAlgorithm.by_health:
+            # Higher health score is better
+            tested_nodes = {node: node.health_score for node in nodes_to_consider}
+            return max(tested_nodes, key=tested_nodes.get)  # type: ignore
 
         else:
             raise ValueError(
