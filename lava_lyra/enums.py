@@ -117,6 +117,10 @@ class PlaylistType(Enum):
     def _missing_(cls, value: object) -> "PlaylistType":
         return cls.OTHER
 
+    @property
+    def none(self) -> None:
+        return None
+
     def __str__(self) -> str:
         return self.value
 
@@ -132,14 +136,18 @@ class NodeAlgorithm(Enum):
     NodeAlgorithm.by_ping returns a node based on it's latency,
     preferring a node with the lowest response time
 
-
     NodeAlgorithm.by_players return a nodes based on how many players it has.
     This algorithm prefers nodes with the least amount of players.
+
+    NodeAlgorithm.by_health returns a node based on its health score,
+    which considers latency, uptime, player load, and connection stability.
+    This is the recommended algorithm for multi-node setups.
     """
 
     # We don't have to define anything special for these, since these just serve as flags
     by_ping = "BY_PING"
     by_players = "BY_PLAYERS"
+    by_health = "BY_HEALTH"
 
     def __str__(self) -> str:
         return self.value

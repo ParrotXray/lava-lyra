@@ -15,6 +15,8 @@ __all__ = (
     "RouteStats",
     "Ping",
     "LavalinkVersion",
+    "NodeHealthMonitor",
+    "ConnectionQualityTracker",
 )
 
 
@@ -282,3 +284,222 @@ class LavalinkVersion(NamedTuple):
             return False
 
         return (self > other) or (self == other)
+
+
+class ConnectionQualityTracker:
+    """
+    Tracks connection quality metrics for a node to help make better
+    failover and load balancing decisions.
+    """
+
+    __slots__ = (
+        "_reconnection_count",
+        "_last_reconnection_time",
+        "_connection_start_time",
+        "_total_downtime",
+        "_latency_samples",
+        "_max_latency_samples",
+        "_consecutive_failures",
+    )
+
+    def __init__(self, max_latency_samples: int = 10) -> None:
+        self._reconnection_count: int = 0
+        self._last_reconnection_time: float = 0.0
+        self._connection_start_time: float = time.time()
+        self._total_downtime: float = 0.0
+        self._latency_samples: list[float] = []
+        self._max_latency_samples: int = max_latency_samples
+        self._consecutive_failures: int = 0
+
+    def record_reconnection(self) -> None:
+        """Record a reconnection event."""
+        current_time = time.time()
+        if self._last_reconnection_time > 0:
+            downtime = current_time - self._last_reconnection_time
+            self._total_downtime += downtime
+
+        self._reconnection_count += 1
+        self._last_reconnection_time = current_time
+
+    def record_connection_success(self) -> None:
+        """Record a successful connection."""
+        self._consecutive_failures = 0
+        self._connection_start_time = time.time()
+
+    def record_connection_failure(self) -> None:
+        """Record a connection failure."""
+        self._consecutive_failures += 1
+
+    def record_latency(self, latency: float) -> None:
+        """Record a latency sample."""
+        if latency >= 0:  # Only record valid latencies
+            self._latency_samples.append(latency)
+            if len(self._latency_samples) > self._max_latency_samples:
+                self._latency_samples.pop(0)
+
+    @property
+    def average_latency(self) -> float:
+        """Get average latency from recent samples."""
+        if not self._latency_samples:
+            return -1.0
+        return sum(self._latency_samples) / len(self._latency_samples)
+
+    @property
+    def uptime_percentage(self) -> float:
+        """Calculate uptime percentage."""
+        total_time = time.time() - self._connection_start_time
+        if total_time <= 0:
+            return 100.0
+        uptime = total_time - self._total_downtime
+        return (uptime / total_time) * 100.0
+
+    @property
+    def reconnection_count(self) -> int:
+        """Get total reconnection count."""
+        return self._reconnection_count
+
+    @property
+    def consecutive_failures(self) -> int:
+        """Get consecutive failure count."""
+        return self._consecutive_failures
+
+    @property
+    def is_stable(self) -> bool:
+        """Determine if connection is considered stable."""
+        # Connection is stable if:
+        # - No consecutive failures
+        # - Uptime > 95%
+        # - Average latency is reasonable (< 1000ms) or no samples yet
+        return (
+            self._consecutive_failures == 0
+            and self.uptime_percentage > 95.0
+            and (self.average_latency < 1000.0 or not self._latency_samples)
+        )
+
+
+class NodeHealthMonitor:
+    """
+    Monitors node health and provides a health score for intelligent
+    node selection and failover decisions.
+    """
+
+    __slots__ = (
+        "_quality_tracker",
+        "_last_health_check",
+        "_health_check_interval",
+        "_circuit_breaker_threshold",
+        "_circuit_open",
+        "_circuit_open_time",
+        "_circuit_timeout",
+    )
+
+    def __init__(
+        self,
+        health_check_interval: float = 30.0,
+        circuit_breaker_threshold: int = 5,
+        circuit_timeout: float = 60.0,
+    ) -> None:
+        self._quality_tracker = ConnectionQualityTracker()
+        self._last_health_check: float = 0.0
+        self._health_check_interval: float = health_check_interval
+        self._circuit_breaker_threshold: int = circuit_breaker_threshold
+        self._circuit_open: bool = False
+        self._circuit_open_time: float = 0.0
+        self._circuit_timeout: float = circuit_timeout
+
+    @property
+    def quality_tracker(self) -> ConnectionQualityTracker:
+        """Get the connection quality tracker."""
+        return self._quality_tracker
+
+    @property
+    def is_circuit_open(self) -> bool:
+        """Check if circuit breaker is open."""
+        if self._circuit_open:
+            # Check if timeout has passed
+            if time.time() - self._circuit_open_time >= self._circuit_timeout:
+                self._circuit_open = False
+                self._quality_tracker._consecutive_failures = 0
+                return False
+        return self._circuit_open
+
+    def check_circuit_breaker(self) -> None:
+        """Check and update circuit breaker state."""
+        if self._quality_tracker.consecutive_failures >= self._circuit_breaker_threshold:
+            if not self._circuit_open:
+                self._circuit_open = True
+                self._circuit_open_time = time.time()
+
+    def record_success(self) -> None:
+        """Record a successful operation."""
+        self._quality_tracker.record_connection_success()
+        if self._circuit_open:
+            self._circuit_open = False
+
+    def record_failure(self) -> None:
+        """Record a failed operation."""
+        self._quality_tracker.record_connection_failure()
+        self.check_circuit_breaker()
+
+    def record_reconnection(self) -> None:
+        """Record a reconnection event."""
+        self._quality_tracker.record_reconnection()
+
+    def get_health_score(self, current_latency: float, player_count: int) -> float:
+        """
+        Calculate a health score from 0.0 (worst) to 100.0 (best).
+
+        Factors:
+        - Latency (40% weight)
+        - Uptime (30% weight)
+        - Player load (20% weight)
+        - Connection stability (10% weight)
+        """
+        if self.is_circuit_open:
+            return 0.0
+
+        # Latency score (0-100, lower latency is better)
+        if current_latency < 0:
+            latency_score = 0.0
+        elif current_latency < 50:
+            latency_score = 100.0
+        elif current_latency < 150:
+            latency_score = 80.0
+        elif current_latency < 300:
+            latency_score = 60.0
+        elif current_latency < 500:
+            latency_score = 40.0
+        elif current_latency < 1000:
+            latency_score = 20.0
+        else:
+            latency_score = 10.0
+
+        # Uptime score (0-100)
+        uptime_score = min(100.0, self._quality_tracker.uptime_percentage)
+
+        # Player load score (0-100, fewer players is better)
+        # Assume 100 players is a reasonable max load
+        player_load_score = max(0.0, 100.0 - (player_count * 1.0))
+
+        # Stability score (0-100)
+        stability_score = 100.0 if self._quality_tracker.is_stable else 50.0
+        if self._quality_tracker.reconnection_count > 10:
+            stability_score *= 0.5
+
+        # Weighted average
+        health_score = (
+            latency_score * 0.4
+            + uptime_score * 0.3
+            + player_load_score * 0.2
+            + stability_score * 0.1
+        )
+
+        return health_score
+
+    def should_health_check(self) -> bool:
+        """Determine if a health check should be performed."""
+        current_time = time.time()
+        if current_time - self._last_health_check >= self._health_check_interval:
+            self._last_health_check = current_time
+            return True
+        return False
