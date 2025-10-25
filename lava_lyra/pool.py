@@ -579,8 +579,7 @@ class Node:
                 ttl_dns_cache=300,  # DNS cache TTL in seconds
             )
             timeout = aiohttp.ClientTimeout(
-                total=self._total_timeout,
-                connect=self._connect_timeout
+                total=self._total_timeout, connect=self._connect_timeout
             )
             self._session = aiohttp.ClientSession(
                 connector=connector,
