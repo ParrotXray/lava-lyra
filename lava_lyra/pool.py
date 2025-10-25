@@ -526,10 +526,13 @@ class Node:
                 if resp.status == 404 and "session" in resp_data.get("message", "").lower():
                     if self._log:
                         self._log.warning(
-                            f"Session not found error from {self._identifier}, marking as unavailable"
+                            f"Session not found error from {self._identifier}, marking as unavailable and closing websocket"
                         )
                     self._available = False
                     self._session_id = None
+                    # Close websocket to trigger reconnection loop
+                    if self._websocket and not self._websocket.closed:
+                        self._loop.create_task(self._websocket.close())
 
                 raise NodeRestException(
                     f'Error from Node {self._identifier} fetching from Lavalink REST api: {resp.status} {resp.reason}: {resp_data["message"]}',
@@ -557,8 +560,11 @@ class Node:
 
         except aiohttp.ClientError as e:
             if self._log:
-                self._log.error(f"HTTP client error when connecting to {self._identifier}: {e}")
+                self._log.error(f"HTTP client error when connecting to {self._identifier}: {e}, closing websocket to trigger reconnection")
             self._available = False
+            # Close websocket to trigger reconnection loop
+            if self._websocket and not self._websocket.closed:
+                self._loop.create_task(self._websocket.close())
             raise NodeNotAvailable(f"HTTP error connecting to node {self._identifier}: {e}")
 
     def get_player(self, guild_id: int) -> Optional[Player]:
