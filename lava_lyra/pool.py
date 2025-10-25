@@ -560,7 +560,9 @@ class Node:
 
         except aiohttp.ClientError as e:
             if self._log:
-                self._log.error(f"HTTP client error when connecting to {self._identifier}: {e}, closing websocket to trigger reconnection")
+                self._log.error(
+                    f"HTTP client error when connecting to {self._identifier}: {e}, closing websocket to trigger reconnection"
+                )
             self._available = False
             # Close websocket to trigger reconnection loop
             if self._websocket and not self._websocket.closed:
