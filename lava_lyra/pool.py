@@ -604,9 +604,8 @@ class Node:
                         f"Version check from Node {self._identifier} successful. Returned version {version}",
                     )
 
-            if reconnect:
-                self._session_id = None
-                self._available = False
+            # Note: _session_id and _available are already reset in _listen()
+            # before calling connect(reconnect=True), so no redundant reset needed here
 
             self._websocket = await client.connect(
                 f"{self._websocket_uri}/v{self._version.major}/websocket",
