@@ -96,6 +96,8 @@ class Node:
         "_stats",
         "_backoff",
         "_health_monitor",
+        "_connect_timeout",
+        "_total_timeout",
         "available",
     )
 
@@ -117,6 +119,11 @@ class Node:
         lyrics: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
+        health_check_interval: float = 30.0,
+        circuit_breaker_threshold: int = 5,
+        circuit_timeout: float = 60.0,
+        connect_timeout: float = 10.0,
+        total_timeout: float = 30.0,
     ):
         if not isinstance(port, int):
             raise TypeError("Port must be an integer")
@@ -132,6 +139,8 @@ class Node:
         self._resume_timeout: int = resume_timeout
         self._secure: bool = secure
         self._fallback: bool = fallback
+        self._connect_timeout: float = connect_timeout
+        self._total_timeout: float = total_timeout
 
         self._websocket_uri: str = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}"
         self._rest_uri: str = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
@@ -150,9 +159,9 @@ class Node:
         self._lyrics_enabled: bool = lyrics
         self._backoff = ExponentialBackoff(base=7)
         self._health_monitor = NodeHealthMonitor(
-            health_check_interval=30.0,
-            circuit_breaker_threshold=5,
-            circuit_timeout=60.0,
+            health_check_interval=health_check_interval,
+            circuit_breaker_threshold=circuit_breaker_threshold,
+            circuit_timeout=circuit_timeout,
         )
 
         if not self._bot.user:
@@ -569,7 +578,9 @@ class Node:
                 limit_per_host=30,  # Per-host connection limit
                 ttl_dns_cache=300,  # DNS cache TTL in seconds
             )
-            timeout = aiohttp.ClientTimeout(total=30, connect=10)
+            timeout = aiohttp.ClientTimeout(
+                total=self._total_timeout, connect=self._connect_timeout
+            )
             self._session = aiohttp.ClientSession(
                 connector=connector,
                 timeout=timeout,
@@ -592,9 +603,8 @@ class Node:
                         f"Version check from Node {self._identifier} successful. Returned version {version}",
                     )
 
-            if reconnect:
-                self._session_id = None
-                self._available = False
+            # Note: _session_id and _available are already reset in _listen()
+            # before calling connect(reconnect=True), so no redundant reset needed here
 
             self._websocket = await client.connect(
                 f"{self._websocket_uri}/v{self._version.major}/websocket",
@@ -1010,12 +1020,30 @@ class NodePool:
         lyrics: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
+        health_check_interval: float = 30.0,
+        circuit_breaker_threshold: int = 5,
+        circuit_timeout: float = 60.0,
+        connect_timeout: float = 10.0,
+        total_timeout: float = 30.0,
     ) -> Node:
         """Creates a Node object to be then added into the node pool.
 
         In Lavalink v4, platform support (Spotify, Apple Music, etc.) is handled
         by server-side plugins. Configure these in your Lavalink server's
         application.yml file instead of passing credentials to the client.
+
+        Health Monitor Parameters:
+            health_check_interval (float): Interval in seconds between health checks. Default: 30.0
+            circuit_breaker_threshold (int): Number of consecutive failures before circuit opens. Default: 5
+                For foreign/unstable nodes, consider increasing to 10-20.
+            circuit_timeout (float): Seconds to keep circuit open before retry. Default: 60.0
+                For foreign nodes, consider increasing to 120.0 or more.
+
+        Connection Timeout Parameters:
+            connect_timeout (float): Timeout in seconds for establishing connection. Default: 10.0
+                For foreign nodes with high latency, consider increasing to 30.0-60.0.
+            total_timeout (float): Total timeout in seconds for all operations. Default: 30.0
+                For foreign nodes, consider increasing to 60.0-120.0.
         """
         if identifier in cls._nodes.keys():
             raise NodeCreationError(
@@ -1038,6 +1066,11 @@ class NodePool:
             lyrics=lyrics,
             fallback=fallback,
             logger=logger,
+            health_check_interval=health_check_interval,
+            circuit_breaker_threshold=circuit_breaker_threshold,
+            circuit_timeout=circuit_timeout,
+            connect_timeout=connect_timeout,
+            total_timeout=total_timeout,
         )
 
         await node.connect()
