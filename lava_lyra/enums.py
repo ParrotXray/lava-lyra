@@ -136,8 +136,12 @@ class NodeAlgorithm(Enum):
     NodeAlgorithm.by_ping returns a node based on it's latency,
     preferring a node with the lowest response time
 
-    NodeAlgorithm.by_players return a nodes based on how many players it has.
-    This algorithm prefers nodes with the least amount of players.
+    NodeAlgorithm.by_total_players return a nodes based on how many total players it has.
+    This algorithm prefers nodes with the least amount of total players.
+
+    NodeAlgorithm.by_playing_players return a nodes based on how many players are currently playing.
+    This algorithm prefers nodes with the least amount of actively playing players.
+    This is more accurate than by_total_players as it only considers active players.
 
     NodeAlgorithm.by_health returns a node based on its health score,
     which considers latency, uptime, player load, and connection stability.
@@ -146,7 +150,8 @@ class NodeAlgorithm(Enum):
 
     # We don't have to define anything special for these, since these just serve as flags
     by_ping = "BY_PING"
-    by_players = "BY_PLAYERS"
+    by_total_players = "BY_TOTAL_PLAYERS"
+    by_playing_players = "BY_PLAYING_PLAYERS"
     by_health = "BY_HEALTH"
 
     def __str__(self) -> str:
