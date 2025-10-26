@@ -985,7 +985,8 @@ class NodePool:
             return min(tested_nodes, key=tested_nodes.get)  # type: ignore
 
         elif algorithm == NodeAlgorithm.by_total_players:
-            tested_nodes = {node: len(node.players.keys()) for node in nodes_to_consider}
+            # Use the total players count from node stats
+            tested_nodes = {node: node.stats.players_total for node in nodes_to_consider}
             return min(tested_nodes, key=tested_nodes.get)  # type: ignore
 
         elif algorithm == NodeAlgorithm.by_playing_players:
