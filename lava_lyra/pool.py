@@ -953,9 +953,14 @@ class NodePool:
         Use NodeAlgorithm.by_ping if you want to get the best node
         based on the node's latency.
 
-        Use NodeAlgorithm.by_players if you want to get the best node
-        based on how many players it has. This method will return a node with
-        the least amount of players.
+        Use NodeAlgorithm.by_total_players if you want to get the best node
+        based on how many total players it has. This method will return a node with
+        the least amount of total players.
+
+        Use NodeAlgorithm.by_playing_players if you want to get the best node
+        based on how many players are currently playing. This method will return a node
+        with the least amount of actively playing players. This is more accurate than
+        by_total_players as it only considers players that are actively playing.
 
         Use NodeAlgorithm.by_health if you want to get the best node
         based on overall health score (latency, uptime, load, stability).
@@ -979,8 +984,13 @@ class NodePool:
             tested_nodes = {node: node.latency for node in nodes_to_consider}
             return min(tested_nodes, key=tested_nodes.get)  # type: ignore
 
-        elif algorithm == NodeAlgorithm.by_players:
+        elif algorithm == NodeAlgorithm.by_total_players:
             tested_nodes = {node: len(node.players.keys()) for node in nodes_to_consider}
+            return min(tested_nodes, key=tested_nodes.get)  # type: ignore
+
+        elif algorithm == NodeAlgorithm.by_playing_players:
+            # Use the playing players count from node stats
+            tested_nodes = {node: node.stats.players_active for node in nodes_to_consider}
             return min(tested_nodes, key=tested_nodes.get)  # type: ignore
 
         elif algorithm == NodeAlgorithm.by_health:
