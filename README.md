@@ -1,6 +1,7 @@
 # Lyra
 
 [![PyPI](https://img.shields.io/pypi/v/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
+[![downloads](https://img.shields.io/pypi/dm/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
 [![Python](https://img.shields.io/pypi/pyversions/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
 [![License](https://img.shields.io/github/license/ParrotXray/lava-lyra.svg)](https://github.com/ParrotXray/Lyra/blob/main/LICENSE)
 
