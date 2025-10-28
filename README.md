@@ -91,6 +91,64 @@ async def play(ctx, query: str):
     await ctx.respond(f"Now playing: **{track.title}**")
 ```
 
+### Advanced Search with LavaSearch
+
+LavaSearch plugin provides advanced search capabilities across tracks, albums, artists, playlists, and text suggestions:
+
+```python
+@bot.slash_command(description="Search for music")
+async def search(ctx, query: str):
+    # Get the node
+    node = lava_lyra.NodePool.get_node()
+
+    # Search for tracks and albums
+    result = await node.load_search(
+        query=query,
+        types=[
+            lava_lyra.LavaSearchType.TRACK,
+            lava_lyra.LavaSearchType.ALBUM,
+            lava_lyra.LavaSearchType.ARTIST,
+            lava_lyra.LavaSearchType.PLAYLIST,
+            lava_lyra.LavaSearchType.TEXT
+        ],
+        ctx=ctx
+    )
+
+    if not result:
+        return await ctx.respond("No results found!")
+
+    # Display results
+    response = []
+    if result.tracks:
+        response.append(f"**Tracks ({len(result.tracks)}):**")
+        for track in result.tracks[:3]:  # Show first 3
+            response.append(f"  - {track.title} by {track.author}")
+
+    if result.albums:
+        response.append(f"\n**Albums ({len(result.albums)}):**")
+        for album in result.albums[:3]:
+            response.append(f"  - {album.name}")
+
+    if result.artists:
+        response.append(f"\n**Artists ({len(result.artists)}):**")
+        for artist in result.artists[:3]:
+            response.append(f"  - {artist.name}")
+
+    if result.playlists:
+        response.append(f"\n**Playlists ({len(result.playlists)}):**")
+        for playlist in result.playlists[:3]:
+            response.append(f"  - {playlist.name}")
+
+    if result.texts:
+        response.append(f"\n**Suggestions:**")
+        for text in result.texts[:5]:
+            response.append(f"  - {text.text}")
+
+    await ctx.respond("\n".join(response))
+```
+
+**Note:** The LavaSearch plugin must be installed on your Lavalink server for this feature to work. See the server setup section below.
+
 ## Lavalink v4 Server Setup
 
 Lyra requires a Lavalink v4 server with plugins. Here's a basic `application.yml`:
@@ -105,9 +163,13 @@ lavalink:
     # Required for YouTube support
     - dependency: "dev.lavalink.youtube:youtube-plugin:VERSION"
     - repository: "https://maven.lavalink.dev/releases"
-    
+
     # Required for Spotify, Apple Music, Deezer, etc.
     - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:VERSION"
+      repository: "https://maven.lavalink.dev/releases"
+
+    # Optional: LavaSearch for advanced search functionality
+    - dependency: "com.github.topi314.lavasearch:lavasearch-plugin:VERSION"
       repository: "https://maven.lavalink.dev/releases"
 
   server:
@@ -135,11 +197,85 @@ plugins:
 All platforms are now supported via Lavalink server plugins:
 
 - **YouTube** - via [YouTube](https://github.com/lavalink-devs/youtube-source) plugin
-- **Spotify** - via [LavaSrc](https://github.com/topi314/LavaSrc) plugin  
+- **Spotify** - via [LavaSrc](https://github.com/topi314/LavaSrc) plugin
 - **Apple Music** - via [LavaSrc](https://github.com/topi314/LavaSrc) plugin
 - **Bilibili** - via [Lavabili](https://github.com/ParrotXray/lavabili-plugin) plugin
-- **SoundCloud** - built-in [Lavalink](https://github.com/lavalink-devs/Lavalink) 
+- **SoundCloud** - built-in [Lavalink](https://github.com/lavalink-devs/Lavalink)
 - **And many more** via community plugins!
+
+## LavaSearch Plugin Support
+
+Lyra now includes full support for the [LavaSearch](https://github.com/topi314/LavaSearch) plugin, which provides advanced search capabilities:
+
+### Features
+
+- **Multi-type Search**: Search for tracks, albums, artists, playlists, and text suggestions in a single query
+- **Rich Results**: Get comprehensive search results with detailed metadata
+- **Plugin Integration**: Works seamlessly with LavaSrc and other Lavalink plugins
+
+### Installation
+
+Add LavaSearch to your Lavalink server's `application.yml`:
+
+```yaml
+lavalink:
+  plugins:
+    - dependency: "com.github.topi314.lavasearch:lavasearch-plugin:x.y.z"
+      repository: "https://maven.lavalink.dev/releases"
+```
+
+Replace `x.y.z` with the [latest version](https://github.com/topi314/LavaSearch/releases).
+
+### API Reference
+
+#### `Node.load_search()`
+
+Search for music content using the LavaSearch plugin.
+
+**Parameters:**
+- `query` (str): The search query string
+- `types` (List[LavaSearchType]): List of search types to include
+  - `LavaSearchType.TRACK` - Search for tracks
+  - `LavaSearchType.ALBUM` - Search for albums
+  - `LavaSearchType.ARTIST` - Search for artists
+  - `LavaSearchType.PLAYLIST` - Search for playlists
+  - `LavaSearchType.TEXT` - Get text suggestions
+- `ctx` (Optional[commands.Context]): Discord context for the search
+
+**Returns:**
+- `SearchResult` object with the following attributes:
+  - `tracks`: List of `Track` objects
+  - `albums`: List of `Playlist` objects (representing albums)
+  - `artists`: List of `Playlist` objects (representing artist top tracks)
+  - `playlists`: List of `Playlist` objects
+  - `texts`: List of `Text` objects (text suggestions)
+  - `plugin_info`: Additional data from plugins
+
+**Raises:**
+- `NodeRestException`: If the LavaSearch plugin is not installed
+- `ValueError`: If no search types are specified
+
+**Example:**
+
+```python
+# Search for everything
+result = await node.load_search(
+    query="architects animals",
+    types=[
+        lava_lyra.LavaSearchType.TRACK,
+        lava_lyra.LavaSearchType.ALBUM,
+        lava_lyra.LavaSearchType.ARTIST,
+        lava_lyra.LavaSearchType.PLAYLIST,
+        lava_lyra.LavaSearchType.TEXT
+    ]
+)
+
+# Search for tracks only
+result = await node.load_search(
+    query="metallica",
+    types=[lava_lyra.LavaSearchType.TRACK]
+)
+```
 
 ## Contributing
 

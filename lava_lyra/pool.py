@@ -32,7 +32,7 @@ from .exceptions import (
     TrackLoadError,
 )
 from .filters import Filter
-from .objects import Playlist, Track
+from .objects import Playlist, SearchResult, Text, Track
 from .routeplanner import RoutePlanner
 from .utils import (
     ExponentialBackoff,
@@ -921,6 +921,139 @@ class Node:
                 "Recommendations are only supported for Spotify and YouTube tracks. "
                 "Make sure the appropriate plugins are installed on your Lavalink server.",
             )
+
+    async def load_search(
+        self,
+        *,
+        query: str,
+        types: List[LavaSearchType],
+        ctx: Optional[commands.Context] = None,
+    ) -> Optional[SearchResult]:
+        """
+        Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.
+
+        This method requires the LavaSearch plugin to be installed on your Lavalink server.
+        See https://github.com/topi314/LavaSearch for installation instructions.
+
+        Args:
+            query: The search query string
+            types: List of search types (track, album, artist, playlist, text)
+            ctx: Discord context for the search
+
+        Returns:
+            SearchResult object containing the search results, or None if no results found
+
+        Raises:
+            TrackLoadError: If there was an error loading the search results
+            NodeRestException: If the LavaSearch plugin is not installed or there was an API error
+
+        Example:
+            ```python
+            # Search for tracks and albums
+            result = await node.load_search(
+                query="architects animals",
+                types=[LavaSearchType.TRACK, LavaSearchType.ALBUM],
+                ctx=ctx
+            )
+
+            if result:
+                print(f"Found {len(result.tracks)} tracks")
+                print(f"Found {len(result.albums)} albums")
+            ```
+        """
+        if not types:
+            raise ValueError("At least one search type must be specified")
+
+        # Convert types list to comma-separated string
+        types_str = ",".join(str(t) for t in types)
+
+        # Make request to LavaSearch endpoint
+        try:
+            data = await self.send(
+                method="GET",
+                path="loadsearch",
+                query=f"query={quote(query)}&types={types_str}",
+            )
+        except NodeRestException as e:
+            if "404" in str(e) or "not found" in str(e).lower():
+                raise NodeRestException(
+                    "LavaSearch plugin is not installed on the Lavalink server. "
+                    "Please install it from https://github.com/topi314/LavaSearch"
+                ) from e
+            raise
+
+        # Check for empty response (204 No Content)
+        if not data:
+            return None
+
+        # Parse tracks
+        tracks = []
+        if "tracks" in data:
+            tracks = [
+                Track(
+                    track_id=track["encoded"],
+                    info=track["info"],
+                    ctx=ctx,
+                    track_type=TrackType(track["info"]["sourceName"]),
+                )
+                for track in data["tracks"]
+            ]
+
+        # Parse albums
+        albums = []
+        if "albums" in data:
+            albums = [
+                Playlist(
+                    playlist_info=album["info"],
+                    tracks=[],  # Albums don't include tracks in search results
+                    playlist_type=PlaylistType.OTHER,
+                )
+                for album in data["albums"]
+            ]
+
+        # Parse artists
+        artists = []
+        if "artists" in data:
+            artists = [
+                Playlist(
+                    playlist_info=artist["info"],
+                    tracks=[],  # Artists don't include tracks in search results
+                    playlist_type=PlaylistType.OTHER,
+                )
+                for artist in data["artists"]
+            ]
+
+        # Parse playlists
+        playlists = []
+        if "playlists" in data:
+            playlists = [
+                Playlist(
+                    playlist_info=playlist["info"],
+                    tracks=[],  # Playlists don't include tracks in search results
+                    playlist_type=PlaylistType.OTHER,
+                )
+                for playlist in data["playlists"]
+            ]
+
+        # Parse text results
+        texts = []
+        if "texts" in data:
+            texts = [
+                Text(
+                    text=text["text"],
+                    plugin_info=text.get("plugin", {}),
+                )
+                for text in data["texts"]
+            ]
+
+        return SearchResult(
+            tracks=tracks,
+            albums=albums,
+            artists=artists,
+            playlists=playlists,
+            texts=texts,
+            plugin_info=data.get("plugin", {}),
+        )
 
 
 class NodePool:
