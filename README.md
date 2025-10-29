@@ -51,18 +51,19 @@ class Bot(discord.Bot):
 
     async def on_ready(self):
         print(f'Logged in as {self.user}')
-        
+
         # Create Lavalink nodes - much simpler than before!
-        nodes = await lava_lyra.NodePool.create_nodes(
-          self, 
-          host='http://localhost:2333', 
-          port=3030, 
-          password='youshallnotpass', 
-          identifier='MAIN', 
-          lyrics=False, 
+        node = await lava_lyra.NodePool.create_node(
+          bot=self,
+          host='localhost',
+          port=2333,
+          password='youshallnotpass',
+          identifier='MAIN',
+          lyrics=False,
+          lavasearch=True,  # Enable LavaSearch plugin support
           fallback=True
         )
-        print(f"Created {len(nodes)} nodes")
+        print(f"Created node: {node.identifier}")
 
 bot = Bot()
 bot.run('your_bot_token')
@@ -93,7 +94,20 @@ async def play(ctx, query: str):
 
 ### Advanced Search with LavaSearch
 
-LavaSearch plugin provides advanced search capabilities across tracks, albums, artists, playlists, and text suggestions:
+LavaSearch plugin provides advanced search capabilities across tracks, albums, artists, playlists, and text suggestions.
+
+**Important:** You must enable LavaSearch when creating the node by setting `lavasearch=True`:
+
+```python
+node = await lava_lyra.NodePool.create_node(
+    bot=bot,
+    host='localhost',
+    port=2333,
+    password='youshallnotpass',
+    identifier='MAIN',
+    lavasearch=True  # Enable LavaSearch support
+)
+```
 
 ```python
 @bot.slash_command(description="Search for music")
@@ -241,6 +255,10 @@ Replace `x.y.z` with the [latest version](https://github.com/topi314/LavaSearch/
 #### `Node.load_search()`
 
 Search for music content using the LavaSearch plugin.
+
+**Prerequisites:**
+- LavaSearch plugin must be installed on your Lavalink server
+- Node must be created with `lavasearch=True` parameter
 
 **Parameters:**
 - `query` (str): The search query string

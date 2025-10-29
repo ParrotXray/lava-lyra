@@ -91,6 +91,7 @@ class Node:
         "_headers",
         "_players",
         "_lyrics_enabled",
+        "_lavasearch_enabled",
         "_route_planner",
         "_log",
         "_stats",
@@ -117,6 +118,7 @@ class Node:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         session: Optional[aiohttp.ClientSession] = None,
         lyrics: bool = False,
+        lavasearch: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
         health_check_interval: float = 30.0,
@@ -157,6 +159,7 @@ class Node:
         self._route_planner = RoutePlanner(self)
         self._log = logger
         self._lyrics_enabled: bool = lyrics
+        self._lavasearch_enabled: bool = lavasearch
         self._backoff = ExponentialBackoff(base=7)
         self._health_monitor = NodeHealthMonitor(
             health_check_interval=health_check_interval,
@@ -229,6 +232,11 @@ class Node:
     def lyrics_enabled(self) -> bool:
         """Property which returns whether lyrics support is enabled for this node"""
         return self._lyrics_enabled
+
+    @property
+    def lavasearch_enabled(self) -> bool:
+        """Property which returns whether LavaSearch plugin support is enabled for this node"""
+        return self._lavasearch_enabled
 
     @property
     def health_monitor(self) -> NodeHealthMonitor:
@@ -973,6 +981,13 @@ class Node:
                 print(f"Found {len(result.albums)} albums")
             ```
         """
+        # Check if LavaSearch is enabled for this node
+        if not self._lavasearch_enabled:
+            raise NodeRestException(
+                "LavaSearch is not enabled for this node. "
+                "Set lavasearch=True when creating the node to enable this feature."
+            )
+
         if not types:
             raise ValueError("At least one search type must be specified")
 
@@ -1187,6 +1202,7 @@ class NodePool:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         session: Optional[aiohttp.ClientSession] = None,
         lyrics: bool = False,
+        lavasearch: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
         health_check_interval: float = 30.0,
@@ -1233,6 +1249,7 @@ class NodePool:
             loop=loop,
             session=session,
             lyrics=lyrics,
+            lavasearch=lavasearch,
             fallback=fallback,
             logger=logger,
             health_check_interval=health_check_interval,
