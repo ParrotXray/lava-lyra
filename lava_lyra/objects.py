@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 
-from discord import ClientUser, Member, User
-from discord.ext import commands
+from discord import ClientUser, Member, User, ApplicationContext
 
 from .enums import PlaylistType, SearchType, TrackType
 from .filters import Filter
@@ -11,12 +10,14 @@ from .filters import Filter
 __all__ = (
     "Track",
     "Playlist",
+    "Text",
+    "SearchResult",
 )
 
 
 class Track:
     """The base track object. Returns critical track information needed for parsing by Lavalink.
-    You can also pass in commands.Context to get a discord.py Context object in your track.
+    You can also pass in ApplicationContext to get a discord.py Context object in your track.
     """
 
     __slots__ = (
@@ -47,7 +48,7 @@ class Track:
         *,
         track_id: str,
         info: dict,
-        ctx: Optional[commands.Context] = None,
+        ctx: Optional[ApplicationContext] = None,
         track_type: TrackType,
         search_type: SearchType = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
@@ -83,7 +84,7 @@ class Track:
         self.is_seekable: bool = info.get("isSeekable", False)
         self.position: int = info.get("position", 0)
 
-        self.ctx: Optional[commands.Context] = ctx
+        self.ctx: Optional[ApplicationContext] = ctx
         self.requester: Optional[Union[Member, User, ClientUser]] = requester
         if not self.requester and self.ctx:
             self.requester = self.ctx.author
@@ -104,7 +105,7 @@ class Track:
 class Playlist:
     """The base playlist object.
     Returns critical playlist information needed for parsing by Lavalink.
-    You can also pass in commands.Context to get a discord.py Context object in your tracks.
+    You can also pass in ApplicationContext to get a discord.py Context object in your tracks.
     """
 
     __slots__ = (
@@ -159,3 +160,63 @@ class Playlist:
     def thumbnail(self) -> Optional[str]:
         """Returns either an Apple Music/Spotify album/playlist thumbnail, or None if its neither of those."""
         return self._thumbnail
+
+
+class Text:
+    """The text search result object returned by LavaSearch plugin.
+    Represents a text-based search suggestion or result.
+    """
+
+    __slots__ = ("text", "plugin_info")
+
+    def __init__(self, *, text: str, plugin_info: Optional[dict] = None):
+        self.text: str = text
+        self.plugin_info: dict = plugin_info or {}
+
+    def __str__(self) -> str:
+        return self.text
+
+    def __repr__(self) -> str:
+        return f"<Lyra.text text={self.text!r}>"
+
+
+class SearchResult:
+    """The search result object returned by LavaSearch plugin.
+    Contains tracks, albums, artists, playlists, and text results from a search query.
+    """
+
+    __slots__ = (
+        "tracks",
+        "albums",
+        "artists",
+        "playlists",
+        "texts",
+        "plugin_info",
+    )
+
+    def __init__(
+        self,
+        *,
+        tracks: Optional[List[Track]] = None,
+        albums: Optional[List[Playlist]] = None,
+        artists: Optional[List[Playlist]] = None,
+        playlists: Optional[List[Playlist]] = None,
+        texts: Optional[List[Text]] = None,
+        plugin_info: Optional[dict] = None,
+    ):
+        self.tracks: List[Track] = tracks or []
+        self.albums: List[Playlist] = albums or []
+        self.artists: List[Playlist] = artists or []
+        self.playlists: List[Playlist] = playlists or []
+        self.texts: List[Text] = texts or []
+        self.plugin_info: dict = plugin_info or {}
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.search_result "
+            f"tracks={len(self.tracks)} "
+            f"albums={len(self.albums)} "
+            f"artists={len(self.artists)} "
+            f"playlists={len(self.playlists)} "
+            f"texts={len(self.texts)}>"
+        )
