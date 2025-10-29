@@ -12,7 +12,7 @@ from urllib.parse import quote
 
 import aiohttp
 import orjson as json
-from discord import Bot, ApplicationContext
+from discord import ApplicationContext, Bot
 from discord.utils import MISSING
 from websockets import client, exceptions
 from websockets import typing as wstype
@@ -992,7 +992,11 @@ class Node:
 
         # Apply search prefix if search_type is provided
         # Similar to get_tracks() method
-        if search_type and not URLRegex.BASE_URL.match(query) and not re.match(r"(?:[a-z]+?)search:.", query):
+        if (
+            search_type
+            and not URLRegex.BASE_URL.match(query)
+            and not re.match(r"(?:[a-z]+?)search:.", query)
+        ):
             query = f"{search_type}:{query}"
 
         # Convert types list to comma-separated string

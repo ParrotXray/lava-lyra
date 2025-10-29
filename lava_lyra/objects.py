@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 
-from discord import ClientUser, Member, User, ApplicationContext
+from discord import ApplicationContext, ClientUser, Member, User
 
 from .enums import PlaylistType, SearchType, TrackType
 from .filters import Filter
