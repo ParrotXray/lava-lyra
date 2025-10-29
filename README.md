@@ -250,46 +250,6 @@ lavalink:
 
 Replace `x.y.z` with the [latest version](https://github.com/topi314/LavaSearch/releases).
 
-### API Reference
-
-#### `Node.load_search()`
-
-Search for music content using the LavaSearch plugin.
-
-**Prerequisites:**
-- LavaSearch plugin must be installed on your Lavalink server
-- Node must be created with `lavasearch=True` parameter
-
-**Parameters:**
-- `query` (str): The search query string
-- `types` (List[LavaSearchType]): List of search types to include
-  - `LavaSearchType.TRACK` - Search for tracks
-  - `LavaSearchType.ALBUM` - Search for albums
-  - `LavaSearchType.ARTIST` - Search for artists
-  - `LavaSearchType.PLAYLIST` - Search for playlists
-  - `LavaSearchType.TEXT` - Get text suggestions
-- `search_type` (Optional[SearchType]): The search platform to use
-  - `SearchType.ytsearch` - Search YouTube
-  - `SearchType.ytmsearch` - Search YouTube Music
-  - `SearchType.spsearch` - Search Spotify
-  - `SearchType.scsearch` - Search SoundCloud
-  - `SearchType.amsearch` - Search Apple Music
-  - If not provided, uses the default platform configured in Lavalink
-- `ctx` (Optional[commands.Context]): Discord context for the search
-
-**Returns:**
-- `SearchResult` object with the following attributes:
-  - `tracks`: List of `Track` objects
-  - `albums`: List of `Playlist` objects (representing albums)
-  - `artists`: List of `Playlist` objects (representing artist top tracks)
-  - `playlists`: List of `Playlist` objects
-  - `texts`: List of `Text` objects (text suggestions)
-  - `plugin_info`: Additional data from plugins
-
-**Raises:**
-- `NodeRestException`: If the LavaSearch plugin is not installed
-- `ValueError`: If no search types are specified
-
 **Example:**
 
 ```python
