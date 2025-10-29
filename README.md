@@ -231,6 +231,55 @@ All platforms are now supported via Lavalink server plugins:
 
 Lyra now includes full support for the [LavaSearch](https://github.com/topi314/LavaSearch) plugin, which provides advanced search capabilities:
 
+### LavaSearch vs. Native Search
+
+Understanding the difference between `get_tracks()` and `load_search()`:
+
+| Feature | `get_tracks()` (Native) | `load_search()` (LavaSearch Plugin) |
+|---------|------------------------|-------------------------------------|
+| **Endpoint** | `/v4/loadtracks` | `/v4/loadsearch` |
+| **Purpose** | Load music to play | Search and browse content |
+| **Return Type** | `List[Track]` or `Playlist` | `SearchResult` (multiple types) |
+| **Results** | Single result type | Tracks, Albums, Artists, Playlists, Text suggestions |
+| **Use Case** | Direct playback | Search UI, content discovery |
+| **Plugin Required** | No (built-in) | Yes (LavaSearch plugin) |
+| **Enable Flag** | Not required | `lavasearch=True` in node creation |
+
+**When to use `get_tracks()`:**
+- Loading music to play immediately
+- Getting tracks from a URL (Spotify playlist, YouTube video, etc.)
+- Simple search for tracks only
+
+```python
+# Load tracks for playback
+tracks = await player.get_tracks("architects animals")
+await player.play(tracks[0])
+```
+
+**When to use `load_search()`:**
+- Building a search interface with multiple result types
+- Showing users albums, artists, and playlists
+- Getting search suggestions (text autocomplete)
+- Content discovery and browsing
+
+```python
+# Search for comprehensive results
+result = await node.load_search(
+    query="architects",
+    types=[
+        LavaSearchType.TRACK,
+        LavaSearchType.ALBUM,
+        LavaSearchType.ARTIST
+    ],
+    search_type=SearchType.ytsearch
+)
+
+# Display different result types
+print(f"Tracks: {len(result.tracks)}")
+print(f"Albums: {len(result.albums)}")
+print(f"Artists: {len(result.artists)}")
+```
+
 ### Features
 
 - **Multi-type Search**: Search for tracks, albums, artists, playlists, and text suggestions in a single query
