@@ -12,8 +12,7 @@ from urllib.parse import quote
 
 import aiohttp
 import orjson as json
-from discord import Client
-from discord.ext import commands
+from discord import ApplicationContext, Bot
 from discord.utils import MISSING
 from websockets import client, exceptions
 from websockets import typing as wstype
@@ -32,7 +31,7 @@ from .exceptions import (
     TrackLoadError,
 )
 from .filters import Filter
-from .objects import Playlist, Track
+from .objects import Playlist, SearchResult, Text, Track
 from .routeplanner import RoutePlanner
 from .utils import (
     ExponentialBackoff,
@@ -91,6 +90,7 @@ class Node:
         "_headers",
         "_players",
         "_lyrics_enabled",
+        "_search_enabled",
         "_route_planner",
         "_log",
         "_stats",
@@ -105,7 +105,7 @@ class Node:
         self,
         *,
         pool: Type[NodePool],
-        bot: commands.Bot,
+        bot: Bot,
         host: str,
         port: int,
         password: str,
@@ -117,6 +117,7 @@ class Node:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         session: Optional[aiohttp.ClientSession] = None,
         lyrics: bool = False,
+        search: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
         health_check_interval: float = 30.0,
@@ -128,7 +129,7 @@ class Node:
         if not isinstance(port, int):
             raise TypeError("Port must be an integer")
 
-        self._bot: commands.Bot = bot
+        self._bot: Bot = bot
         self._host: str = host
         self._port: int = port
         self._pool: Type[NodePool] = pool
@@ -157,6 +158,7 @@ class Node:
         self._route_planner = RoutePlanner(self)
         self._log = logger
         self._lyrics_enabled: bool = lyrics
+        self._search_enabled: bool = search
         self._backoff = ExponentialBackoff(base=7)
         self._health_monitor = NodeHealthMonitor(
             health_check_interval=health_check_interval,
@@ -201,8 +203,8 @@ class Node:
         return self._players
 
     @property
-    def bot(self) -> Client:
-        """Property which returns the discord.py client linked to this node"""
+    def bot(self) -> Bot:
+        """Property which returns the py-cord client linked to this node"""
         return self._bot
 
     @property
@@ -229,6 +231,11 @@ class Node:
     def lyrics_enabled(self) -> bool:
         """Property which returns whether lyrics support is enabled for this node"""
         return self._lyrics_enabled
+
+    @property
+    def search_enabled(self) -> bool:
+        """Property which returns whether LavaSearch plugin support is enabled for this node"""
+        return self._search_enabled
 
     @property
     def health_monitor(self) -> NodeHealthMonitor:
@@ -689,7 +696,7 @@ class Node:
                 f"Successfully disconnected from node {self._identifier} and closed all sessions. Took {end - start:.3f}s",
             )
 
-    async def build_track(self, identifier: str, ctx: Optional[commands.Context] = None) -> Track:
+    async def build_track(self, identifier: str, ctx: Optional[ApplicationContext] = None) -> Track:
         """
         Builds a track using a valid track identifier
 
@@ -716,7 +723,7 @@ class Node:
         self,
         query: str,
         *,
-        ctx: Optional[commands.Context] = None,
+        ctx: Optional[ApplicationContext] = None,
         search_type: Optional[SearchType] = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
     ) -> Optional[Union[Playlist, List[Track]]]:
@@ -884,7 +891,7 @@ class Node:
         self,
         *,
         track: Track,
-        ctx: Optional[commands.Context] = None,
+        ctx: Optional[ApplicationContext] = None,
     ) -> Optional[Union[List[Track], Playlist]]:
         """
         Gets recommendations for a track.
@@ -921,6 +928,167 @@ class Node:
                 "Recommendations are only supported for Spotify and YouTube tracks. "
                 "Make sure the appropriate plugins are installed on your Lavalink server.",
             )
+
+    async def load_search(
+        self,
+        *,
+        query: str,
+        types: List[LavaSearchType],
+        search_type: Optional[SearchType] = None,
+        ctx: Optional[ApplicationContext] = None,
+    ) -> Optional[SearchResult]:
+        """
+        Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.
+
+        This method requires the LavaSearch plugin to be installed on your Lavalink server.
+        See https://github.com/topi314/LavaSearch for installation instructions.
+
+        Args:
+            query: The search query string
+            types: List of search types (track, album, artist, playlist, text)
+            search_type: Optional search platform (ytsearch, ytmsearch, scsearch, spsearch, amsearch, etc.)
+                        If not provided, uses the default search platform configured in Lavalink
+            ctx: Discord context for the search
+
+        Returns:
+            SearchResult object containing the search results, or None if no results found
+
+        Raises:
+            TrackLoadError: If there was an error loading the search results
+            NodeRestException: If the LavaSearch plugin is not installed or there was an API error
+
+        Example:
+            ```python
+            # Search YouTube for tracks and albums
+            result = await node.load_search(
+                query="architects animals",
+                types=[LavaSearchType.TRACK, LavaSearchType.ALBUM],
+                search_type=SearchType.ytsearch,
+                ctx=ctx
+            )
+
+            # Search Spotify
+            result = await node.load_search(
+                query="metallica",
+                types=[LavaSearchType.TRACK, LavaSearchType.ARTIST],
+                search_type=SearchType.spsearch,
+                ctx=ctx
+            )
+
+            if result:
+                print(f"Found {len(result.tracks)} tracks")
+                print(f"Found {len(result.albums)} albums")
+            ```
+        """
+        # Check if LavaSearch is enabled for this node
+        if not self._search_enabled:
+            raise NodeRestException(
+                "LavaSearch is not enabled for this node. "
+                "Set search=True when creating the node to enable this feature."
+            )
+
+        if not types:
+            raise ValueError("At least one search type must be specified")
+
+        # Apply search prefix if search_type is provided
+        # Similar to get_tracks() method
+        if (
+            search_type
+            and not URLRegex.BASE_URL.match(query)
+            and not re.match(r"(?:[a-z]+?)search:.", query)
+        ):
+            query = f"{search_type}:{query}"
+
+        # Convert types list to comma-separated string
+        types_str = ",".join(str(t) for t in types)
+
+        # Make request to LavaSearch endpoint
+        try:
+            data = await self.send(
+                method="GET",
+                path="loadsearch",
+                query=f"query={quote(query)}&types={types_str}",
+            )
+        except NodeRestException as e:
+            if "404" in str(e) or "not found" in str(e).lower():
+                raise NodeRestException(
+                    "LavaSearch plugin is not installed on the Lavalink server. "
+                    "Please install it from https://github.com/topi314/LavaSearch"
+                ) from e
+            raise
+
+        # Check for empty response (204 No Content)
+        if not data:
+            return None
+
+        # Parse tracks
+        tracks = []
+        if "tracks" in data:
+            tracks = [
+                Track(
+                    track_id=track["encoded"],
+                    info=track["info"],
+                    ctx=ctx,
+                    track_type=TrackType(track["info"]["sourceName"]),
+                )
+                for track in data["tracks"]
+            ]
+
+        # Parse albums
+        albums = []
+        if "albums" in data:
+            albums = [
+                Playlist(
+                    playlist_info=album["info"],
+                    tracks=[],  # Albums don't include tracks in search results
+                    playlist_type=PlaylistType.OTHER,
+                )
+                for album in data["albums"]
+            ]
+
+        # Parse artists
+        artists = []
+        if "artists" in data:
+            artists = [
+                Playlist(
+                    playlist_info=artist["info"],
+                    tracks=[],  # Artists don't include tracks in search results
+                    playlist_type=PlaylistType.OTHER,
+                )
+                for artist in data["artists"]
+            ]
+
+        # Parse playlists
+        playlists = []
+        if "playlists" in data:
+            playlists = [
+                Playlist(
+                    playlist_info=playlist["info"],
+                    tracks=[],  # Playlists don't include tracks in search results
+                    playlist_type=PlaylistType.OTHER,
+                )
+                for playlist in data["playlists"]
+            ]
+
+        # Parse text results
+        texts = []
+        if "texts" in data:
+            texts = [
+                Text(
+                    text=text["text"],
+                    plugin_info=text.get("plugin", {}),
+                )
+                for text in data["texts"]
+            ]
+
+        return SearchResult(
+            tracks=tracks,
+            albums=albums,
+            artists=artists,
+            playlists=playlists,
+            texts=texts,
+            plugin_info=data.get("plugin", {}),
+        )
 
 
 class NodePool:
@@ -1025,7 +1193,7 @@ class NodePool:
     async def create_node(
         cls,
         *,
-        bot: commands.Bot,
+        bot: Bot,
         host: str,
         port: int,
         password: str,
@@ -1037,6 +1205,7 @@ class NodePool:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         session: Optional[aiohttp.ClientSession] = None,
         lyrics: bool = False,
+        search: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
         health_check_interval: float = 30.0,
@@ -1083,6 +1252,7 @@ class NodePool:
             loop=loop,
             session=session,
             lyrics=lyrics,
+            search=search,
             fallback=fallback,
             logger=logger,
             health_check_interval=health_check_interval,

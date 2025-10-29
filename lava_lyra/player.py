@@ -4,8 +4,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-from discord import Client, Guild, VoiceChannel, VoiceProtocol
-from discord.ext import commands
+from discord import ApplicationContext, Bot, Guild, VoiceChannel, VoiceProtocol
 
 from . import events
 from .enums import SearchType
@@ -149,7 +148,7 @@ class Player(VoiceProtocol):
         "_lyrics_manager",
     )
 
-    def __call__(self, client: Client, channel: VoiceChannel) -> Player:
+    def __call__(self, client: Bot, channel: VoiceChannel) -> Player:
         self.client = client
         self.channel = channel
         self._guild = channel.guild
@@ -158,16 +157,16 @@ class Player(VoiceProtocol):
 
     def __init__(
         self,
-        client: Client,
+        client: Bot,
         channel: VoiceChannel,
         *,
         node: Optional[Node] = None,
     ) -> None:
-        self.client: Client = client
+        self.client: Bot = client
         self.channel: VoiceChannel = channel
         self._guild = channel.guild
 
-        self._bot: Client = client
+        self._bot: Bot = client
         self._node: Node = node if node else NodePool.get_node()
         self._lyrics_manager = LyricsManager(self)
         self._current: Optional[Track] = None
@@ -270,7 +269,7 @@ class Player(VoiceProtocol):
         return self._filters
 
     @property
-    def bot(self) -> Client:
+    def bot(self) -> Bot:
         """Property which returns the bot associated with this player instance"""
         return self._bot
 
@@ -460,7 +459,7 @@ class Player(VoiceProtocol):
         self,
         query: str,
         *,
-        ctx: Optional[commands.Context] = None,
+        ctx: Optional[ApplicationContext] = None,
         search_type: SearchType | None = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
     ) -> Optional[Union[List[Track], Playlist]]:
@@ -478,7 +477,7 @@ class Player(VoiceProtocol):
         """
         return await self._node.get_tracks(query, ctx=ctx, search_type=search_type, filters=filters)
 
-    async def build_track(self, identifier: str, ctx: Optional[commands.Context] = None) -> Track:
+    async def build_track(self, identifier: str, ctx: Optional[ApplicationContext] = None) -> Track:
         """
         Builds a track using a valid track identifier
 
@@ -492,7 +491,7 @@ class Player(VoiceProtocol):
         self,
         *,
         track: Track,
-        ctx: Optional[commands.Context] = None,
+        ctx: Optional[ApplicationContext] = None,
     ) -> Optional[Union[List[Track], Playlist]]:
         """
         Gets recommendations from either YouTube or Spotify.

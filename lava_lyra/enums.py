@@ -11,6 +11,7 @@ __all__ = (
     "RouteIPType",
     "URLRegex",
     "LogLevel",
+    "LavaSearchType",
 )
 
 
@@ -343,3 +344,28 @@ class LogLevel(IntEnum):
             return cls[level_str.upper()]
         except KeyError:
             raise ValueError(f"No such log level: {level_str}")
+
+
+class LavaSearchType(Enum):
+    """
+    The enum for the different search types for LavaSearch plugin.
+
+    LavaSearchType.TRACK searches for tracks only.
+
+    LavaSearchType.ALBUM searches for albums only.
+
+    LavaSearchType.ARTIST searches for artists only.
+
+    LavaSearchType.PLAYLIST searches for playlists only.
+
+    LavaSearchType.TEXT searches for text results only.
+    """
+
+    TRACK = "track"
+    ALBUM = "album"
+    ARTIST = "artist"
+    PLAYLIST = "playlist"
+    TEXT = "text"
+
+    def __str__(self) -> str:
+        return self.value
