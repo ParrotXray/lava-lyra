@@ -67,4 +67,5 @@ from .objects import *
 from .player import *
 from .pool import *
 from .routeplanner import *
+from .search import *
 from .trackqueue import *
