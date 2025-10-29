@@ -12,8 +12,7 @@ from urllib.parse import quote
 
 import aiohttp
 import orjson as json
-from discord import Client
-from discord.ext import commands
+from discord import Bot, ApplicationContext
 from discord.utils import MISSING
 from websockets import client, exceptions
 from websockets import typing as wstype
@@ -91,7 +90,7 @@ class Node:
         "_headers",
         "_players",
         "_lyrics_enabled",
-        "_lavasearch_enabled",
+        "_search_enabled",
         "_route_planner",
         "_log",
         "_stats",
@@ -106,7 +105,7 @@ class Node:
         self,
         *,
         pool: Type[NodePool],
-        bot: commands.Bot,
+        bot: Bot,
         host: str,
         port: int,
         password: str,
@@ -118,7 +117,7 @@ class Node:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         session: Optional[aiohttp.ClientSession] = None,
         lyrics: bool = False,
-        lavasearch: bool = False,
+        search: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
         health_check_interval: float = 30.0,
@@ -130,7 +129,7 @@ class Node:
         if not isinstance(port, int):
             raise TypeError("Port must be an integer")
 
-        self._bot: commands.Bot = bot
+        self._bot: Bot = bot
         self._host: str = host
         self._port: int = port
         self._pool: Type[NodePool] = pool
@@ -159,7 +158,7 @@ class Node:
         self._route_planner = RoutePlanner(self)
         self._log = logger
         self._lyrics_enabled: bool = lyrics
-        self._lavasearch_enabled: bool = lavasearch
+        self._search_enabled: bool = search
         self._backoff = ExponentialBackoff(base=7)
         self._health_monitor = NodeHealthMonitor(
             health_check_interval=health_check_interval,
@@ -204,8 +203,8 @@ class Node:
         return self._players
 
     @property
-    def bot(self) -> Client:
-        """Property which returns the discord.py client linked to this node"""
+    def bot(self) -> Bot:
+        """Property which returns the py-cord client linked to this node"""
         return self._bot
 
     @property
@@ -234,9 +233,9 @@ class Node:
         return self._lyrics_enabled
 
     @property
-    def lavasearch_enabled(self) -> bool:
+    def search_enabled(self) -> bool:
         """Property which returns whether LavaSearch plugin support is enabled for this node"""
-        return self._lavasearch_enabled
+        return self._search_enabled
 
     @property
     def health_monitor(self) -> NodeHealthMonitor:
@@ -697,7 +696,7 @@ class Node:
                 f"Successfully disconnected from node {self._identifier} and closed all sessions. Took {end - start:.3f}s",
             )
 
-    async def build_track(self, identifier: str, ctx: Optional[commands.Context] = None) -> Track:
+    async def build_track(self, identifier: str, ctx: Optional[ApplicationContext] = None) -> Track:
         """
         Builds a track using a valid track identifier
 
@@ -724,7 +723,7 @@ class Node:
         self,
         query: str,
         *,
-        ctx: Optional[commands.Context] = None,
+        ctx: Optional[ApplicationContext] = None,
         search_type: Optional[SearchType] = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
     ) -> Optional[Union[Playlist, List[Track]]]:
@@ -892,7 +891,7 @@ class Node:
         self,
         *,
         track: Track,
-        ctx: Optional[commands.Context] = None,
+        ctx: Optional[ApplicationContext] = None,
     ) -> Optional[Union[List[Track], Playlist]]:
         """
         Gets recommendations for a track.
@@ -936,7 +935,7 @@ class Node:
         query: str,
         types: List[LavaSearchType],
         search_type: Optional[SearchType] = None,
-        ctx: Optional[commands.Context] = None,
+        ctx: Optional[ApplicationContext] = None,
     ) -> Optional[SearchResult]:
         """
         Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.
@@ -982,10 +981,10 @@ class Node:
             ```
         """
         # Check if LavaSearch is enabled for this node
-        if not self._lavasearch_enabled:
+        if not self._search_enabled:
             raise NodeRestException(
                 "LavaSearch is not enabled for this node. "
-                "Set lavasearch=True when creating the node to enable this feature."
+                "Set search=True when creating the node to enable this feature."
             )
 
         if not types:
@@ -1190,7 +1189,7 @@ class NodePool:
     async def create_node(
         cls,
         *,
-        bot: commands.Bot,
+        bot: Bot,
         host: str,
         port: int,
         password: str,
@@ -1202,7 +1201,7 @@ class NodePool:
         loop: Optional[asyncio.AbstractEventLoop] = None,
         session: Optional[aiohttp.ClientSession] = None,
         lyrics: bool = False,
-        lavasearch: bool = False,
+        search: bool = False,
         fallback: bool = False,
         logger: Optional[logging.Logger] = None,
         health_check_interval: float = 30.0,
@@ -1249,7 +1248,7 @@ class NodePool:
             loop=loop,
             session=session,
             lyrics=lyrics,
-            lavasearch=lavasearch,
+            search=search,
             fallback=fallback,
             logger=logger,
             health_check_interval=health_check_interval,

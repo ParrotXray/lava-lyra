@@ -3,8 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
-from discord import Client, Guild
-from discord.ext import commands
+from discord import Bot, Guild
 
 from .lyrics import LyricLine, Lyrics
 from .objects import Track
@@ -43,7 +42,7 @@ class LyraEvent(ABC):
     name = "event"
     handler_args: Tuple
 
-    def dispatch(self, bot: Client) -> None:
+    def dispatch(self, bot: Bot) -> None:
         bot.dispatch(f"lyra_{self.name}", *self.handler_args)
 
 
@@ -147,8 +146,8 @@ class TrackExceptionEvent(LyraEvent):
 class WebSocketClosedPayload:
     __slots__ = ("code", "reason", "by_remote", "_guild_id", "_bot")
 
-    def __init__(self, data: dict, bot: Optional[Client] = None):
-        self._bot: Optional[Client] = bot
+    def __init__(self, data: dict, bot: Optional[Bot] = None):
+        self._bot: Optional[Bot] = bot
         self._guild_id: int = int(data["guildId"])
         self.code: int = data["code"]
         self.reason: str = data["reason"]
