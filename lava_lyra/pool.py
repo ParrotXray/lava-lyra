@@ -927,6 +927,7 @@ class Node:
         *,
         query: str,
         types: List[LavaSearchType],
+        search_type: Optional[SearchType] = None,
         ctx: Optional[commands.Context] = None,
     ) -> Optional[SearchResult]:
         """
@@ -938,6 +939,8 @@ class Node:
         Args:
             query: The search query string
             types: List of search types (track, album, artist, playlist, text)
+            search_type: Optional search platform (ytsearch, ytmsearch, scsearch, spsearch, amsearch, etc.)
+                        If not provided, uses the default search platform configured in Lavalink
             ctx: Discord context for the search
 
         Returns:
@@ -949,10 +952,19 @@ class Node:
 
         Example:
             ```python
-            # Search for tracks and albums
+            # Search YouTube for tracks and albums
             result = await node.load_search(
                 query="architects animals",
                 types=[LavaSearchType.TRACK, LavaSearchType.ALBUM],
+                search_type=SearchType.ytsearch,
+                ctx=ctx
+            )
+
+            # Search Spotify
+            result = await node.load_search(
+                query="metallica",
+                types=[LavaSearchType.TRACK, LavaSearchType.ARTIST],
+                search_type=SearchType.spsearch,
                 ctx=ctx
             )
 
@@ -963,6 +975,11 @@ class Node:
         """
         if not types:
             raise ValueError("At least one search type must be specified")
+
+        # Apply search prefix if search_type is provided
+        # Similar to get_tracks() method
+        if search_type and not URLRegex.BASE_URL.match(query) and not re.match(r"(?:[a-z]+?)search:.", query):
+            query = f"{search_type}:{query}"
 
         # Convert types list to comma-separated string
         types_str = ",".join(str(t) for t in types)

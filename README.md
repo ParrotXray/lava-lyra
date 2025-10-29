@@ -97,11 +97,19 @@ LavaSearch plugin provides advanced search capabilities across tracks, albums, a
 
 ```python
 @bot.slash_command(description="Search for music")
-async def search(ctx, query: str):
+async def search(ctx, query: str, platform: str = "youtube"):
     # Get the node
     node = lava_lyra.NodePool.get_node()
 
-    # Search for tracks and albums
+    # Map platform to search type
+    search_types = {
+        "youtube": lava_lyra.SearchType.ytsearch,
+        "spotify": lava_lyra.SearchType.spsearch,
+        "soundcloud": lava_lyra.SearchType.scsearch,
+        "apple_music": lava_lyra.SearchType.amsearch,
+    }
+
+    # Search for tracks, albums, artists, playlists, and text
     result = await node.load_search(
         query=query,
         types=[
@@ -111,6 +119,7 @@ async def search(ctx, query: str):
             lava_lyra.LavaSearchType.PLAYLIST,
             lava_lyra.LavaSearchType.TEXT
         ],
+        search_type=search_types.get(platform, lava_lyra.SearchType.ytsearch),
         ctx=ctx
     )
 
@@ -118,7 +127,8 @@ async def search(ctx, query: str):
         return await ctx.respond("No results found!")
 
     # Display results
-    response = []
+    response = [f"**Search results for '{query}' on {platform}:**\n"]
+
     if result.tracks:
         response.append(f"**Tracks ({len(result.tracks)}):**")
         for track in result.tracks[:3]:  # Show first 3
@@ -240,6 +250,13 @@ Search for music content using the LavaSearch plugin.
   - `LavaSearchType.ARTIST` - Search for artists
   - `LavaSearchType.PLAYLIST` - Search for playlists
   - `LavaSearchType.TEXT` - Get text suggestions
+- `search_type` (Optional[SearchType]): The search platform to use
+  - `SearchType.ytsearch` - Search YouTube
+  - `SearchType.ytmsearch` - Search YouTube Music
+  - `SearchType.spsearch` - Search Spotify
+  - `SearchType.scsearch` - Search SoundCloud
+  - `SearchType.amsearch` - Search Apple Music
+  - If not provided, uses the default platform configured in Lavalink
 - `ctx` (Optional[commands.Context]): Discord context for the search
 
 **Returns:**
@@ -258,7 +275,7 @@ Search for music content using the LavaSearch plugin.
 **Example:**
 
 ```python
-# Search for everything
+# Search YouTube for everything
 result = await node.load_search(
     query="architects animals",
     types=[
@@ -267,13 +284,25 @@ result = await node.load_search(
         lava_lyra.LavaSearchType.ARTIST,
         lava_lyra.LavaSearchType.PLAYLIST,
         lava_lyra.LavaSearchType.TEXT
-    ]
+    ],
+    search_type=lava_lyra.SearchType.ytsearch
 )
 
-# Search for tracks only
+# Search Spotify for tracks and artists
 result = await node.load_search(
     query="metallica",
-    types=[lava_lyra.LavaSearchType.TRACK]
+    types=[
+        lava_lyra.LavaSearchType.TRACK,
+        lava_lyra.LavaSearchType.ARTIST
+    ],
+    search_type=lava_lyra.SearchType.spsearch
+)
+
+# Search Apple Music for albums
+result = await node.load_search(
+    query="taylor swift",
+    types=[lava_lyra.LavaSearchType.ALBUM],
+    search_type=lava_lyra.SearchType.amsearch
 )
 ```
 
