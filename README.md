@@ -96,7 +96,7 @@ async def play(ctx, query: str):
 
 LavaSearch plugin provides advanced search capabilities across tracks, albums, artists, playlists, and text suggestions.
 
-**Important:** You must enable LavaSearch when creating the node by setting `lavasearch=True`:
+**Important:** You must enable LavaSearch when creating the node by setting `search=True`:
 
 ```python
 node = await lava_lyra.NodePool.create_node(
@@ -105,7 +105,7 @@ node = await lava_lyra.NodePool.create_node(
     port=2333,
     password='youshallnotpass',
     identifier='MAIN',
-    lavasearch=True  # Enable LavaSearch support
+    search=True  # Enable LavaSearch support
 )
 ```
 
