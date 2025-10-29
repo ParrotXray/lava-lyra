@@ -10,8 +10,6 @@ from .filters import Filter
 __all__ = (
     "Track",
     "Playlist",
-    "Text",
-    "SearchResult",
 )
 
 
@@ -160,63 +158,3 @@ class Playlist:
     def thumbnail(self) -> Optional[str]:
         """Returns either an Apple Music/Spotify album/playlist thumbnail, or None if its neither of those."""
         return self._thumbnail
-
-
-class Text:
-    """The text search result object returned by LavaSearch plugin.
-    Represents a text-based search suggestion or result.
-    """
-
-    __slots__ = ("text", "plugin_info")
-
-    def __init__(self, *, text: str, plugin_info: Optional[dict] = None):
-        self.text: str = text
-        self.plugin_info: dict = plugin_info or {}
-
-    def __str__(self) -> str:
-        return self.text
-
-    def __repr__(self) -> str:
-        return f"<Lyra.text text={self.text!r}>"
-
-
-class SearchResult:
-    """The search result object returned by LavaSearch plugin.
-    Contains tracks, albums, artists, playlists, and text results from a search query.
-    """
-
-    __slots__ = (
-        "tracks",
-        "albums",
-        "artists",
-        "playlists",
-        "texts",
-        "plugin_info",
-    )
-
-    def __init__(
-        self,
-        *,
-        tracks: Optional[List[Track]] = None,
-        albums: Optional[List[Playlist]] = None,
-        artists: Optional[List[Playlist]] = None,
-        playlists: Optional[List[Playlist]] = None,
-        texts: Optional[List[Text]] = None,
-        plugin_info: Optional[dict] = None,
-    ):
-        self.tracks: List[Track] = tracks or []
-        self.albums: List[Playlist] = albums or []
-        self.artists: List[Playlist] = artists or []
-        self.playlists: List[Playlist] = playlists or []
-        self.texts: List[Text] = texts or []
-        self.plugin_info: dict = plugin_info or {}
-
-    def __repr__(self) -> str:
-        return (
-            f"<Lyra.search_result "
-            f"tracks={len(self.tracks)} "
-            f"albums={len(self.albums)} "
-            f"artists={len(self.artists)} "
-            f"playlists={len(self.playlists)} "
-            f"texts={len(self.texts)}>"
-        )
