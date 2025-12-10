@@ -781,7 +781,7 @@ class Node:
         data = await self.send(
             method="GET",
             path="loadtracks",
-            query=f"identifier={quote(query)}",
+            query=f"identifier={query}",
         )
 
         load_type = data.get("loadType")
