@@ -636,6 +636,13 @@ class Node:
                     include_version=False,
                 )
 
+                info: dict = await self.send(
+                    method="GET",
+                    path="info",
+                    ignore_if_available=True,
+                    include_version=False,
+                )
+
                 await self._handle_version_check(version=version)
                 # await self._set_ext_client_session(session=self._session)
 
