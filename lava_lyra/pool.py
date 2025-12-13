@@ -361,7 +361,7 @@ class Node:
 
         if self._version.major == 3:
             data["resumingKey"] = self._resume_key
-        elif self._version.major == 4:
+        elif self._version.major == 4 or (self._is_nodelink and self._version.major >= 3):
             if self._log:
                 self._log.warning("Using a resume key with Lavalink v4 is deprecated.")
             data["resuming"] = True
@@ -732,7 +732,7 @@ class Node:
             query=f"encodedTrack={quote(identifier)}",
         )
 
-        track_info = data["info"] if self._version.major >= 4 else data
+        track_info = data["info"] if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3) else data
 
         return Track(
             track_id=identifier,
@@ -804,7 +804,7 @@ class Node:
         )
 
         load_type = data.get("loadType")
-        data_type = "data" if self._version.major >= 4 else "tracks"
+        data_type = "data" if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3) else "tracks"
 
         if not load_type:
             raise TrackLoadError(
@@ -812,7 +812,7 @@ class Node:
             )
 
         elif load_type in ("LOAD_FAILED", "error"):
-            exception = data["data"] if self._version.major >= 4 else data["exception"]
+            exception = data["data"] if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3) else data["exception"]
             raise TrackLoadError(
                 f"{exception['message']} [{exception['severity']}]",
             )
@@ -821,7 +821,7 @@ class Node:
             return None
 
         elif load_type in ("PLAYLIST_LOADED", "playlist"):
-            if self._version.major >= 4:
+            if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3):
                 track_list = data[data_type]["tracks"]
                 playlist_info = data[data_type]["info"]
             else:
@@ -847,7 +847,10 @@ class Node:
             )
 
         elif load_type in ("SEARCH_RESULT", "TRACK_LOADED", "track", "search"):
-            if self._version.major >= 4 and isinstance(data[data_type], dict):
+            if isinstance(data[data_type], dict) and (
+                self._version.major >= 4 or 
+                (self._is_nodelink and self._version.major >= 3)
+            ):
                 data[data_type] = [data[data_type]]
 
             # Handle local files
