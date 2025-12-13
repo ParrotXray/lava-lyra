@@ -76,6 +76,7 @@ class Node:
         "_heartbeat",
         "_resume_key",
         "_resume_timeout",
+        "_is_nodelink",
         "_secure",
         "_fallback",
         "_log_level",
@@ -113,6 +114,7 @@ class Node:
         password: str,
         identifier: str,
         secure: bool = False,
+        is_nodelink: bool = False,
         heartbeat: int = 120,
         resume_key: Optional[str] = None,
         resume_timeout: int = 60,
@@ -140,6 +142,7 @@ class Node:
         self._heartbeat: int = heartbeat
         self._resume_key: Optional[str] = resume_key
         self._resume_timeout: int = resume_timeout
+        self._is_nodelink: bool = is_nodelink
         self._secure: bool = secure
         self._fallback: bool = fallback
         self._connect_timeout: float = connect_timeout
@@ -275,11 +278,11 @@ class Node:
         if self._log:
             self._log.debug(f"Parsed Lavalink version: {major}.{minor}.{fix}")
         self._version = LavalinkVersion(major=major, minor=minor, fix=fix)
-        if self._version < LavalinkVersion(3, 7, 0):
+        if self._version < LavalinkVersion(4, 0, 0) or (self._is_nodelink and self._version < LavalinkVersion(3, 0, 0)):
             self._available = False
             raise LavalinkVersionIncompatible(
                 "The Lavalink version you're using is incompatible. "
-                "Lavalink version 3.7.0 or above is required to use this library.",
+                "Lavalink version 4.0.0 or above is required to use this library.",
             )
 
     # async def _set_ext_client_session(self, session: aiohttp.ClientSession) -> None:
@@ -358,7 +361,7 @@ class Node:
 
         if self._version.major == 3:
             data["resumingKey"] = self._resume_key
-        elif self._version.major == 4:
+        elif self._version.major == 4 or (self._is_nodelink and self._version.major >= 3):
             if self._log:
                 self._log.warning("Using a resume key with Lavalink v4 is deprecated.")
             data["resuming"] = True
@@ -472,6 +475,22 @@ class Node:
             await self._configure_resuming()
             self._available = True
 
+            if self._is_nodelink:
+                try:
+                    stats_data = await self.send(
+                        method="GET",
+                        path="stats",
+                        include_version=True,
+                        ignore_if_available=True,
+                    )
+                    if stats_data:
+                        self._stats = NodeStats(stats_data)
+                        if self._log:
+                            self._log.debug(f"Initial stats retrieved: players={self._stats.players_total}")
+                except Exception as e:
+                    if self._log:
+                        self._log.warning(f"Failed to fetch initial stats: {e}")
+
         if not "guildId" in data:
             return
 
@@ -511,7 +530,7 @@ class Node:
 
         uri: str = (
             f"{self._rest_uri}/"
-            f'{f"v{self._version.major}/" if include_version else ""}'
+            f'{f"v4/" if include_version else ""}'
             f"{path}"
             f'{f"/{guild_id}" if guild_id else ""}'
             f'{f"?{query}" if query else ""}'
@@ -625,7 +644,7 @@ class Node:
             # before calling connect(reconnect=True), so no redundant reset needed here
 
             self._websocket = await client.connect(
-                f"{self._websocket_uri}/v{self._version.major}/websocket",
+                f"{self._websocket_uri}/v4/websocket",
                 extra_headers=self._headers,
                 ping_interval=self._heartbeat,
             )
@@ -636,7 +655,7 @@ class Node:
 
             if self._log:
                 self._log.debug(
-                    f"Node {self._identifier} successfully connected to websocket using {self._websocket_uri}/v{self._version.major}/websocket",
+                    f"Node {self._identifier} successfully connected to websocket using {self._websocket_uri}/v4/websocket",
                 )
 
             if not self._task or self._task.done():
@@ -713,7 +732,7 @@ class Node:
             query=f"encodedTrack={quote(identifier)}",
         )
 
-        track_info = data["info"] if self._version.major >= 4 else data
+        track_info = data["info"] if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3) else data
 
         return Track(
             track_id=identifier,
@@ -785,7 +804,7 @@ class Node:
         )
 
         load_type = data.get("loadType")
-        data_type = "data" if self._version.major >= 4 else "tracks"
+        data_type = "data" if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3) else "tracks"
 
         if not load_type:
             raise TrackLoadError(
@@ -793,7 +812,7 @@ class Node:
             )
 
         elif load_type in ("LOAD_FAILED", "error"):
-            exception = data["data"] if self._version.major >= 4 else data["exception"]
+            exception = data["data"] if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3) else data["exception"]
             raise TrackLoadError(
                 f"{exception['message']} [{exception['severity']}]",
             )
@@ -802,7 +821,7 @@ class Node:
             return None
 
         elif load_type in ("PLAYLIST_LOADED", "playlist"):
-            if self._version.major >= 4:
+            if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3):
                 track_list = data[data_type]["tracks"]
                 playlist_info = data[data_type]["info"]
             else:
@@ -828,7 +847,10 @@ class Node:
             )
 
         elif load_type in ("SEARCH_RESULT", "TRACK_LOADED", "track", "search"):
-            if self._version.major >= 4 and isinstance(data[data_type], dict):
+            if isinstance(data[data_type], dict) and (
+                self._version.major >= 4 or 
+                (self._is_nodelink and self._version.major >= 3)
+            ):
                 data[data_type] = [data[data_type]]
 
             # Handle local files
@@ -1071,6 +1093,7 @@ class NodePool:
         password: str,
         identifier: str,
         secure: bool = False,
+        is_nodelink: bool = False,
         heartbeat: int = 120,
         resume_key: Optional[str] = None,
         resume_timeout: int = 60,
@@ -1117,6 +1140,7 @@ class NodePool:
             port=port,
             password=password,
             identifier=identifier,
+            is_nodelink=is_nodelink,
             secure=secure,
             heartbeat=heartbeat,
             resume_key=resume_key,

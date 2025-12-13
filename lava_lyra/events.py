@@ -26,6 +26,12 @@ __all__ = (
     "NodeConnectedEvent",
     "NodeDisconnectedEvent",
     "NodeReconnectingEvent",
+    "PlayerCreatedEvent",
+    "VolumeChangedEvent",
+    "PlayerConnectedEvent",
+    "FiltersChangedEvent",
+    "PauseEvent",
+    "SeekEvent",
 )
 
 
@@ -331,3 +337,100 @@ class NodeReconnectingEvent(LyraEvent):
 
     def __repr__(self) -> str:
         return f"<Lyra.NodeReconnectingEvent node_id={self.node_id!r} retry_in={self.retry_in!r}>"
+
+class PlayerCreatedEvent(LyraEvent):
+    """Fired when a player is created (NodeLink specific)"""
+
+    name = "player_created"
+
+    __slots__ = ("player", "guild_id")
+
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.guild_id: int = int(data.get("guildId", 0))
+
+        # on_lyra_player_created(player, guild_id)
+        self.handler_args = self.player, self.guild_id
+
+    def __repr__(self) -> str:
+        return f"<Lyra.PlayerCreatedEvent player={self.player!r} guild_id={self.guild_id!r}>"
+
+
+class VolumeChangedEvent(LyraEvent):
+    """Fired when player volume is changed (NodeLink specific)"""
+
+    name = "volume_changed"
+
+    __slots__ = ("player", "volume")
+
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.volume: int = data.get("volume", 100)
+
+        # on_lyra_volume_changed(player, volume)
+        self.handler_args = self.player, self.volume
+
+    def __repr__(self) -> str:
+        return f"<Lyra.VolumeChangedEvent player={self.player!r} volume={self.volume!r}>"
+
+
+class PlayerConnectedEvent(LyraEvent):
+    """Fired when a player connects to Discord voice (NodeLink specific)"""
+
+    name = "player_connected"
+
+    __slots__ = ("player", "voice")
+
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.voice: dict = data.get("voice", {})
+
+        # on_lyra_player_connected(player, voice)
+        self.handler_args = self.player, self.voice
+
+    def __repr__(self) -> str:
+        return f"<Lyra.PlayerConnectedEvent player={self.player!r} voice={self.voice!r}>"
+    
+class FiltersChangedEvent(LyraEvent):
+    """Fired when player filters are changed (NodeLink specific)"""
+
+    name = "filters_changed"
+
+    __slots__ = ("player", "filters")
+
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.filters: dict = data.get("filters", {})
+
+        # on_lyra_filters_changed(player, filters)
+        self.handler_args = self.player, self.filters
+
+    def __repr__(self) -> str:
+        return f"<Lyra.FiltersChangedEvent player={self.player!r} filters={self.filters!r}>"
+    
+class PauseEvent(LyraEvent):
+    """Fired when player is paused (NodeLink specific)"""
+    name = "pause"
+    __slots__ = ("player", "paused")
+    
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.paused: bool = data.get("paused", True)
+        self.handler_args = self.player, self.paused
+    
+    def __repr__(self) -> str:
+        return f"<Lyra.PauseEvent player={self.player!r} paused={self.paused!r}>"
+
+
+class SeekEvent(LyraEvent):
+    """Fired when player seeks (NodeLink specific)"""
+    name = "seek"
+    __slots__ = ("player", "position")
+    
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.position: int = data.get("position", 0)
+        self.handler_args = self.player, self.position
+    
+    def __repr__(self) -> str:
+        return f"<Lyra.SeekEvent player={self.player!r} position={self.position!r}>"
