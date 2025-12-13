@@ -530,7 +530,7 @@ class Node:
 
         uri: str = (
             f"{self._rest_uri}/"
-            f'{f"v{self._version.major}/" if include_version else ""}'
+            f'{f"v4/" if include_version else ""}'
             f"{path}"
             f'{f"/{guild_id}" if guild_id else ""}'
             f'{f"?{query}" if query else ""}'
