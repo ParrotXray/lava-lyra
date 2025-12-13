@@ -278,7 +278,9 @@ class Node:
         if self._log:
             self._log.debug(f"Parsed Lavalink version: {major}.{minor}.{fix}")
         self._version = LavalinkVersion(major=major, minor=minor, fix=fix)
-        if self._version < LavalinkVersion(4, 0, 0) or (self._is_nodelink and self._version < LavalinkVersion(3, 0, 0)):
+        if self._version < LavalinkVersion(4, 0, 0) or (
+            self._is_nodelink and self._version < LavalinkVersion(3, 0, 0)
+        ):
             self._available = False
             raise LavalinkVersionIncompatible(
                 "The Lavalink version you're using is incompatible. "
@@ -486,7 +488,9 @@ class Node:
                     if stats_data:
                         self._stats = NodeStats(stats_data)
                         if self._log:
-                            self._log.debug(f"Initial stats retrieved: players={self._stats.players_total}")
+                            self._log.debug(
+                                f"Initial stats retrieved: players={self._stats.players_total}"
+                            )
                 except Exception as e:
                     if self._log:
                         self._log.warning(f"Failed to fetch initial stats: {e}")
@@ -732,7 +736,11 @@ class Node:
             query=f"encodedTrack={quote(identifier)}",
         )
 
-        track_info = data["info"] if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3) else data
+        track_info = (
+            data["info"]
+            if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3)
+            else data
+        )
 
         return Track(
             track_id=identifier,
@@ -804,7 +812,11 @@ class Node:
         )
 
         load_type = data.get("loadType")
-        data_type = "data" if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3) else "tracks"
+        data_type = (
+            "data"
+            if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3)
+            else "tracks"
+        )
 
         if not load_type:
             raise TrackLoadError(
@@ -812,7 +824,11 @@ class Node:
             )
 
         elif load_type in ("LOAD_FAILED", "error"):
-            exception = data["data"] if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3) else data["exception"]
+            exception = (
+                data["data"]
+                if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3)
+                else data["exception"]
+            )
             raise TrackLoadError(
                 f"{exception['message']} [{exception['severity']}]",
             )
@@ -848,8 +864,7 @@ class Node:
 
         elif load_type in ("SEARCH_RESULT", "TRACK_LOADED", "track", "search"):
             if isinstance(data[data_type], dict) and (
-                self._version.major >= 4 or 
-                (self._is_nodelink and self._version.major >= 3)
+                self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3)
             ):
                 data[data_type] = [data[data_type]]
 

@@ -317,7 +317,9 @@ class Player(VoiceProtocol):
         self._lyrics_manager.reset()
 
     def _adjust_end_time(self) -> Optional[str]:
-        if self._node._version >= LavalinkVersion(4, 0, 0) or (self._node._is_nodelink and self._node._version >= LavalinkVersion(3, 0, 0)):
+        if self._node._version >= LavalinkVersion(4, 0, 0) or (
+            self._node._is_nodelink and self._node._version >= LavalinkVersion(3, 0, 0)
+        ):
             return None
 
         return "0" if not self._node._is_nodelink else 0
@@ -605,13 +607,11 @@ class Player(VoiceProtocol):
                     raise TrackLoadError(
                         "No equivalent track was able to be found.",
                     )
-                
+
             # Build data based on node type
             if self._node._is_nodelink:
                 data = {
-                    "track": {
-                        "encoded": search.track_id
-                    },
+                    "track": {"encoded": search.track_id},
                     "position": start,
                     "endTime": self._adjust_end_time(),
                 }
@@ -621,7 +621,7 @@ class Player(VoiceProtocol):
                     "position": str(start),
                     "endTime": self._adjust_end_time(),
                 }
-            
+
             track.original = search
             track.track_id = search.track_id
             # Set track_id for later lavalink searches
@@ -629,9 +629,7 @@ class Player(VoiceProtocol):
             # Build data based on node type
             if self._node._is_nodelink:
                 data = {
-                    "track": {
-                        "encoded": track.track_id
-                    },
+                    "track": {"encoded": track.track_id},
                     "position": start,
                     "endTime": self._adjust_end_time(),
                 }
