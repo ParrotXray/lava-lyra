@@ -26,6 +26,9 @@ __all__ = (
     "NodeConnectedEvent",
     "NodeDisconnectedEvent",
     "NodeReconnectingEvent",
+    "PlayerCreatedEvent",
+    "VolumeChangedEvent",
+    "PlayerConnectedEvent",
 )
 
 
@@ -331,3 +334,56 @@ class NodeReconnectingEvent(LyraEvent):
 
     def __repr__(self) -> str:
         return f"<Lyra.NodeReconnectingEvent node_id={self.node_id!r} retry_in={self.retry_in!r}>"
+
+class PlayerCreatedEvent(LyraEvent):
+    """Fired when a player is created (NodeLink specific)"""
+
+    name = "player_created"
+
+    __slots__ = ("player", "guild_id")
+
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.guild_id: int = int(data.get("guildId", 0))
+
+        # on_lyra_player_created(player, guild_id)
+        self.handler_args = self.player, self.guild_id
+
+    def __repr__(self) -> str:
+        return f"<Lyra.PlayerCreatedEvent player={self.player!r} guild_id={self.guild_id!r}>"
+
+
+class VolumeChangedEvent(LyraEvent):
+    """Fired when player volume is changed (NodeLink specific)"""
+
+    name = "volume_changed"
+
+    __slots__ = ("player", "volume")
+
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.volume: int = data.get("volume", 100)
+
+        # on_lyra_volume_changed(player, volume)
+        self.handler_args = self.player, self.volume
+
+    def __repr__(self) -> str:
+        return f"<Lyra.VolumeChangedEvent player={self.player!r} volume={self.volume!r}>"
+
+
+class PlayerConnectedEvent(LyraEvent):
+    """Fired when a player connects to Discord voice (NodeLink specific)"""
+
+    name = "player_connected"
+
+    __slots__ = ("player", "voice")
+
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.voice: dict = data.get("voice", {})
+
+        # on_lyra_player_connected(player, voice)
+        self.handler_args = self.player, self.voice
+
+    def __repr__(self) -> str:
+        return f"<Lyra.PlayerConnectedEvent player={self.player!r} voice={self.voice!r}>"
