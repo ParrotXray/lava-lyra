@@ -317,10 +317,12 @@ class Player(VoiceProtocol):
         self._lyrics_manager.reset()
 
     def _adjust_end_time(self) -> Optional[str]:
-        if self._node._version >= LavalinkVersion(3, 7, 5):
+        if self._node._version >= LavalinkVersion(4, 0, 0) or (
+            self._node._is_nodelink and self._node._version >= LavalinkVersion(3, 0, 0)
+        ):
             return None
 
-        return "0"
+        return "0" if not self._node._is_nodelink else 0
 
     async def _update_state(self, data: dict) -> None:
         state: dict = data.get("state", {})
@@ -605,20 +607,38 @@ class Player(VoiceProtocol):
                     raise TrackLoadError(
                         "No equivalent track was able to be found.",
                     )
-            data = {
-                "encodedTrack": search.track_id,
-                "position": str(start),
-                "endTime": self._adjust_end_time(),
-            }
+
+            # Build data based on node type
+            if self._node._is_nodelink:
+                data = {
+                    "track": {"encoded": search.track_id},
+                    "position": start,
+                    "endTime": self._adjust_end_time(),
+                }
+            else:
+                data = {
+                    "encodedTrack": search.track_id,
+                    "position": str(start),
+                    "endTime": self._adjust_end_time(),
+                }
+
             track.original = search
             track.track_id = search.track_id
             # Set track_id for later lavalink searches
         else:
-            data = {
-                "encodedTrack": track.track_id,
-                "position": str(start),
-                "endTime": self._adjust_end_time(),
-            }
+            # Build data based on node type
+            if self._node._is_nodelink:
+                data = {
+                    "track": {"encoded": track.track_id},
+                    "position": start,
+                    "endTime": self._adjust_end_time(),
+                }
+            else:
+                data = {
+                    "encodedTrack": track.track_id,
+                    "position": str(start),
+                    "endTime": self._adjust_end_time(),
+                }
 
         # Reset lyrics state when playing a new track
         self._reset_lyrics()
@@ -651,7 +671,7 @@ class Player(VoiceProtocol):
         # Otherwise, it'll be set here:
 
         if end > 0:
-            data["endTime"] = str(end)
+            data["endTime"] = str(end) if not self._node._is_nodelink else end
 
         try:
             await self._node.send(
