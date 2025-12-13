@@ -9,7 +9,7 @@ A modern Lavalink v4 wrapper designed for py-cord, based on the excellent [Pomic
 
 ## What's New in Lyra
 
-Lyra is a complete refactor of Pomice for **Lavalink v4**, bringing significant improvements:
+Lyra is a complete refactor of Pomice for **Lavalink v4.X or NodeLink v3.X**, bringing significant improvements:
 
 - **Full Lavalink v4 REST API support**
 - **Server-side plugin integration** (LavaSrc, YouTube plugin, etc.)
@@ -61,7 +61,8 @@ class Bot(discord.Bot):
           identifier='MAIN',
           lyrics=False,
           lavasearch=True,  # Enable LavaSearch plugin support
-          fallback=True
+          fallback=True,
+          is_nodelink=False # Using Nodelink requires open
         )
         print(f"Created node: {node.identifier}")
 
