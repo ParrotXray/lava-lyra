@@ -12,6 +12,7 @@ __all__ = (
     "URLRegex",
     "LogLevel",
     "LavaSearchType",
+    "MixEndReason",
 )
 
 
@@ -366,6 +367,26 @@ class LavaSearchType(Enum):
     ARTIST = "artist"
     PLAYLIST = "playlist"
     TEXT = "text"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class MixEndReason(Enum):
+    """
+    Mix end reasons (NodeLink specific)
+
+    MixEndReason.FINISHED indicates that playback completed naturally.
+    MixEndReason.REMOVED indicates that the mix was manually removed via API.
+    MixEndReason.ERROR indicates that a stream error occurred.
+    MixEndReason.MAIN_ENDED indicates that the main track ended, triggering auto-cleanup
+
+    """
+
+    FINISHED = "FINISHED"
+    REMOVED = "REMOVED"
+    ERROR = "ERROR"
+    MAIN_ENDED = "MAIN_ENDED"
 
     def __str__(self) -> str:
         return self.value

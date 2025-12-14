@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 from discord import Bot, Guild
 
+from .enums import MixEndReason
 from .lyrics import LyricLine, Lyrics
 from .objects import Track
 
@@ -32,6 +33,8 @@ __all__ = (
     "FiltersChangedEvent",
     "PauseEvent",
     "SeekEvent",
+    "MixStartedEvent",
+    "MixEndedEvent",
 )
 
 
@@ -286,17 +289,18 @@ class NodeConnectedEvent(LyraEvent):
 
     name = "node_connected"
 
-    __slots__ = ("node_id", "reconnect")
+    __slots__ = ("node_id", "is_nodelink", "reconnect")
 
-    def __init__(self, node_id: str, reconnect: bool = False):
+    def __init__(self, node_id: str, is_nodelink: bool, reconnect: bool = False):
         self.node_id: str = node_id
+        self.is_nodelink: bool = is_nodelink
         self.reconnect: bool = reconnect
 
-        # on_lyra_node_connected(node_id, reconnect)
-        self.handler_args = self.node_id, self.reconnect
+        # on_lyra_node_connected(node_id, is_nodelink, reconnect)
+        self.handler_args = self.node_id, self.is_nodelink, self.reconnect
 
     def __repr__(self) -> str:
-        return f"<Lyra.NodeConnectedEvent node_id={self.node_id!r} reconnect={self.reconnect!r}>"
+        return f"<Lyra.NodeConnectedEvent node_id={self.node_id!r} is_nodelink={self.is_nodelink!r} reconnect={self.reconnect!r}>"
 
 
 class NodeDisconnectedEvent(LyraEvent):
@@ -306,17 +310,18 @@ class NodeDisconnectedEvent(LyraEvent):
 
     name = "node_disconnected"
 
-    __slots__ = ("node_id", "player_count")
+    __slots__ = ("node_id", "is_nodelink", "player_count")
 
-    def __init__(self, node_id: str, player_count: int):
+    def __init__(self, node_id: str, is_nodelink: bool, player_count: int):
         self.node_id: str = node_id
+        self.is_nodelink: bool = is_nodelink
         self.player_count: int = player_count
 
-        # on_lyra_node_disconnected(node_id, player_count)
-        self.handler_args = self.node_id, self.player_count
+        # on_lyra_node_disconnected(node_id, is_nodelink, player_count)
+        self.handler_args = self.node_id, self.is_nodelink, self.player_count
 
     def __repr__(self) -> str:
-        return f"<Lyra.NodeDisconnectedEvent node_id={self.node_id!r} player_count={self.player_count!r}>"
+        return f"<Lyra.NodeDisconnectedEvent node_id={self.node_id!r} is_nodelink={self.is_nodelink!r} player_count={self.player_count!r}>"
 
 
 class NodeReconnectingEvent(LyraEvent):
@@ -326,17 +331,18 @@ class NodeReconnectingEvent(LyraEvent):
 
     name = "node_reconnecting"
 
-    __slots__ = ("node_id", "retry_in")
+    __slots__ = ("node_id", "is_nodelink", "retry_in")
 
-    def __init__(self, node_id: str, retry_in: float):
+    def __init__(self, node_id: str, is_nodelink: bool, retry_in: float):
         self.node_id: str = node_id
+        self.is_nodelink: bool = is_nodelink
         self.retry_in: float = retry_in
 
-        # on_lyra_node_reconnecting(node_id, retry_in)
-        self.handler_args = self.node_id, self.retry_in
+        # on_lyra_node_reconnecting(node_id, is_nodelink, retry_in)
+        self.handler_args = self.node_id, self.is_nodelink, self.retry_in
 
     def __repr__(self) -> str:
-        return f"<Lyra.NodeReconnectingEvent node_id={self.node_id!r} retry_in={self.retry_in!r}>"
+        return f"<Lyra.NodeReconnectingEvent node_id={self.node_id!r} is_nodelink={self.is_nodelink!r} retry_in={self.retry_in!r}>"
 
 
 class PlayerCreatedEvent(LyraEvent):
@@ -439,3 +445,103 @@ class SeekEvent(LyraEvent):
 
     def __repr__(self) -> str:
         return f"<Lyra.SeekEvent player={self.player!r} position={self.position!r}>"
+
+
+class MixStartedEvent(LyraEvent):
+    """Event fired when a mix layer starts (NodeLink specific)
+
+    A mix layer is an additional audio stream that plays alongside the main track.
+    This is useful for features like:
+    - Background music
+    - Sound effects
+    - Audio overlays
+    - Multi-track playback
+
+    Attributes:
+        player: The player instance
+        mix_id: Unique identifier for this mix layer
+        track: The track being mixed in
+        volume: Volume level of the mix layer (0.0 - 1.0)
+    """
+
+    name = "mix_started"
+    __slots__ = ("player", "mix_id", "track", "volume")
+
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.mix_id: str = data.get("mixId", "")
+        self.volume: float = data.get("volume", 1.0)
+
+        # Parse track data if present
+        track_data = data.get("track")
+        if track_data:
+            self.track: Optional[Track] = Track(track_data)
+        else:
+            self.track: Optional[Track] = None
+
+        # on_lyra_mix_started(player, mix_id, track, volume)
+        self.handler_args = (self.player, self.mix_id, self.track, self.volume)
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.MixStartedEvent "
+            f"player={self.player!r} "
+            f"mix_id={self.mix_id!r} "
+            f"track={self.track!r} "
+            f"volume={self.volume!r}>"
+        )
+
+
+class MixEndedEvent(LyraEvent):
+    """Event fired when a mix layer ends (NodeLink specific)
+
+    This event is triggered when a mix layer stops playing, either because:
+    - It finished playing naturally (FINISHED)
+    - It was manually removed (REMOVED)
+    - An error occurred (ERROR)
+    - The main track ended (MAIN_ENDED)
+
+    Attributes:
+        player: The player instance
+        mix_id: Unique identifier for this mix layer
+        reason: Why the mix ended (see MixEndReason)
+    """
+
+    name = "mix_ended"
+    __slots__ = ("player", "mix_id", "reason")
+
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
+        self.mix_id: str = data.get("mixId", "")
+        self.reason: str = data.get("reason", MixEndReason.FINISHED)
+
+        # on_lyra_mix_ended(player, mix_id, reason)
+        self.handler_args = (self.player, self.mix_id, self.reason)
+
+    @property
+    def is_finished(self) -> bool:
+        """Check if mix ended naturally"""
+        return self.reason == MixEndReason.FINISHED
+
+    @property
+    def is_removed(self) -> bool:
+        """Check if mix was manually removed"""
+        return self.reason == MixEndReason.REMOVED
+
+    @property
+    def is_error(self) -> bool:
+        """Check if mix ended due to error"""
+        return self.reason == MixEndReason.ERROR
+
+    @property
+    def is_main_ended(self) -> bool:
+        """Check if mix ended because main track ended"""
+        return self.reason == MixEndReason.MAIN_ENDED
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.MixEndedEvent "
+            f"player={self.player!r} "
+            f"mix_id={self.mix_id!r} "
+            f"reason={self.reason!r}>"
+        )

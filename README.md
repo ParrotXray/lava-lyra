@@ -24,6 +24,7 @@ Lyra is a complete refactor of Pomice for **Lavalink v4.X or NodeLink v3.X**, br
 | Feature | Pomice (v2.x) | Lyra (v1.x) |
 |---------|---------------|-------------|
 | Lavalink Support | v3.x & v4.x | **v4.x** |
+| Nodelink Support | Unknown | **v3.x** |
 | Discord Library | discord.py | **py-cord** |
 | Spotify Support | Client-side API | **Server plugin** |
 | Apple Music Support | Client-side API | **Server plugin** |
@@ -62,7 +63,6 @@ class Bot(discord.Bot):
           lyrics=False,
           lavasearch=True,  # Enable LavaSearch plugin support
           fallback=True,
-          is_nodelink=False # Using Nodelink requires open
         )
         print(f"Created node: {node.identifier}")
 

@@ -114,7 +114,6 @@ class Node:
         password: str,
         identifier: str,
         secure: bool = False,
-        is_nodelink: bool = False,
         heartbeat: int = 120,
         resume_key: Optional[str] = None,
         resume_timeout: int = 60,
@@ -142,7 +141,6 @@ class Node:
         self._heartbeat: int = heartbeat
         self._resume_key: Optional[str] = resume_key
         self._resume_timeout: int = resume_timeout
-        self._is_nodelink: bool = is_nodelink
         self._secure: bool = secure
         self._fallback: bool = fallback
         self._connect_timeout: float = connect_timeout
@@ -158,6 +156,7 @@ class Node:
 
         self._session_id: Optional[str] = None
         self._available: bool = False
+        self._is_nodelink: bool = False
         self._version: LavalinkVersion = LavalinkVersion(0, 0, 0)
 
         self._route_planner = RoutePlanner(self)
@@ -265,7 +264,7 @@ class Node:
             self._available = False
             raise LavalinkVersionIncompatible(
                 "The Lavalink version you're using is incompatible. "
-                "Lavalink version 3.7.0 or above is required to use this library.",
+                "Lavalink version 4.0.0 or above is required to use this library.",
             )
 
         _version_groups = _version_rx.groups()
@@ -401,7 +400,7 @@ class Node:
 
                 # Dispatch node disconnected event
                 player_count = self.player_count
-                event = NodeDisconnectedEvent(self._identifier, player_count)
+                event = NodeDisconnectedEvent(self._identifier, self._is_nodelink, player_count)
                 event.dispatch(self._bot)
 
                 # If fallback is enabled, switch players to another node
@@ -423,7 +422,7 @@ class Node:
                     )
 
                 # Dispatch node reconnecting event
-                event = NodeReconnectingEvent(self._identifier, retry)
+                event = NodeReconnectingEvent(self._identifier, self._is_nodelink, retry)
                 event.dispatch(self._bot)
 
                 await asyncio.sleep(retry)
@@ -636,6 +635,16 @@ class Node:
                     include_version=False,
                 )
 
+                info: dict = await self.send(
+                    method="GET",
+                    path="info",
+                    ignore_if_available=True,
+                    include_version=True,
+                )
+
+                if info.get("isNodelink", False):
+                    self._is_nodelink = True
+
                 await self._handle_version_check(version=version)
                 # await self._set_ext_client_session(session=self._session)
 
@@ -668,7 +677,7 @@ class Node:
             end = time.perf_counter()
 
             # Dispatch node connected event
-            event = NodeConnectedEvent(self._identifier, reconnect)
+            event = NodeConnectedEvent(self._identifier, self._is_nodelink, reconnect)
             event.dispatch(self._bot)
 
             # Record successful connection in health monitor
@@ -1108,7 +1117,6 @@ class NodePool:
         password: str,
         identifier: str,
         secure: bool = False,
-        is_nodelink: bool = False,
         heartbeat: int = 120,
         resume_key: Optional[str] = None,
         resume_timeout: int = 60,
@@ -1155,7 +1163,6 @@ class NodePool:
             port=port,
             password=password,
             identifier=identifier,
-            is_nodelink=is_nodelink,
             secure=secure,
             heartbeat=heartbeat,
             resume_key=resume_key,
