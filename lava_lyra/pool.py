@@ -114,7 +114,6 @@ class Node:
         password: str,
         identifier: str,
         secure: bool = False,
-        is_nodelink: bool = False,
         heartbeat: int = 120,
         resume_key: Optional[str] = None,
         resume_timeout: int = 60,
@@ -142,7 +141,6 @@ class Node:
         self._heartbeat: int = heartbeat
         self._resume_key: Optional[str] = resume_key
         self._resume_timeout: int = resume_timeout
-        self._is_nodelink: bool = is_nodelink
         self._secure: bool = secure
         self._fallback: bool = fallback
         self._connect_timeout: float = connect_timeout
@@ -158,6 +156,7 @@ class Node:
 
         self._session_id: Optional[str] = None
         self._available: bool = False
+        self._is_nodelink: bool = False
         self._version: LavalinkVersion = LavalinkVersion(0, 0, 0)
 
         self._route_planner = RoutePlanner(self)
@@ -265,7 +264,7 @@ class Node:
             self._available = False
             raise LavalinkVersionIncompatible(
                 "The Lavalink version you're using is incompatible. "
-                "Lavalink version 3.7.0 or above is required to use this library.",
+                "Lavalink version 4.0.0 or above is required to use this library.",
             )
 
         _version_groups = _version_rx.groups()
@@ -640,8 +639,11 @@ class Node:
                     method="GET",
                     path="info",
                     ignore_if_available=True,
-                    include_version=False,
+                    include_version=True,
                 )
+
+                if info.get("isNodelink", False):
+                    self._is_nodelink = True
 
                 await self._handle_version_check(version=version)
                 # await self._set_ext_client_session(session=self._session)
@@ -1115,7 +1117,6 @@ class NodePool:
         password: str,
         identifier: str,
         secure: bool = False,
-        is_nodelink: bool = False,
         heartbeat: int = 120,
         resume_key: Optional[str] = None,
         resume_timeout: int = 60,
@@ -1162,7 +1163,6 @@ class NodePool:
             port=port,
             password=password,
             identifier=identifier,
-            is_nodelink=is_nodelink,
             secure=secure,
             heartbeat=heartbeat,
             resume_key=resume_key,
