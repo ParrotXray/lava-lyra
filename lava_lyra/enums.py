@@ -371,6 +371,7 @@ class LavaSearchType(Enum):
     def __str__(self) -> str:
         return self.value
 
+
 class MixEndReason(Enum):
     """
     Mix end reasons (NodeLink specific)
@@ -381,6 +382,7 @@ class MixEndReason(Enum):
     MixEndReason.MAIN_ENDED indicates that the main track ended, triggering auto-cleanup
 
     """
+
     FINISHED = "FINISHED"
     REMOVED = "REMOVED"
     ERROR = "ERROR"

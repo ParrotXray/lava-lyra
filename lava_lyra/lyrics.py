@@ -53,7 +53,7 @@ class Lyrics:
                 self.name = lyrics_data.get("name")
                 self.synced = lyrics_data.get("synced", False)
                 self.lang = lyrics_data.get("lang")
-                
+
                 # Parse lines
                 lines_data = lyrics_data.get("lines", [])
                 for line_data in lines_data:
@@ -61,7 +61,11 @@ class Lyrics:
                         lyric_line = LyricLine(
                             text=line_data.get("text", ""),
                             time=line_data.get("time", 0) / 1000.0,  # Convert to seconds
-                            duration=line_data.get("duration", 0) / 1000.0 if line_data.get("duration") else None,
+                            duration=(
+                                line_data.get("duration", 0) / 1000.0
+                                if line_data.get("duration")
+                                else None
+                            ),
                         )
                         self.lines.append(lyric_line)
             return
@@ -134,7 +138,7 @@ class LyricsManager:
     def lyrics_loaded(self) -> bool:
         """Check if lyrics have been attempted to load"""
         return self._lyrics_loaded
-    
+
     @property
     def is_subscribed(self) -> bool:
         """Check if subscribed to live lyrics"""
@@ -173,18 +177,15 @@ class LyricsManager:
             self._log.debug("Marked lyrics as not found")
 
     async def fetch_lyrics(
-        self, 
-        track=None, 
-        skip_track_source: bool = False,
-        lang: Optional[str] = None
+        self, track=None, skip_track_source: bool = False, lang: Optional[str] = None
     ) -> Optional[Lyrics]:
         """Fetch lyrics
-        
+
         Args:
             track: Track object (default: current track)
             skip_track_source: Skip track source when searching (NodeLink only)
             lang: Language code for YouTube captions (NodeLink only)
-        
+
         Returns:
             Lyrics object or None
         """
@@ -209,17 +210,13 @@ class LyricsManager:
                 self._log.error(f"Failed to fetch lyrics: {e}")
             return None
 
-    async def _fetch_lyrics_nodelink(
-        self,
-        track,
-        lang: Optional[str] = None
-    ) -> Optional[Lyrics]:
+    async def _fetch_lyrics_nodelink(self, track, lang: Optional[str] = None) -> Optional[Lyrics]:
         """Fetch lyrics from NodeLink"""
         query_params = []
-        
-        if hasattr(track, 'track_id') and track.track_id:
+
+        if hasattr(track, "track_id") and track.track_id:
             query_params.append(f"encodedTrack={track.track_id}")
-        elif hasattr(track, 'encoded') and track.encoded:
+        elif hasattr(track, "encoded") and track.encoded:
             query_params.append(f"encodedTrack={track.encoded}")
         else:
             if self._log:
@@ -230,7 +227,7 @@ class LyricsManager:
             query_params.append(f"lang={lang}")
 
         query = "&".join(query_params)
-        
+
         data = await self.player._node.send(
             method="GET",
             path="loadlyrics",
@@ -252,9 +249,7 @@ class LyricsManager:
             return None
 
     async def _fetch_lyrics_lavalink(
-        self,
-        track,
-        skip_track_source: bool = False
+        self, track, skip_track_source: bool = False
     ) -> Optional[Lyrics]:
         """Fetch lyrics from Lavalink v4"""
         # Lavalink v4 endpoint structure
@@ -268,7 +263,7 @@ class LyricsManager:
             query_params.append("skipTrackSource=true")
 
         if track != self.player._current:
-            track_id = getattr(track, 'track_id', None) or getattr(track, 'encoded', None)
+            track_id = getattr(track, "track_id", None) or getattr(track, "encoded", None)
             if track_id:
                 query_params.append(f"track={track_id}")
 
@@ -294,11 +289,11 @@ class LyricsManager:
 
     async def subscribe_lyrics(self, skip_track_source: bool = False) -> bool:
         """Subscribe to live lyrics
-        
+
         Note:
             - Lavalink v4: Full support via POST endpoint
             - NodeLink: Not supported (this is a no-op)
-        
+
         Returns:
             bool: True if successful, False otherwise
         """
@@ -339,11 +334,11 @@ class LyricsManager:
 
     async def unsubscribe_lyrics(self) -> bool:
         """Unsubscribe from live lyrics
-        
+
         Note:
             - Lavalink v4: Full support via DELETE endpoint
             - NodeLink: Not supported (resets local state instead)
-        
+
         Returns:
             bool: True if successful (or no-op for NodeLink), False otherwise
         """
@@ -351,7 +346,7 @@ class LyricsManager:
             if self._log:
                 self._log.debug("Lyrics feature is not enabled on this node")
             return False
-        
+
         # NodeLink does not support unsubscribe, reset local state
         if self.is_nodelink:
             if self._log:

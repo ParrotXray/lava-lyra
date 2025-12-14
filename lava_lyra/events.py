@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 from discord import Bot, Guild
 
-from .lyrics import LyricLine, Lyrics
 from .enums import MixEndReason
+from .lyrics import LyricLine, Lyrics
 from .objects import Track
 
 if TYPE_CHECKING:
@@ -323,6 +323,7 @@ class NodeDisconnectedEvent(LyraEvent):
     def __repr__(self) -> str:
         return f"<Lyra.NodeDisconnectedEvent node_id={self.node_id!r} is_nodelink={self.is_nodelink!r} player_count={self.player_count!r}>"
 
+
 class NodeReconnectingEvent(LyraEvent):
     """Fired when a node is attempting to reconnect to Lavalink.
     Returns the node identifier and the retry delay in seconds.
@@ -342,6 +343,7 @@ class NodeReconnectingEvent(LyraEvent):
 
     def __repr__(self) -> str:
         return f"<Lyra.NodeReconnectingEvent node_id={self.node_id!r} is_nodelink={self.is_nodelink!r} retry_in={self.retry_in!r}>"
+
 
 class PlayerCreatedEvent(LyraEvent):
     """Fired when a player is created (NodeLink specific)"""
@@ -443,17 +445,18 @@ class SeekEvent(LyraEvent):
 
     def __repr__(self) -> str:
         return f"<Lyra.SeekEvent player={self.player!r} position={self.position!r}>"
-    
+
+
 class MixStartedEvent(LyraEvent):
     """Event fired when a mix layer starts (NodeLink specific)
-    
+
     A mix layer is an additional audio stream that plays alongside the main track.
     This is useful for features like:
     - Background music
     - Sound effects
     - Audio overlays
     - Multi-track playback
-    
+
     Attributes:
         player: The player instance
         mix_id: Unique identifier for this mix layer
@@ -468,14 +471,14 @@ class MixStartedEvent(LyraEvent):
         self.player: Player = player
         self.mix_id: str = data.get("mixId", "")
         self.volume: float = data.get("volume", 1.0)
-        
+
         # Parse track data if present
         track_data = data.get("track")
         if track_data:
             self.track: Optional[Track] = Track(track_data)
         else:
             self.track: Optional[Track] = None
-        
+
         # on_lyra_mix_started(player, mix_id, track, volume)
         self.handler_args = (self.player, self.mix_id, self.track, self.volume)
 
@@ -488,15 +491,16 @@ class MixStartedEvent(LyraEvent):
             f"volume={self.volume!r}>"
         )
 
+
 class MixEndedEvent(LyraEvent):
     """Event fired when a mix layer ends (NodeLink specific)
-    
+
     This event is triggered when a mix layer stops playing, either because:
     - It finished playing naturally (FINISHED)
     - It was manually removed (REMOVED)
     - An error occurred (ERROR)
     - The main track ended (MAIN_ENDED)
-    
+
     Attributes:
         player: The player instance
         mix_id: Unique identifier for this mix layer
@@ -510,7 +514,7 @@ class MixEndedEvent(LyraEvent):
         self.player: Player = player
         self.mix_id: str = data.get("mixId", "")
         self.reason: str = data.get("reason", MixEndReason.FINISHED)
-        
+
         # on_lyra_mix_ended(player, mix_id, reason)
         self.handler_args = (self.player, self.mix_id, self.reason)
 
@@ -518,17 +522,17 @@ class MixEndedEvent(LyraEvent):
     def is_finished(self) -> bool:
         """Check if mix ended naturally"""
         return self.reason == MixEndReason.FINISHED
-    
+
     @property
     def is_removed(self) -> bool:
         """Check if mix was manually removed"""
         return self.reason == MixEndReason.REMOVED
-    
+
     @property
     def is_error(self) -> bool:
         """Check if mix ended due to error"""
         return self.reason == MixEndReason.ERROR
-    
+
     @property
     def is_main_ended(self) -> bool:
         """Check if mix ended because main track ended"""
