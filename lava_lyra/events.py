@@ -289,17 +289,18 @@ class NodeConnectedEvent(LyraEvent):
 
     name = "node_connected"
 
-    __slots__ = ("node_id", "reconnect")
+    __slots__ = ("node_id", "is_nodelink", "reconnect")
 
-    def __init__(self, node_id: str, reconnect: bool = False):
+    def __init__(self, node_id: str, is_nodelink: bool, reconnect: bool = False):
         self.node_id: str = node_id
+        self.is_nodelink: bool = is_nodelink
         self.reconnect: bool = reconnect
 
-        # on_lyra_node_connected(node_id, reconnect)
-        self.handler_args = self.node_id, self.reconnect
+        # on_lyra_node_connected(node_id, is_nodelink, reconnect)
+        self.handler_args = self.node_id, self.is_nodelink, self.reconnect
 
     def __repr__(self) -> str:
-        return f"<Lyra.NodeConnectedEvent node_id={self.node_id!r} reconnect={self.reconnect!r}>"
+        return f"<Lyra.NodeConnectedEvent node_id={self.node_id!r} is_nodelink={self.is_nodelink!r} reconnect={self.reconnect!r}>"
 
 
 class NodeDisconnectedEvent(LyraEvent):
@@ -309,18 +310,18 @@ class NodeDisconnectedEvent(LyraEvent):
 
     name = "node_disconnected"
 
-    __slots__ = ("node_id", "player_count")
+    __slots__ = ("node_id", "is_nodelink", "player_count")
 
-    def __init__(self, node_id: str, player_count: int):
+    def __init__(self, node_id: str, is_nodelink: bool, player_count: int):
         self.node_id: str = node_id
+        self.is_nodelink: bool = is_nodelink
         self.player_count: int = player_count
 
-        # on_lyra_node_disconnected(node_id, player_count)
-        self.handler_args = self.node_id, self.player_count
+        # on_lyra_node_disconnected(node_id, is_nodelink, player_count)
+        self.handler_args = self.node_id, self.is_nodelink, self.player_count
 
     def __repr__(self) -> str:
-        return f"<Lyra.NodeDisconnectedEvent node_id={self.node_id!r} player_count={self.player_count!r}>"
-
+        return f"<Lyra.NodeDisconnectedEvent node_id={self.node_id!r} is_nodelink={self.is_nodelink!r} player_count={self.player_count!r}>"
 
 class NodeReconnectingEvent(LyraEvent):
     """Fired when a node is attempting to reconnect to Lavalink.
@@ -329,18 +330,18 @@ class NodeReconnectingEvent(LyraEvent):
 
     name = "node_reconnecting"
 
-    __slots__ = ("node_id", "retry_in")
+    __slots__ = ("node_id", "is_nodelink", "retry_in")
 
-    def __init__(self, node_id: str, retry_in: float):
+    def __init__(self, node_id: str, is_nodelink: bool, retry_in: float):
         self.node_id: str = node_id
+        self.is_nodelink: bool = is_nodelink
         self.retry_in: float = retry_in
 
-        # on_lyra_node_reconnecting(node_id, retry_in)
-        self.handler_args = self.node_id, self.retry_in
+        # on_lyra_node_reconnecting(node_id, is_nodelink, retry_in)
+        self.handler_args = self.node_id, self.is_nodelink, self.retry_in
 
     def __repr__(self) -> str:
-        return f"<Lyra.NodeReconnectingEvent node_id={self.node_id!r} retry_in={self.retry_in!r}>"
-
+        return f"<Lyra.NodeReconnectingEvent node_id={self.node_id!r} is_nodelink={self.is_nodelink!r} retry_in={self.retry_in!r}>"
 
 class PlayerCreatedEvent(LyraEvent):
     """Fired when a player is created (NodeLink specific)"""

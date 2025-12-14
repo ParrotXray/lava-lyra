@@ -400,7 +400,7 @@ class Node:
 
                 # Dispatch node disconnected event
                 player_count = self.player_count
-                event = NodeDisconnectedEvent(self._identifier, player_count)
+                event = NodeDisconnectedEvent(self._identifier, self._is_nodelink, player_count)
                 event.dispatch(self._bot)
 
                 # If fallback is enabled, switch players to another node
@@ -422,7 +422,7 @@ class Node:
                     )
 
                 # Dispatch node reconnecting event
-                event = NodeReconnectingEvent(self._identifier, retry)
+                event = NodeReconnectingEvent(self._identifier, self._is_nodelink, retry)
                 event.dispatch(self._bot)
 
                 await asyncio.sleep(retry)
@@ -677,7 +677,7 @@ class Node:
             end = time.perf_counter()
 
             # Dispatch node connected event
-            event = NodeConnectedEvent(self._identifier, reconnect)
+            event = NodeConnectedEvent(self._identifier, self._is_nodelink, reconnect)
             event.dispatch(self._bot)
 
             # Record successful connection in health monitor
