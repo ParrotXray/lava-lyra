@@ -62,7 +62,6 @@ class Bot(discord.Bot):
           lyrics=False,
           lavasearch=True,  # Enable LavaSearch plugin support
           fallback=True,
-          is_nodelink=False # Using Nodelink requires open
         )
         print(f"Created node: {node.identifier}")
 
