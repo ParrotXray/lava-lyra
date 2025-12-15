@@ -151,7 +151,7 @@ class Node:
 
         self._session: aiohttp.ClientSession = session  # type: ignore
         self._loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
-        self._websocket: client.WebSocketClientProtocol
+        self._websocket: client.WebSocketClientProtocol = None
         self._task: asyncio.Task = None  # type: ignore
 
         self._session_id: Optional[str] = None
@@ -159,13 +159,13 @@ class Node:
         self._is_nodelink: bool = False
         self._version: LavalinkVersion = LavalinkVersion(0, 0, 0)
 
-        self._route_planner = RoutePlanner(self)
-        self._search_manager = SearchManager(self)
-        self._log = logger
+        self._route_planner: RoutePlanner = RoutePlanner(self)
+        self._search_manager: SearchManager = SearchManager(self)
+        self._log: Optional[logging.Logger] = logger
         self._lyrics_enabled: bool = lyrics
         self._search_enabled: bool = search
-        self._backoff = ExponentialBackoff(base=7)
-        self._health_monitor = NodeHealthMonitor(
+        self._backoff: ExponentialBackoff = ExponentialBackoff(base=7)
+        self._health_monitor: NodeHealthMonitor = NodeHealthMonitor(
             health_check_interval=health_check_interval,
             circuit_breaker_threshold=circuit_breaker_threshold,
             circuit_timeout=circuit_timeout,
@@ -662,6 +662,11 @@ class Node:
                 ping_interval=self._heartbeat,
             )
 
+            if not self._websocket:
+                raise NodeConnectionFailure(
+                    f"The websocket connection to node '{self._identifier}' failed.",
+                )
+
             if reconnect:
                 if self._log:
                     self._log.info(f"Successfully reconnected to Node {self._identifier}")
@@ -698,7 +703,7 @@ class Node:
             raise NodeConnectionFailure(
                 f"The password for node '{self._identifier}' is invalid: {e}",
             ) from None
-        except exceptions.InvalidURI:
+        except exceptions.InvalidURI as e:
             self._health_monitor.record_failure()
             raise NodeConnectionFailure(
                 f"The URI for node '{self._identifier}' is invalid: {e}",
