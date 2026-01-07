@@ -47,7 +47,7 @@ class PackageRequirement:
 def import_discord_types():
     if PackageRequirement.is_discordpy():
         from discord.ext.commands import Bot, Context
-        from discord.abc import Member, User, Guild
+        from discord import Member, User, Guild
         from discord import VoiceChannel, VoiceProtocol, ClientUser
         return Bot, Context, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
 
