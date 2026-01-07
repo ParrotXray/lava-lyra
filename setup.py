@@ -56,8 +56,7 @@ install_requires = [
     "aiohttp>=3.8.0",
     "orjson>=3.8.0",
     "websockets>=10.0",
-    "typing-extensions;python_version<'3.11'",
-    "py-cord>=2.0.0",
+    "typing-extensions;python_version<'3.11'"
 ]
 
 packages = setuptools.find_packages(include=["lava_lyra", "lava_lyra.*"])
