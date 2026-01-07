@@ -3,14 +3,25 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
-from discord import Bot, Guild
 
 from .enums import MixEndReason
 from .lyrics import LyricLine, Lyrics
 from .objects import Track
+from .checker import PackageRequirememt
 
 if TYPE_CHECKING:
     from .player import Player
+
+if PackageRequirement.is_discordpy():
+    from discord.ext.commands import Bot
+    from discord.abc import Guild
+    
+elif PackageRequirement.is_pycord():
+    from discord import Bot, Guild
+    
+else:
+    raise RequirementNotFound("Neither discord.py nor py-cord could be found")
+
 
 __all__ = (
     "LyraEvent",
@@ -43,8 +54,15 @@ class LyraEvent(ABC):
     Every event must be formatted within your bot's code as a listener.
     i.e: If you want to listen for when a track starts, the event would be:
     ```py
+    # Example for py-cord
     @bot.listen
     async def on_lyra_track_start(self, event):
+        pass
+    
+    # Example for discord.py
+    @bot.event
+    async def on_lyra_track_start(event):
+        pass
     ```
     """
 
