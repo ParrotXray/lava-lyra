@@ -58,4 +58,4 @@ def import_discord_types():
     raise RequirementNotFound("Neither discord.py nor py-cord could be found")
 
 
-Bot, Context, Member, User, Guild, VoiceChannel, VoiceProtocol = import_discord_types()
+Bot, ApplicationContext, Member, User, Guild, VoiceChannel, VoiceProtocol = import_discord_types()
