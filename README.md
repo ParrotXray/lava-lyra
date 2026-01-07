@@ -16,20 +16,20 @@ Lyra is a complete refactor of Pomice for **Lavalink v4.X or NodeLink v3.X**, br
 - **Simplified setup** - No more API credentials needed in client
 - **Better error handling** and plugin support  
 - **Removed deprecated modules** (client-side Spotify/Apple Music parsing)
-- **Optimized for py-cord** instead of discord.py
+- **Both for py-cord and discord.py**
 - **Improved documentation** and examples
 
 ## Key Differences from Pomice
 
-| Feature | Pomice (v2.x) | Lyra (v1.x) |
-|---------|---------------|-------------|
-| Lavalink Support | v3.x & v4.x | **v4.x** |
-| Nodelink Support | Unknown | **v3.x** |
-| Discord Library | discord.py | **py-cord** |
-| Spotify Support | Client-side API | **Server plugin** |
-| Apple Music Support | Client-side API | **Server plugin** |
-| Setup Complexity | API keys required | **Plugin configuration only** |
-| Architecture | Mixed client/server | **Pure server-side** |
+| Feature | Pomice (v2.x) | Lyra (v1.x) | Wavelink (v3.x) |
+|---------|---------------|-------------|-----------------|
+| Lavalink Support | v3.x & v4.x | **v4.x** | **v4.x** |
+| Nodelink Support | Unknown | **v3.x** | Unknown |
+| Discord Library | discord.py | **py-cord** | discord.py |
+| Spotify Support | Client-side API | **Server plugin** | Client-side API |
+| Apple Music Support | Client-side API | **Server plugin** | Client-side API |
+| Setup Complexity | API keys required | **Plugin configuration only** | API keys required |
+| Architecture | Mixed client/server | **Pure server-side** | Mixed client/server |
 
 ## Quick Start
 
@@ -71,7 +71,7 @@ bot = Bot()
 bot.run('your_bot_token')
 ```
 
-## Discordpy
+## Discordpy Example
 ```python
 import discord
 from discord.ext import commands
@@ -257,7 +257,7 @@ async def search(interaction, query: str, platform: str = "youtube"):
             lava_lyra.LavaSearchType.TEXT
         ],
         search_type=search_types.get(platform, lava_lyra.SearchType.ytsearch),
-        # ctx=ctx    # ctx in discord.py interaction could be "None"
+        # ctx=ctx    # ctx in discord.py slash interaction could be "None"
     )
 
     if not result:
