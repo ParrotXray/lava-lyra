@@ -7,20 +7,10 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple
 from .enums import MixEndReason
 from .lyrics import LyricLine, Lyrics
 from .objects import Track
-from .checker import PackageRequirememt
+from .checker import Bot, Guild
 
 if TYPE_CHECKING:
     from .player import Player
-
-if PackageRequirement.is_discordpy():
-    from discord.ext.commands import Bot
-    from discord.abc import Guild
-    
-elif PackageRequirement.is_pycord():
-    from discord import Bot, Guild
-    
-else:
-    raise RequirementNotFound("Neither discord.py nor py-cord could be found")
 
 
 __all__ = (
