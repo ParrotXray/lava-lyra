@@ -257,7 +257,7 @@ async def search(interaction, query: str, platform: str = "youtube"):
             lava_lyra.LavaSearchType.TEXT
         ],
         search_type=search_types.get(platform, lava_lyra.SearchType.ytsearch),
-        ctx=ctx
+        # ctx=ctx    # ctx in discord.py interaction could be "None"
     )
 
     if not result:
