@@ -1,32 +1,33 @@
 from importlib.metadata import PackageNotFoundError, version
 from typing import TYPE_CHECKING
+from .exceptions import RequirementNotFound
+
 
 if TYPE_CHECKING:
     # discord.py
-    from discord.ext.commands import Bot
-    from discord.ext.commands import Context
-    from discord.abc import Member, User, Guild
-    # py-cord
-    from discord import Bot
-    from discord import ApplicationContext
-    from discord import Member, User
-    
-class PackageRequirement:
-    """
-    Utilities for checking installed Discord libraries.
+    from discord.ext.commands import Bot as DiscordPyBot
+    from discord.ext.commands import Context as DiscordPyContext
+    from discord.abc import Member as DiscordPyMember, User as DiscordPyUser, Guild as DiscordPyGuild
 
-    This class provides static methods to detect whether
-    `py-cord` or `discord.py` is installed in the environment.
-    """
+    # py-cord
+    from discord import Bot as PycordBot
+    from discord import ApplicationContext as PycordContext
+    from discord import Member as PycordMember, User as PycordUser, Guild as PycordGuild
+
+    BotType = "DiscordPyBot" | "PycordBot"
+    ContextType = "DiscordPyContext" | "PycordContext"
+    MemberType = "DiscordPyMember" | "PycordMember"
+    UserType = "DiscordPyUser" | "PycordUser"
+    GuildType = "DiscordPyGuild" | "PycordGuild"
+    ClientUserType = BotType
+
+
+
+class PackageRequirement:
+    """Check if py-cord or discord.py is installed."""
 
     @staticmethod
     def is_pycord() -> bool:
-        """
-        Check whether py-cord is installed.
-
-        Returns:
-            bool: True if py-cord is installed, otherwise False.
-        """
         try:
             version("py-cord")
             return True
@@ -35,14 +36,25 @@ class PackageRequirement:
 
     @staticmethod
     def is_discordpy() -> bool:
-        """
-        Check whether discord.py is installed.
-
-        Returns:
-            bool: True if discord.py is installed, otherwise False.
-        """
         try:
             version("discord.py")
             return True
         except PackageNotFoundError:
             return False
+
+
+
+def import_discord_types():
+    if PackageRequirement.is_discordpy():
+        from discord.ext.commands import Bot, Context
+        from discord.abc import Member, User, Guild
+        return Bot, Context, Member, User, Guild
+
+    if PackageRequirement.is_pycord():
+        from discord import Bot, ApplicationContext, Member, User, Guild
+        return Bot, ApplicationContext, Member, User, Guild
+
+    raise RequirementNotFound("Neither discord.py nor py-cord could be found")
+
+
+Bot, Context, Member, User, Guild = import_discord_types()
