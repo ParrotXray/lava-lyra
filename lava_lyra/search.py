@@ -4,7 +4,7 @@ import re
 from typing import TYPE_CHECKING, List, Optional
 from urllib.parse import quote
 
-from discord import ApplicationContext
+from .checker import ApplicationContext
 
 from .enums import LavaSearchType, PlaylistType, SearchType, TrackType, URLRegex
 from .exceptions import NodeRestException, TrackLoadError
