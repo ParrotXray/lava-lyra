@@ -4,7 +4,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-from discord import ApplicationContext, Bot, Guild, VoiceChannel, VoiceProtocol
+from .checker import ApplicationContext, Bot, Guild, VoiceChannel, VoiceProtocol
 
 from . import events
 from .enums import SearchType
