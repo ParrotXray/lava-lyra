@@ -62,7 +62,7 @@ class Bot(discord.Bot):
           password='youshallnotpass',
           identifier='MAIN',
           lyrics=False,
-          lavasearch=True,  # Enable LavaSearch plugin support
+          search=True,  # Enable LavaSearch plugin support
           fallback=True,
         )
         print(f"Created node: {node.identifier}")
@@ -96,7 +96,7 @@ class Bot(commands.Bot):
           password='youshallnotpass',
           identifier='MAIN',
           lyrics=False,
-          lavasearch=True,  # Enable LavaSearch plugin support
+          search=True,  # Enable LavaSearch plugin support
           fallback=True,
         )
         print(f"Created node: {node.identifier}")
