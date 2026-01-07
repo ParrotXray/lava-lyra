@@ -48,13 +48,14 @@ def import_discord_types():
     if PackageRequirement.is_discordpy():
         from discord.ext.commands import Bot, Context
         from discord.abc import Member, User, Guild
-        return Bot, Context, Member, User, Guild
+        from discord import VoiceChannel, VoiceProtocol
+        return Bot, Context, Member, User, Guild, VoiceChannel, VoiceProtocol
 
     if PackageRequirement.is_pycord():
-        from discord import Bot, ApplicationContext, Member, User, Guild
-        return Bot, ApplicationContext, Member, User, Guild
+        from discord import Bot, ApplicationContext, Member, User, Guild, VoiceChannel, VoiceProtocol
+        return Bot, ApplicationContext, Member, User, Guild, VoiceChannel, VoiceProtocol
 
     raise RequirementNotFound("Neither discord.py nor py-cord could be found")
 
 
-Bot, Context, Member, User, Guild = import_discord_types()
+Bot, Context, Member, User, Guild, VoiceChannel, VoiceProtocol = import_discord_types()
