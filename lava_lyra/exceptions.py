@@ -125,6 +125,14 @@ class LavalinkVersionIncompatible(LyraException):
 
     pass
 
+class RequirementNotFound(LyraException):
+    """Couldn't found any of discord packages.
+    
+    Neither discord.py nor pycord could be found.
+    Please install one of them before using.
+    """
+    pass
+
 
 # Platform-specific exceptions have been removed in v4
 # These are no longer needed as all platform support is handled
