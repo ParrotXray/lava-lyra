@@ -1,6 +1,16 @@
 from importlib.metadata import PackageNotFoundError, version
+from typing import TYPE_CHECKING
 
-
+if TYPE_CHECKING:
+    # discord.py
+    from discord.ext.commands import Bot
+    from discord.ext.commands import Context
+    from discord.abc import Member, User, Guild
+    # py-cord
+    from discord import Bot
+    from discord import ApplicationContext
+    from discord import Member, User
+    
 class PackageRequirement:
     """
     Utilities for checking installed Discord libraries.
