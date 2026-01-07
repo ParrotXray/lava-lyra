@@ -23,7 +23,7 @@ Lyra is a complete refactor of Pomice for **Lavalink v4.X or NodeLink v3.X**, br
 
 | Feature | Pomice (v2.x) | Lyra (v1.x) | Wavelink (v3.x) |
 |---------|---------------|-------------|-----------------|
-| Lavalink Support | v3.x & v4.x | **v4.x** | **v4.x** |
+| Lavalink Support | v3.x & v4.x | **v4.x** | v4.x |
 | Nodelink Support | Unknown | **v3.x** | Unknown |
 | Discord Library | discord.py | **py-cord** | discord.py |
 | Spotify Support | Client-side API | **Server plugin** | Client-side API |
