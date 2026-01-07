@@ -16,6 +16,7 @@ __all__ = (
     "QueueFull",
     "QueueEmpty",
     "LavalinkVersionIncompatible",
+    "RequirementNotFound",
     # Removed in v4: Platform-specific client exceptions
     # "InvalidSpotifyClientAuthorization",
     # "AppleMusicNotEnabled",
@@ -123,6 +124,14 @@ class LavalinkVersionIncompatible(LyraException):
     For Lavalink v3.x support, use an older version of Lyra.
     """
 
+    pass
+
+class RequirementNotFound(LyraException):
+    """Couldn't found any of discord packages.
+    
+    Neither discord.py nor py-cord could be found.
+    Please install one of them before using.
+    """
     pass
 
 

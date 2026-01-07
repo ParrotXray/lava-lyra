@@ -5,13 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lava-lyra"
 dynamic = ["version"]
-description = "A modern Lavalink v4 wrapper for py-cord, based on Pomice"
+description = "A modern Lavalink v4 wrapper for py-cord and discord.py, based on Pomice"
 readme = "README.md"
 license = {text = "GPL-3.0"}
 authors = [
     {name = "ParrotXray"},
 ]
-keywords = ["discord", "lavalink", "py-cord", "music", "audio", "lavalink4", "voice", "streaming"]
+keywords = ["discord", "lavalink", "py-cord", "discord.py", "music", "audio", "lavalink4", "voice", "streaming"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: AsyncIO",
@@ -43,7 +43,6 @@ dependencies = [
     "orjson>=3.8.0",
     "websockets>=10.0",
     "typing-extensions;python_version<'3.11'",
-    "py-cord>=2.0.0",
 ]
 
 [project.optional-dependencies]

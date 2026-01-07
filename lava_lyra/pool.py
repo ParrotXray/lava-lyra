@@ -12,7 +12,7 @@ from urllib.parse import quote
 
 import aiohttp
 import orjson as json
-from discord import ApplicationContext, Bot
+from .checker import ApplicationContext, Bot
 from discord.utils import MISSING
 from websockets import client, exceptions
 from websockets import typing as wstype
