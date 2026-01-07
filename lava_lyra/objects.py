@@ -2,10 +2,23 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 
-from discord import ApplicationContext, ClientUser, Member, User
-
 from .enums import PlaylistType, SearchType, TrackType
 from .filters import Filter
+
+from .checker import PaskageRequirent
+
+if PackageRequirement.is_discordpy():
+    from discord.ext.commands import Context as ApplicationContext
+    from discord import ClientUser
+    from discord.abc import Member, User
+    
+elif PackageRequirement.is_pycord():
+    from discord import ApplicationContext, ClientUser, Member, User
+    
+else:
+    raise RequirementNotFound("Neither discord.py nor py-cord could be found")
+
+
 
 __all__ = (
     "Track",
