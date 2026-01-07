@@ -16,6 +16,7 @@ __all__ = (
     "QueueFull",
     "QueueEmpty",
     "LavalinkVersionIncompatible",
+    "RequirementNotFound",
     # Removed in v4: Platform-specific client exceptions
     # "InvalidSpotifyClientAuthorization",
     # "AppleMusicNotEnabled",
