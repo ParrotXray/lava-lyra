@@ -19,11 +19,16 @@ if TYPE_CHECKING:
     from disnake.ext.commands import Context as DisnakeContext
     from disnake import Member as DisnakeMember, User as DisnakeUser, Guild as DisnakeGuild
 
-    BotType = "DiscordPyBot" | "PycordBot" | "DisnakeBot"
-    ContextType = "DiscordPyContext" | "PycordContext" | "DisnakeContext"
-    MemberType = "DiscordPyMember" | "PycordMember" | "DisnakeMember"
-    UserType = "DiscordPyUser" | "PycordUser" | "DisnakeUser"
-    GuildType = "DiscordPyGuild" | "PycordGuild" | "DisnakeGuild"
+    # nextcord
+    from nextcord.ext.commands import Bot as NextBot
+    from nextcord.ext.commands import Context as NextContext
+    from nextcord import Member as NextMember, User as NextUser, Guild as NextGuild
+
+    BotType = "DiscordPyBot" | "PycordBot" | "DisnakeBot" | "NextBot"
+    ContextType = "DiscordPyContext" | "PycordContext" | "DisnakeContext" | "NextContext"
+    MemberType = "DiscordPyMember" | "PycordMember" | "DisnakeMember" | "NextMember"
+    UserType = "DiscordPyUser" | "PycordUser" | "DisnakeUser" | "NextUser"
+    GuildType = "DiscordPyGuild" | "PycordGuild" | "DisnakeGuild" | "NextGuild"
     ClientUserType = BotType
 
 
@@ -55,24 +60,49 @@ class PackageRequirement:
         except PackageNotFoundError:
             return False
 
+    @staticmethod
+    def is_nextcord() -> bool:
+        try:
+            version("nextcord")
+            return True
+        except PackageNotFoundError:
+            return False
+
 
 def import_discord_types():
     if PackageRequirement.is_discordpy():
-        from discord.ext.commands import Bot, Context
-        from discord import Member, User, Guild
-        from discord import VoiceChannel, VoiceProtocol, ClientUser
-        return Bot, Context, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+        try:
+            from discord.ext.commands import Bot, Context
+            from discord import Member, User, Guild
+            from discord import VoiceChannel, VoiceProtocol, ClientUser
+            return Bot, Context, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+        except:
+            raise ImportError("discord.py>=2.0 is required")
 
     elif PackageRequirement.is_pycord():
-        from discord import Bot, ApplicationContext, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
-        return Bot, ApplicationContext, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+        try:
+            from discord import Bot, ApplicationContext, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+            return Bot, ApplicationContext, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+        except:
+            raise ImportError("py-cord>=2.0 is required")
 
     elif PackageRequirement.is_disnake():
-        from disnake.ext.commands import Bot, Context
-        from disnake import Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
-        return Bot, Context, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+        try:
+            from disnake.ext.commands import Bot, Context
+            from disnake import Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+            return Bot, Context, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+        except:
+            raise ImportError("disnake>=2.0 is required")
 
-    raise RequirementNotFound("Neither discord.py, py-cord nor disnake could be found")
+    elif PackageRequirement.is_nextcord():
+        try:
+            from nextcord.ext.commands import Bot, Context
+            from nextcord import Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+            return Bot, Context, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser
+        except:
+            raise ImportError("nextcord>=2.5 is required")
+
+    raise RequirementNotFound("Neither discord.py, py-cord, disnake, nor nextcord could be found")
 
 
 Bot, ApplicationContext, Member, User, Guild, VoiceChannel, VoiceProtocol, ClientUser = import_discord_types()
