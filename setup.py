@@ -30,6 +30,12 @@ classifiers = [
 ]
 
 extras_require = {
+    "pycord": [
+        "py-cord>=2.6.0",
+    ],
+    "discordpy": [
+        "discord.py>=2.6.0",
+    ],
     "docs": [
         "sphinx>=5.0.0",
         "sphinx-rtd-theme>=1.0.0",
@@ -57,7 +63,6 @@ install_requires = [
     "orjson>=3.8.0",
     "websockets>=10.0",
     "typing-extensions;python_version<'3.11'",
-    "py-cord>=2.0.0",
 ]
 
 packages = setuptools.find_packages(include=["lava_lyra", "lava_lyra.*"])
@@ -125,7 +130,7 @@ setuptools.setup(
     version=version,
     author="ParrotXray",
     author_email="",
-    description="A modern Lavalink v4 wrapper for py-cord, based on Pomice",
+    description="A modern Lavalink v4 wrapper supporting both py-cord and discord.py, based on Pomice",
     long_description=long_description,
     long_description_content_type=long_description_content_type,
     url="https://github.com/ParrotXray/lava-lyra",

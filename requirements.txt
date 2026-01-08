@@ -1,3 +1,5 @@
 aiohttp
 typing-extensions;python_version<"3.11"
-py-cord
+# Install one of the following:
+# py-cord>=2.6.0
+# discord.py>=2.6.0

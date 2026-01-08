@@ -41,6 +41,7 @@ pip install lava_lyra
 
 ### Basic Usage
 
+## Pycord Example
 ```python
 import discord
 import lava_lyra
@@ -61,7 +62,41 @@ class Bot(discord.Bot):
           password='youshallnotpass',
           identifier='MAIN',
           lyrics=False,
-          lavasearch=True,  # Enable LavaSearch plugin support
+          search=True,  # Enable LavaSearch plugin support
+          fallback=True,
+        )
+        print(f"Created node: {node.identifier}")
+
+bot = Bot()
+bot.run('your_bot_token')
+```
+
+## Discordpy
+```python
+import discord
+from discord.ext import commands
+import lava_lyra
+
+class Bot(commands.Bot):
+    def __init__(self):
+        super().__init__(
+            intents=discord.Intents.default(),
+            command_prefix='!'
+        )
+        self.node = None
+
+    async def on_ready(self):
+        print(f'Logged in as {self.user}')
+
+        # Create Lavalink nodes - much simpler than before!
+        node = await lava_lyra.NodePool.create_node(
+          bot=self,
+          host='localhost',
+          port=2333,
+          password='youshallnotpass',
+          identifier='MAIN',
+          lyrics=False,
+          search=True,  # Enable LavaSearch plugin support
           fallback=True,
         )
         print(f"Created node: {node.identifier}")
@@ -72,6 +107,7 @@ bot.run('your_bot_token')
 
 ### Playing Music
 
+## Pycord Example
 ```python
 @bot.slash_command(description="Play music")
 async def play(ctx, query: str):
@@ -93,6 +129,28 @@ async def play(ctx, query: str):
     await ctx.respond(f"Now playing: **{track.title}**")
 ```
 
+## Discordpy Example
+```python
+@bot.tree.command(description="Play music")
+async def play(interaction, query: str):
+    # Connect to voice channel
+    if not interaction.user.voice:
+        return await interaction.response.send_message("You need to be in a voice channel!")
+    
+    player = await ctx.author.voice.channel.connect(cls=lava_lyra.Player)
+    
+    # Search for tracks (supports Spotify, YouTube, Apple Music via plugins!)
+    results = await player.get_tracks(query)
+    
+    if not results:
+        return await interaction.response.send_message("No tracks found!")
+    
+    # Play the track
+    track = results[0]
+    await player.play(track)
+    await interaction.response.send_message(f"Now playing: **{track.title}**")
+```
+
 ### Advanced Search with LavaSearch
 
 LavaSearch plugin provides advanced search capabilities across tracks, albums, artists, playlists, and text suggestions.
@@ -110,6 +168,7 @@ node = await lava_lyra.NodePool.create_node(
 )
 ```
 
+## Pycord Example
 ```python
 @bot.slash_command(description="Search for music")
 async def search(ctx, query: str, platform: str = "youtube"):
@@ -170,6 +229,69 @@ async def search(ctx, query: str, platform: str = "youtube"):
             response.append(f"  - {text.text}")
 
     await ctx.respond("\n".join(response))
+```
+
+## Discordpy Example
+```python
+@bot.tree.command(description="Search for music")
+async def search(interaction, query: str, platform: str = "youtube"):
+    # Get the node
+    node = lava_lyra.NodePool.get_node()
+
+    # Map platform to search type
+    search_types = {
+        "youtube": lava_lyra.SearchType.ytsearch,
+        "spotify": lava_lyra.SearchType.spsearch,
+        "soundcloud": lava_lyra.SearchType.scsearch,
+        "apple_music": lava_lyra.SearchType.amsearch,
+    }
+
+    # Search for tracks, albums, artists, playlists, and text
+    result = await node.load_search(
+        query=query,
+        types=[
+            lava_lyra.LavaSearchType.TRACK,
+            lava_lyra.LavaSearchType.ALBUM,
+            lava_lyra.LavaSearchType.ARTIST,
+            lava_lyra.LavaSearchType.PLAYLIST,
+            lava_lyra.LavaSearchType.TEXT
+        ],
+        search_type=search_types.get(platform, lava_lyra.SearchType.ytsearch),
+        # ctx=ctx    # ctx in discord.py interaction could be "None"
+    )
+
+    if not result:
+        return await interaction.response.send_message("No results found!")
+
+    # Display results
+    response = [f"**Search results for '{query}' on {platform}:**\n"]
+
+    if result.tracks:
+        response.append(f"**Tracks ({len(result.tracks)}):**")
+        for track in result.tracks[:3]:  # Show first 3
+            response.append(f"  - {track.title} by {track.author}")
+
+    if result.albums:
+        response.append(f"\n**Albums ({len(result.albums)}):**")
+        for album in result.albums[:3]:
+            response.append(f"  - {album.name}")
+
+    if result.artists:
+        response.append(f"\n**Artists ({len(result.artists)}):**")
+        for artist in result.artists[:3]:
+            response.append(f"  - {artist.name}")
+
+    if result.playlists:
+        response.append(f"\n**Playlists ({len(result.playlists)}):**")
+        for playlist in result.playlists[:3]:
+            response.append(f"  - {playlist.name}")
+
+    if result.texts:
+        response.append(f"\n**Suggestions:**")
+        for text in result.texts[:5]:
+            response.append(f"  - {text.text}")
+
+    await interaction.response.send_message("\n".join(response))
 ```
 
 **Note:** The LavaSearch plugin must be installed on your Lavalink server for this feature to work. See the server setup section below.

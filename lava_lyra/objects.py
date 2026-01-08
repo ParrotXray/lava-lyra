@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 
-from discord import ApplicationContext, ClientUser, Member, User
-
+from .compat import ClientUserType, ContextType, MemberType, UserType
 from .enums import PlaylistType, SearchType, TrackType
 from .filters import Filter
 
@@ -46,12 +45,12 @@ class Track:
         *,
         track_id: str,
         info: dict,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ContextType] = None,
         track_type: TrackType,
         search_type: SearchType = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
         timestamp: Optional[float] = None,
-        requester: Optional[Union[Member, User, ClientUser]] = None,
+        requester: Optional[Union[MemberType, UserType, ClientUserType]] = None,
     ):
         self.track_id: str = track_id
         self.info: dict = info
@@ -82,8 +81,8 @@ class Track:
         self.is_seekable: bool = info.get("isSeekable", False)
         self.position: int = info.get("position", 0)
 
-        self.ctx: Optional[ApplicationContext] = ctx
-        self.requester: Optional[Union[Member, User, ClientUser]] = requester
+        self.ctx: Optional[ContextType] = ctx
+        self.requester: Optional[Union[MemberType, UserType, ClientUserType]] = requester
         if not self.requester and self.ctx:
             self.requester = self.ctx.author
 

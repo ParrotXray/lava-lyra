@@ -26,18 +26,20 @@ Licensed under GPL-3.0
 
 from typing import NamedTuple
 
-import discord
+# import discord
 
-if not discord.version_info.major >= 2:
+# ==Pass for both discord.py and pycord==
 
-    class DiscordPyOutdated(Exception):
-        pass
+# if not discord.version_info.major >= 2:
 
-    raise DiscordPyOutdated(
-        "You must have py-cord (v2.0 or greater) to use this library. "
-        "Uninstall your current version and install py-cord 2.0 "
-        "using 'pip install py-cord'",
-    )
+# class DiscordPyOutdated(Exception):
+# pass
+
+# raise DiscordPyOutdated(
+#     "You must have py-cord (v2.0 or greater) to use this library. "
+#     "Uninstall your current version and install py-cord 2.0 "
+#     "using 'pip install py-cord'",
+# )
 
 
 class _VersionInfo(NamedTuple):
@@ -48,8 +50,8 @@ class _VersionInfo(NamedTuple):
     serial: int
 
 
-__version__ = "1.5.3"
-__version_info__ = _VersionInfo(1, 5, 3, "final", 0)
+__version__ = "1.6.0"
+__version_info__ = _VersionInfo(1, 6, 0, "final", 0)
 
 version = __version__
 version_info = __version_info__

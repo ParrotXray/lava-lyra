@@ -43,10 +43,15 @@ dependencies = [
     "orjson>=3.8.0",
     "websockets>=10.0",
     "typing-extensions;python_version<'3.11'",
-    "py-cord>=2.0.0",
 ]
 
 [project.optional-dependencies]
+pycord = [
+    "py-cord>=2.6.0",
+]
+discordpy = [
+    "discord.py>=2.6.0",
+]
 docs = [
     "sphinx>=5.0.0",
     "sphinx-rtd-theme>=1.0.0",
