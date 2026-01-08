@@ -1,0 +1,120 @@
+name: Auto Format Code
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    # branches: [ main, develop ]
+  workflow_dispatch: 
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install black isort flake8
+
+    - name: Run black formatter
+      run: |
+        black lava_lyra
+        echo "Black formatting completed"
+
+    - name: Run isort import sorter
+      run: |
+        isort lava_lyra
+        echo "Import sorting completed"
+
+    - name: Check for changes
+      id: verify-changed-files
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "Files were changed by formatting"
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+          echo "No files were changed by formatting"
+        fi
+
+    - name: Format check with black
+      run: |
+        echo "Checking code formatting with black..."
+        black --check lava_lyra
+
+    - name: Import sorting check with isort
+      run: |
+        echo "Checking import sorting with isort..."
+        isort --check-only lava_lyra
+
+    - name: Lint with flake8
+      run: |
+        echo "Running flake8 syntax checks..."
+        flake8 lava_lyra --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 lava_lyra --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Verify code quality after formatting
+      run: |
+        echo "All checks passed! Code is ready for commit."
+
+    - name: Commit changes
+      if: steps.verify-changed-files.outputs.changed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        git commit -m "Auto-format code with black and isort"
+
+    - name: Push changes
+      if: steps.verify-changed-files.outputs.changed == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.head_ref || github.ref_name }}
+
+    - name: Comment on PR
+      if: steps.verify-changed-files.outputs.changed == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: 'Code has been automatically formatted! All format checks passed. Please pull the latest changes.'
+          })
+
+    - name: Comment on PR if no changes
+      if: steps.verify-changed-files.outputs.changed == 'false' && github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: 'Code formatting check completed! No formatting changes needed. All format checks passed.'
+          })
