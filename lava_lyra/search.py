@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, List, Optional
 from urllib.parse import quote
 
 from .compat import ContextType
-
 from .enums import LavaSearchType, PlaylistType, SearchType, TrackType, URLRegex
 from .exceptions import NodeRestException, TrackLoadError
 from .objects import Playlist, Track

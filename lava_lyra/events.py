@@ -3,11 +3,10 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
-
+from .compat import BotType, GuildType
 from .enums import MixEndReason
 from .lyrics import LyricLine, Lyrics
 from .objects import Track
-from .compat import BotType, GuildType
 
 if TYPE_CHECKING:
     from .player import Player
@@ -48,7 +47,7 @@ class LyraEvent(ABC):
     @bot.listen
     async def on_lyra_track_start(self, event):
         pass
-    
+
     # Example for discord.py
     @bot.event
     async def on_lyra_track_start(event):

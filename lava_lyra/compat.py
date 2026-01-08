@@ -1,6 +1,7 @@
 """
 Compatibility layer for py-cord and discord.py
 """
+
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version
@@ -9,9 +10,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     import discord
 except ImportError:
-    raise ImportError(
-        "You must have either py-cord or discord.py installed to use this library."
-    )
+    raise ImportError("You must have either py-cord or discord.py installed to use this library.")
 
 # Detect which library is being used
 try:
@@ -28,15 +27,13 @@ except PackageNotFoundError:
             "You must have either py-cord or discord.py installed to use this library."
         )
 
-from discord import (
-    ClientUser as ClientUserType,
-    Guild as GuildType,
-    Interaction as InteractionType,
-    Member as MemberType,
-    User as UserType,
-    VoiceChannel as VoiceChannelType,
-    VoiceProtocol as VoiceProtocolType,
-)
+from discord import ClientUser as ClientUserType
+from discord import Guild as GuildType
+from discord import Interaction as InteractionType
+from discord import Member as MemberType
+from discord import User as UserType
+from discord import VoiceChannel as VoiceChannelType
+from discord import VoiceProtocol as VoiceProtocolType
 
 if IS_PYCORD:
     from discord import ApplicationContext as ContextType

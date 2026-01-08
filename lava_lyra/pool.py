@@ -12,12 +12,12 @@ from urllib.parse import quote
 
 import aiohttp
 import orjson as json
-from .compat import ContextType, BotType
 from discord.utils import MISSING
 from websockets import client, exceptions
 from websockets import typing as wstype
 
 from . import __version__
+from .compat import BotType, ContextType
 from .enums import *
 from .enums import LogLevel
 from .events import NodeConnectedEvent, NodeDisconnectedEvent, NodeReconnectingEvent

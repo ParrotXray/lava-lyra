@@ -2,13 +2,9 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 
+from .compat import ClientUserType, ContextType, MemberType, UserType
 from .enums import PlaylistType, SearchType, TrackType
 from .filters import Filter
-
-from .compat import ContextType, ClientUserType, MemberType, UserType
-
-
-
 
 __all__ = (
     "Track",

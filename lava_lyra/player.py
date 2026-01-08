@@ -4,9 +4,8 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-from .compat import ContextType, BotType, GuildType, VoiceChannelType, VoiceProtocolType
-
 from . import events
+from .compat import BotType, ContextType, GuildType, VoiceChannelType, VoiceProtocolType
 from .enums import SearchType
 from .events import LyraEvent, TrackEndEvent, TrackStartEvent
 from .exceptions import (
