@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     BotType = "DiscordPyBot" | "PycordBot" | "DisnakeBot"
     ContextType = "DiscordPyContext" | "PycordContext" | "DisnakeContext"
     MemberType = "DiscordPyMember" | "PycordMember" | "DisnakeMember"
-    UserType = "DiscordPyUser" | "PycordUser" | "DisnakeUser
+    UserType = "DiscordPyUser" | "PycordUser" | "DisnakeUser"
     GuildType = "DiscordPyGuild" | "PycordGuild" | "DisnakeGuild"
     ClientUserType = BotType
 
