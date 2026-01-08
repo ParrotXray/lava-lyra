@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Optional, Tuple
 from .enums import MixEndReason
 from .lyrics import LyricLine, Lyrics
 from .objects import Track
-from .checker import Bot, Guild
+from .compat import BotType, GuildType
 
 if TYPE_CHECKING:
     from .player import Player
@@ -59,7 +59,7 @@ class LyraEvent(ABC):
     name = "event"
     handler_args: Tuple
 
-    def dispatch(self, bot: Bot) -> None:
+    def dispatch(self, bot: BotType) -> None:
         bot.dispatch(f"lyra_{self.name}", *self.handler_args)
 
 
@@ -163,15 +163,15 @@ class TrackExceptionEvent(LyraEvent):
 class WebSocketClosedPayload:
     __slots__ = ("code", "reason", "by_remote", "_guild_id", "_bot")
 
-    def __init__(self, data: dict, bot: Optional[Bot] = None):
-        self._bot: Optional[Bot] = bot
+    def __init__(self, data: dict, bot: Optional[BotType] = None):
+        self._bot: Optional[BotType] = bot
         self._guild_id: int = int(data["guildId"])
         self.code: int = data["code"]
         self.reason: str = data["reason"]
         self.by_remote: bool = data["byRemote"]
 
     @property
-    def guild(self) -> Optional[Guild]:
+    def guild(self) -> Optional[GuildType]:
         """Returns the guild associated with this event.
         Lazily fetches the guild to avoid circular imports.
         """

@@ -12,7 +12,7 @@ from urllib.parse import quote
 
 import aiohttp
 import orjson as json
-from .checker import ApplicationContext, Bot
+from .compat import ContextType, BotType
 from discord.utils import MISSING
 from websockets import client, exceptions
 from websockets import typing as wstype
@@ -108,7 +108,7 @@ class Node:
         self,
         *,
         pool: Type[NodePool],
-        bot: Bot,
+        bot: BotType,
         host: str,
         port: int,
         password: str,
@@ -132,7 +132,7 @@ class Node:
         if not isinstance(port, int):
             raise TypeError("Port must be an integer")
 
-        self._bot: Bot = bot
+        self._bot: BotType = bot
         self._host: str = host
         self._port: int = port
         self._pool: Type[NodePool] = pool
@@ -208,7 +208,7 @@ class Node:
         return self._players
 
     @property
-    def bot(self) -> Bot:
+    def bot(self) -> BotType:
         """Property which returns the py-cord client linked to this node"""
         return self._bot
 
@@ -736,7 +736,7 @@ class Node:
                 f"Successfully disconnected from node {self._identifier} and closed all sessions. Took {end - start:.3f}s",
             )
 
-    async def build_track(self, identifier: str, ctx: Optional[ApplicationContext] = None) -> Track:
+    async def build_track(self, identifier: str, ctx: Optional[ContextType] = None) -> Track:
         """
         Builds a track using a valid track identifier
 
@@ -767,7 +767,7 @@ class Node:
         self,
         query: str,
         *,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ContextType] = None,
         search_type: Optional[SearchType] = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
     ) -> Optional[Union[Playlist, List[Track]]]:
@@ -945,7 +945,7 @@ class Node:
         self,
         *,
         track: Track,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ContextType] = None,
     ) -> Optional[Union[List[Track], Playlist]]:
         """
         Gets recommendations for a track.
@@ -989,7 +989,7 @@ class Node:
         query: str,
         types: List[LavaSearchType],
         search_type: Optional[SearchType] = None,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ContextType] = None,
     ):
         """
         Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.
@@ -1116,7 +1116,7 @@ class NodePool:
     async def create_node(
         cls,
         *,
-        bot: Bot,
+        bot: BotType,
         host: str,
         port: int,
         password: str,

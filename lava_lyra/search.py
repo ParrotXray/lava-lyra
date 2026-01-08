@@ -4,7 +4,7 @@ import re
 from typing import TYPE_CHECKING, List, Optional
 from urllib.parse import quote
 
-from .checker import ApplicationContext
+from .compat import ContextType
 
 from .enums import LavaSearchType, PlaylistType, SearchType, TrackType, URLRegex
 from .exceptions import NodeRestException, TrackLoadError
@@ -99,7 +99,7 @@ class SearchManager:
         query: str,
         types: List[LavaSearchType],
         search_type: Optional[SearchType] = None,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ContextType] = None,
     ) -> Optional[SearchResult]:
         """
         Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.
