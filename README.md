@@ -4,8 +4,9 @@
 [![downloads](https://img.shields.io/pypi/dm/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
 [![Python](https://img.shields.io/pypi/pyversions/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
 [![License](https://img.shields.io/github/license/ParrotXray/lava-lyra.svg)](https://github.com/ParrotXray/Lyra/blob/main/LICENSE)
+![Discord](https://img.shields.io/badge/Discord-7289DA.svg?logo=discord&logoColor=white)
 
-A modern Lavalink v4 wrapper designed for py-cord, based on the excellent [Pomice](https://github.com/cloudwithax/pomice) library by cloudwithax.
+A modern Lavalink v4 wrapper designed for both py-cord and discord.py, based on the excellent [Pomice](https://github.com/cloudwithax/pomice) library by cloudwithax.
 
 ## What's New in Lyra
 
@@ -39,9 +40,9 @@ Lyra is a complete refactor of Pomice for **Lavalink v4.X or NodeLink v3.X**, br
 pip install lava_lyra
 ```
 
-### Basic Usage
+## Basic Usage
 
-## Pycord Example
+### Pycord Example
 ```python
 import discord
 import lava_lyra
@@ -71,7 +72,7 @@ bot = Bot()
 bot.run('your_bot_token')
 ```
 
-## Discordpy Example
+### Discordpy Example
 ```python
 import discord
 from discord.ext import commands
@@ -105,9 +106,9 @@ bot = Bot()
 bot.run('your_bot_token')
 ```
 
-### Playing Music
+## Playing Music
 
-## Pycord Example
+### Pycord Example
 ```python
 @bot.slash_command(description="Play music")
 async def play(ctx, query: str):
@@ -129,7 +130,7 @@ async def play(ctx, query: str):
     await ctx.respond(f"Now playing: **{track.title}**")
 ```
 
-## Discordpy Example
+### Discordpy Example
 ```python
 @bot.tree.command(description="Play music")
 async def play(interaction, query: str):
@@ -151,7 +152,34 @@ async def play(interaction, query: str):
     await interaction.response.send_message(f"Now playing: **{track.title}**")
 ```
 
-### Advanced Search with LavaSearch
+## Event Listener
+
+### Pycord Example
+ ```python
+    @bot.listen
+    async def on_lyra_track_start(self, event):
+        pass
+```
+
+### Discordpy Example
+```python
+    @bot.event
+    async def on_lyra_track_start(event):
+        pass
+```
+
+### Cog Listener(Discordpy/Pycord)
+```python
+class ListenerCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_lyra_track_start(self, event):
+        pass
+```
+
+## Advanced Search with LavaSearch
 
 LavaSearch plugin provides advanced search capabilities across tracks, albums, artists, playlists, and text suggestions.
 
@@ -168,7 +196,7 @@ node = await lava_lyra.NodePool.create_node(
 )
 ```
 
-## Pycord Example
+### Pycord Example
 ```python
 @bot.slash_command(description="Search for music")
 async def search(ctx, query: str, platform: str = "youtube"):
@@ -231,7 +259,7 @@ async def search(ctx, query: str, platform: str = "youtube"):
     await ctx.respond("\n".join(response))
 ```
 
-## Discordpy Example
+### Discordpy Example
 ```python
 @bot.tree.command(description="Search for music")
 async def search(interaction, query: str, platform: str = "youtube"):
@@ -448,7 +476,8 @@ We extend our heartfelt thanks to **cloudwithax** and all Pomice contributors fo
 
 ### Key Contributors
 - **cloudwithax** - Original Pomice library creator
-- **ParrotXray** - Lavalink v4 refactoring and Lyra development  
+- **ParrotXray** - Lavalink v4 refactoring and Lyra development
+- **littlecommandcat** - Lyra refactoring  
 - **Community contributors** - Bug reports, features, and improvements
 
 ## Star History
