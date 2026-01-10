@@ -49,12 +49,12 @@ class Track:
         *,
         track_id: str,
         info: dict,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ApplicationContext] = None,  # type: ignore
         track_type: TrackType,
         search_type: SearchType = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
         timestamp: Optional[float] = None,
-        requester: Optional[Union[Member, User, ClientUser]] = None,
+        requester: Optional[Union[Member, User, ClientUser]] = None,  # type: ignore
     ):
         self.track_id: str = track_id
         self.info: dict = info
@@ -85,8 +85,8 @@ class Track:
         self.is_seekable: bool = info.get("isSeekable", False)
         self.position: int = info.get("position", 0)
 
-        self.ctx: Optional[ApplicationContext] = ctx
-        self.requester: Optional[Union[Member, User, ClientUser]] = requester
+        self.ctx: Optional[ApplicationContext] = ctx  # type: ignore
+        self.requester: Optional[Union[Member, User, ClientUser]] = requester  # type: ignore
         if not self.requester and self.ctx:
             self.requester = self.ctx.author
 

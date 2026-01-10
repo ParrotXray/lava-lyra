@@ -101,14 +101,14 @@ class Node:
         "_health_monitor",
         "_connect_timeout",
         "_total_timeout",
-        "available",
+        "_available",
     )
 
     def __init__(
         self,
         *,
         pool: Type[NodePool],
-        bot: Bot,
+        bot: Bot,  # type: ignore
         host: str,
         port: int,
         password: str,
@@ -132,7 +132,7 @@ class Node:
         if not isinstance(port, int):
             raise TypeError("Port must be an integer")
 
-        self._bot: Bot = bot
+        self._bot: Bot = bot  # type: ignore
         self._host: str = host
         self._port: int = port
         self._pool: Type[NodePool] = pool
@@ -208,7 +208,7 @@ class Node:
         return self._players
 
     @property
-    def bot(self) -> Bot:
+    def bot(self) -> Bot:  # type: ignore
         """Property which returns the py-cord client linked to this node"""
         return self._bot
 
@@ -722,7 +722,7 @@ class Node:
             self._log.debug("Websocket and http session closed.")
 
         del self._pool._nodes[self._identifier]
-        self.available = False
+        self._available = False
         self._task.cancel()
 
         end = time.perf_counter()
@@ -731,7 +731,7 @@ class Node:
                 f"Successfully disconnected from node {self._identifier} and closed all sessions. Took {end - start:.3f}s",
             )
 
-    async def build_track(self, identifier: str, ctx: Optional[ApplicationContext] = None) -> Track:
+    async def build_track(self, identifier: str, ctx: Optional[ApplicationContext] = None) -> Track:  # type: ignore
         """
         Builds a track using a valid track identifier
 
@@ -762,7 +762,7 @@ class Node:
         self,
         query: str,
         *,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ApplicationContext] = None,  # type: ignore
         search_type: Optional[SearchType] = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
     ) -> Optional[Union[Playlist, List[Track]]]:
@@ -940,7 +940,7 @@ class Node:
         self,
         *,
         track: Track,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ApplicationContext] = None,  # type: ignore
     ) -> Optional[Union[List[Track], Playlist]]:
         """
         Gets recommendations for a track.
@@ -984,7 +984,7 @@ class Node:
         query: str,
         types: List[LavaSearchType],
         search_type: Optional[SearchType] = None,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ApplicationContext] = None,  # type: ignore
     ):
         """
         Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.
@@ -1111,7 +1111,7 @@ class NodePool:
     async def create_node(
         cls,
         *,
-        bot: Bot,
+        bot: Bot,  # type: ignore
         host: str,
         port: int,
         password: str,

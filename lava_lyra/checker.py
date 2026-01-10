@@ -1,3 +1,4 @@
+# type: ignore
 from importlib.metadata import PackageNotFoundError, version
 from typing import TYPE_CHECKING
 from .exceptions import RequirementNotFound
@@ -69,7 +70,7 @@ class PackageRequirement:
             return False
 
 
-def import_discord_types():
+def import_discord_types() -> tuple:
     if PackageRequirement.is_discordpy():
         try:
             from discord.ext.commands import Bot, Context

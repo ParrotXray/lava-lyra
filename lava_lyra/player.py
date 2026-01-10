@@ -148,7 +148,7 @@ class Player(VoiceProtocol):
         "_lyrics_manager",
     )
 
-    def __call__(self, client: Bot, channel: VoiceChannel) -> Player:
+    def __call__(self, client: Bot, channel: VoiceChannel) -> Player:  # type: ignore
         self.client = client
         self.channel = channel
         self._guild = channel.guild
@@ -157,16 +157,16 @@ class Player(VoiceProtocol):
 
     def __init__(
         self,
-        client: Bot,
-        channel: VoiceChannel,
+        client: Bot,  # type: ignore
+        channel: VoiceChannel,  # type: ignore
         *,
         node: Optional[Node] = None,
     ) -> None:
-        self.client: Bot = client
-        self.channel: VoiceChannel = channel
+        self.client: Bot = client  # type: ignore
+        self.channel: VoiceChannel = channel  # type: ignore
         self._guild = channel.guild
 
-        self._bot: Bot = client
+        self._bot: Bot = client  # type: ignore
         self._node: Node = node if node else NodePool.get_node()
         self._lyrics_manager = LyricsManager(self)
         self._current: Optional[Track] = None
@@ -254,7 +254,7 @@ class Player(VoiceProtocol):
         return self._node
 
     @property
-    def guild(self) -> Guild:
+    def guild(self) -> Guild:  # type: ignore
         """Property which returns the guild associated with the player"""
         return self._guild
 
@@ -269,7 +269,7 @@ class Player(VoiceProtocol):
         return self._filters
 
     @property
-    def bot(self) -> Bot:
+    def bot(self) -> Bot:  # type: ignore
         """Property which returns the bot associated with this player instance"""
         return self._bot
 
@@ -461,7 +461,7 @@ class Player(VoiceProtocol):
         self,
         query: str,
         *,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ApplicationContext] = None,  # type: ignore
         search_type: SearchType | None = SearchType.ytsearch,
         filters: Optional[List[Filter]] = None,
     ) -> Optional[Union[List[Track], Playlist]]:
@@ -479,7 +479,7 @@ class Player(VoiceProtocol):
         """
         return await self._node.get_tracks(query, ctx=ctx, search_type=search_type, filters=filters)
 
-    async def build_track(self, identifier: str, ctx: Optional[ApplicationContext] = None) -> Track:
+    async def build_track(self, identifier: str, ctx: Optional[ApplicationContext] = None) -> Track:  # type: ignore
         """
         Builds a track using a valid track identifier
 
@@ -493,7 +493,7 @@ class Player(VoiceProtocol):
         self,
         *,
         track: Track,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ApplicationContext] = None,  # type: ignore
     ) -> Optional[Union[List[Track], Playlist]]:
         """
         Gets recommendations from either YouTube or Spotify.
@@ -767,7 +767,7 @@ class Player(VoiceProtocol):
             self._log.debug(f"Player volume has been adjusted to {volume}")
         return self._volume
 
-    async def move_to(self, channel: VoiceChannel) -> None:
+    async def move_to(self, channel: VoiceChannel) -> None:  # type: ignore
         """Moves the player to a new voice channel."""
 
         await self.guild.change_voice_state(channel=channel)

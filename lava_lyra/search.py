@@ -99,7 +99,7 @@ class SearchManager:
         query: str,
         types: List[LavaSearchType],
         search_type: Optional[SearchType] = None,
-        ctx: Optional[ApplicationContext] = None,
+        ctx: Optional[ApplicationContext] = None,  # type: ignore
     ) -> Optional[SearchResult]:
         """
         Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.

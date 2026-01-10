@@ -11,7 +11,7 @@ license = {text = "GPL-3.0"}
 authors = [
     {name = "ParrotXray"},
 ]
-keywords = ["discord", "lavalink", "py-cord", "discord.py", "music", "audio", "lavalink4", "voice", "streaming"]
+keywords = ["discord", "lavalink", "py-cord", "discord.py", "nextcord", "disnake", "music", "audio", "lavalink4", "voice", "streaming"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: AsyncIO",

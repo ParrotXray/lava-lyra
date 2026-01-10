@@ -31,6 +31,11 @@ __all__ = (
     "PlayerCreatedEvent",
     "VolumeChangedEvent",
     "PlayerConnectedEvent",
+    "PlayerDestroyedEvent",
+    "PlayerErrorEvent",
+    "PlayerMovedEvent",
+    "PlayerPausedEvent",
+    "PlayerResumedEvent",
     "FiltersChangedEvent",
     "PauseEvent",
     "SeekEvent",
@@ -59,7 +64,7 @@ class LyraEvent(ABC):
     name = "event"
     handler_args: Tuple
 
-    def dispatch(self, bot: Bot) -> None:
+    def dispatch(self, bot: Bot) -> None:  # type: ignore
         bot.dispatch(f"lyra_{self.name}", *self.handler_args)
 
 
@@ -163,15 +168,15 @@ class TrackExceptionEvent(LyraEvent):
 class WebSocketClosedPayload:
     __slots__ = ("code", "reason", "by_remote", "_guild_id", "_bot")
 
-    def __init__(self, data: dict, bot: Optional[Bot] = None):
-        self._bot: Optional[Bot] = bot
+    def __init__(self, data: dict, bot: Optional[Bot] = None):  # type: ignore
+        self._bot: Optional[Bot] = bot  # type: ignore
         self._guild_id: int = int(data["guildId"])
         self.code: int = data["code"]
         self.reason: str = data["reason"]
         self.by_remote: bool = data["byRemote"]
 
     @property
-    def guild(self) -> Optional[Guild]:
+    def guild(self) -> Optional[Guild]:  # type: ignore
         """Returns the guild associated with this event.
         Lazily fetches the guild to avoid circular imports.
         """
@@ -405,6 +410,87 @@ class PlayerConnectedEvent(LyraEvent):
 
     def __repr__(self) -> str:
         return f"<Lyra.PlayerConnectedEvent player={self.player!r} voice={self.voice!r}>"
+
+
+class PlayerDestroyedEvent(LyraEvent):
+    """Emitted when the player is destroyed."""
+
+    name = "player_destroyed"
+
+    __slots__ = ("player", "reason")
+
+    def __init__(self, reason: str, player: Player):
+        self.player = player
+        self.reason = reason
+        self.handler_args = self.player, self.reason
+
+    def __repr__(self) -> str:
+        return f"<Lyra.PlayerDestroyedEvent player={self.player!r} reason={self.reason!r}>"
+
+
+class PlayerErrorEvent(LyraEvent):
+    """Emitted when the player encounters an error."""
+
+    name = "player_error"
+
+    __slots__ = ("player", "error")
+
+    def __init__(self, error: Exception, player: Player):
+        self.player = player
+        self.error = error
+        self.handler_args = self.player, self.error
+
+    def __repr__(self) -> str:
+        return f"<Lyra.PlayerErrorEvent player={self.player!r} error={self.error!r}>"
+
+
+class PlayerMovedEvent(LyraEvent):
+    """Emitted when the player moves to another voice channel."""
+
+    name = "player_moved"
+
+    __slots__ = ("player", "old_channel", "new_channel")
+
+    def __init__(self, old_channel, new_channel, player: Player):
+        self.player = player
+        self.old_channel = old_channel
+        self.new_channel = new_channel
+        self.handler_args = self.player, self.old_channel, self.new_channel
+
+    def __repr__(self) -> str:
+        return f"<Lyra.PlayerMovedEvent player={self.player!r} old={self.old_channel!r} new={self.new_channel!r}>"
+
+
+class PlayerPausedEvent(LyraEvent):
+    """Emitted when the player is paused."""
+
+    name = "player_paused"
+
+    __slots__ = ("player", "reason")
+
+    def __init__(self, reason: str, player: Player):
+        self.player = player
+        self.reason = reason
+        self.handler_args = self.player, self.reason
+
+    def __repr__(self) -> str:
+        return f"<Lyra.PlayerPausedEvent player={self.player!r} reason={self.reason!r}>"
+
+
+class PlayerResumedEvent(LyraEvent):
+    """Emitted when the player is resumed."""
+
+    name = "player_resumed"
+
+    __slots__ = ("player", "reason")
+
+    def __init__(self, reason: str, player: Player):
+        self.player = player
+        self.reason = reason
+        self.handler_args = self.player, self.reason
+
+    def __repr__(self) -> str:
+        return f"<Lyra.PlayerResumedEvent player={self.player!r} reason={self.reason!r}>"
 
 
 class FiltersChangedEvent(LyraEvent):

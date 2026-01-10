@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/github/license/ParrotXray/lava-lyra.svg)](https://github.com/ParrotXray/Lyra/blob/main/LICENSE)
 ![Discord](https://img.shields.io/badge/Discord-7289DA.svg?logo=discord&logoColor=white)
 
-A modern Lavalink v4 wrapper designed for both py-cord and discord.py, based on the excellent [Pomice](https://github.com/cloudwithax/pomice) library by cloudwithax.
+A modern Lavalink v4 wrapper designed for py-cord, discord.py, disnake, nextcord.Based on the excellent [Pomice](https://github.com/cloudwithax/pomice) library by cloudwithax.
 
 ## What's New in Lyra
 
@@ -20,13 +20,13 @@ Lyra is a complete refactor of Pomice for **Lavalink v4.X or NodeLink v3.X**, br
 - **Both for py-cord and discord.py**
 - **Improved documentation** and examples
 
-## Key Differences from Pomice
+## Key Differences from Pomice and Wavelink
 
 | Feature | Pomice (v2.x) | Lyra (v1.x) | Wavelink (v3.x) |
 |---------|---------------|-------------|-----------------|
 | Lavalink Support | v3.x & v4.x | **v4.x** | v4.x |
 | Nodelink Support | Unknown | **v3.x** | Unknown |
-| Discord Library | discord.py | **py-cord** | discord.py |
+| Discord Library | discord.py | **py-cord / discord.py / disnake / nextcord** | discord.py |
 | Spotify Support | Client-side API | **Server plugin** | Client-side API |
 | Apple Music Support | Client-side API | **Server plugin** | Client-side API |
 | Setup Complexity | API keys required | **Plugin configuration only** | API keys required |
@@ -138,7 +138,7 @@ async def play(interaction, query: str):
     if not interaction.user.voice:
         return await interaction.response.send_message("You need to be in a voice channel!")
     
-    player = await ctx.author.voice.channel.connect(cls=lava_lyra.Player)
+    player = await interaction.user.voice.channel.connect(cls=lava_lyra.Player)
     
     # Search for tracks (supports Spotify, YouTube, Apple Music via plugins!)
     results = await player.get_tracks(query)
@@ -477,7 +477,7 @@ We extend our heartfelt thanks to **cloudwithax** and all Pomice contributors fo
 ### Key Contributors
 - **cloudwithax** - Original Pomice library creator
 - **ParrotXray** - Lavalink v4 refactoring and Lyra development
-- **littlecommandcat** - Lyra refactoring  
+- **littlecommandcat** - Refactoring and contributions across multiple Discord libraries  
 - **Community contributors** - Bug reports, features, and improvements
 
 ## Star History
