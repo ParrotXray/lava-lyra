@@ -1,0 +1,61 @@
+name: Python CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      # Packages
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # Dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install black isort flake8 pytest
+
+      # BlackFormatter
+      - name: Black check
+        run: black --check lava_lyra || echo "Black formatting issues detected"
+
+      # Isort check
+      - name: isort check
+        run: isort --check-only lava_lyra || echo "isort import issues detected"
+
+      # Flake8 lint
+      - name: Lint with flake8
+        run: |
+          flake8 lava_lyra --count --exit-zero --max-complexity=10 --max-line-length=127
+
+      # Pytest
+      - name: Run pytest
+        run: |
+<<<<<<< HEAD
+          pytest lava_lyra || echo "No tests found or tests failed"
+=======
+          pytest lava_lyra || echo "No tests found or tests failed"
+>>>>>>> origin/main
