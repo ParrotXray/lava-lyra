@@ -1,6 +1,6 @@
 aiohttp>=3.13.0
 typing-extensions;python_version<"3.11"
-zstandard>=3.13.0
+zstandard>=0.25.0
 # Install one of the following:
 # py-cord>=2.6.0
 # discord.py>=2.6.0
