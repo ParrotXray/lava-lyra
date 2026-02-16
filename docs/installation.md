@@ -17,13 +17,55 @@ A minimal `application.yml` for Lavalink v4:
 ```yaml
 server:
   port: 2333
-  address: 0.0.0.0
+  address: 127.0.0.1
+
 lavalink:
+  plugins:
+    # Required for YouTube support
+    - dependency: "dev.lavalink.youtube:youtube-plugin:VERSION"
+    - repository: "https://maven.lavalink.dev/releases"
+
+    # Required for Spotify, Apple Music, Deezer, etc.
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:VERSION"
+      repository: "https://maven.lavalink.dev/releases"
+
+    # Optional: LavaSearch for advanced search functionality
+    - dependency: "com.github.topi314.lavasearch:lavasearch-plugin:VERSION"
+      repository: "https://maven.lavalink.dev/releases"
+
   server:
     password: "youshallnotpass"
+
+plugins:
+  youtube:
+    enabled: true
+    allowSearch: true
+
+  lavasrc:
     sources:
-      youtube: true
-      soundcloud: true
+      spotify: true
+      applemusic: true
+      deezer: true
+    
+    spotify:
+      clientId: ""
+      clientSecret: ""
+      spDc: ""
+      countryCode: "US"      
+      customTokenEndpoint: "http://localhost:8080/api/token"
+
+    applemusic:
+      countryCode: "US"
+
+      # The following settings, manually input or empty to get a token automatically
+      mediaAPIToken: "your apple music api token" # apple music api token
+      # or specify an apple music key
+      keyID: "your key id"
+      teamID: "your team id"
+      musicKitKey: |
+        -----BEGIN PRIVATE KEY-----
+        your key
+        -----END PRIVATE KEY-----
 ```
 
 For extended platform support (Spotify, Apple Music, Deezer, etc.) install the
