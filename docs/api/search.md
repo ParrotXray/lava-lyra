@@ -1,8 +1,8 @@
 ```{eval-rst}
-Utils
--------------------
+Search
+--------------------
 
-.. automodule:: lava_lyra.utils
+.. automodule:: lava_lyra.search
    :members:
    :undoc-members:
    :show-inheritance:

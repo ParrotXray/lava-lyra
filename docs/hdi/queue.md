@@ -1,13 +1,13 @@
 # Use the Queue class
 
-Pomice has an optional queue system that works seamlessly with the library. This queue system introduce quality-of-life features that every music application should ideally have like queue shuffling, queue jumping, and looping.
+Lyra has an optional queue system that works seamlessly with the library. This queue system introduce quality-of-life features that every music application should ideally have like queue shuffling, queue jumping, and looping.
 
 
-To use the queue system with Pomice, you must first subclass the `Player` class within your application like so:
+To use the queue system with Lyra, you must first subclass the `Player` class within your application like so:
 
 ```py
 
-from pomice import Player
+from lava_lyra import Player
 
 class CustomPlayer(Player):
     ...
@@ -18,7 +18,7 @@ After you have initialized your subclass, you can add a `queue` variable to your
 
 ```py
 
-from pomice import Player, Queue
+from lava_lyra import Player, Queue
 
 class CustomPlayer(Player):
     ...

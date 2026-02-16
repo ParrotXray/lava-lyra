@@ -1,10 +1,9 @@
 # Quick Jumpstart
 
-
-If you want a quick example as to how to start with Pomice, look below:
+If you want a quick example on how to get started with Lyra, look below:
 
 ```py
-import pomice
+import lava_lyra
 import discord
 import re
 
@@ -33,31 +32,31 @@ class Music(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-        self.pomice = pomice.NodePool()
+        self.pool = lava_lyra.NodePool()
 
     async def start_nodes(self):
-        await self.pomice.create_node(
+        await self.pool.create_node(
             bot=self.bot,
             host="127.0.0.1",
-            port="3030",
+            port=2333,
             password="youshallnotpass",
             identifier="MAIN",
         )
-        print(f"Node is ready!")
+        print("Node is ready!")
 
     @commands.command(name="join", aliases=["connect"])
     async def join(
-        self, ctx: commands.Context, *, channel: discord.TextChannel = None
+        self, ctx: commands.Context, *, channel: discord.VoiceChannel = None
     ) -> None:
         if not channel:
             channel = getattr(ctx.author.voice, "channel", None)
             if not channel:
                 raise commands.CheckFailure(
-                    "You must be in a voice channel to use this command"
+                    "You must be in a voice channel to use this command "
                     "without specifying the channel argument."
                 )
 
-        await ctx.author.voice.channel.connect(cls=pomice.Player)
+        await ctx.author.voice.channel.connect(cls=lava_lyra.Player)
         await ctx.send(f"Joined the voice channel `{channel}`")
 
     @commands.command(name="play")
@@ -72,7 +71,7 @@ class Music(commands.Cog):
         if not results:
             raise commands.CommandError("No results were found for that search term.")
 
-        if isinstance(results, pomice.Playlist):
+        if isinstance(results, lava_lyra.Playlist):
             await player.play(track=results.tracks[0])
         else:
             await player.play(track=results[0])
@@ -81,3 +80,9 @@ class Music(commands.Cog):
 bot = MyBot()
 bot.run("token here")
 ```
+
+:::{note}
+Platform support (Spotify, Apple Music, etc.) is handled entirely by your Lavalink
+server's plugins. No API credentials are needed in Lyra itself — configure them in
+your `application.yml` instead.
+:::

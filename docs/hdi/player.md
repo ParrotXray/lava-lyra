@@ -1,6 +1,6 @@
 # Use the Player class
 
-The `Player` class is the class you will be interacting with the most within Pomice.
+The `Player` class is the class you will be interacting with the most within Lyra.
 
 The `Player` class has a couple functions you will be using frequently:
 
@@ -137,10 +137,10 @@ await Player.get_tracks(
 
 ```
 
-:::{important}
+:::{note}
 
-All querying of Spotify and Apple Music tracks or playlists is handled in this function if you enabled that functionality when creating your node.
-If you want to enable it, refer to [](pool.md#adding-a-node)
+Platform support (Spotify, Apple Music, etc.) is resolved by your Lavalink server's plugins.
+No credentials are needed on the client side — configure them in your `application.yml` instead.
 
 :::
 
@@ -384,7 +384,7 @@ After running this function, your player should be in the new voice channel. All
 
 ## Controlling filters
 
-Pomice has an extensive suite of filter management tools to help you make the most of Lavalink and it's filters.
+Lyra has an extensive suite of filter management tools to help you make the most of Lavalink and it's filters.
 
 Here are some of the functions you will be using to control filters:
 

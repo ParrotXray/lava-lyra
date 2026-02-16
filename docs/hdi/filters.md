@@ -1,11 +1,11 @@
 # Use the Filter class
 
-Pomice takes full advantage of the Lavalink filter system by using a unique system to apply filters on top of one another. We call this system "filter stacking". With this system, we can stack any filter on top of one another to produce one-of-a-kind audio effects on playback while still being able to easily manage each filters.
+Lyra takes full advantage of the Lavalink filter system by using a unique system to apply filters on top of one another. We call this system "filter stacking". With this system, we can stack any filter on top of one another to produce one-of-a-kind audio effects on playback while still being able to easily manage each filters.
 
 
 ## Types of filters
 
-Lavalink, and by extension, Pomice, has different types of filters you can use.
+Lavalink, and by extension, Lyra, has different types of filters you can use.
 
 Here are the different types and what they do:
 
@@ -17,39 +17,39 @@ Here are the different types and what they do:
   - Description
 
 * - Channel Mix
-  - `pomice.ChannelMix()`
+  - `lava_lyra.ChannelMix()`
   - Adjusts stereo panning of a track.
 
 * - Distortion
-  - `pomice.Distortion()`
+  - `lava_lyra.Distortion()`
   - Generates a distortion effect on a track.
 
 * - Equalizer
-  - `pomice.Equalizer()`
+  - `lava_lyra.Equalizer()`
   - Represents a 15 band equalizer. You can adjust the dynamic of the sound using this filter.
 
 * - Karaoke
-  - `pomice.Karaoke()`
+  - `lava_lyra.Karaoke()`
   - Filters the vocals from the track.
 
 * - Low Pass
-  - `pomice.LowPass()`
+  - `lava_lyra.LowPass()`
   - Filters out high frequencies and only lets low frequencies pass through.
 
 * - Rotation
-  - `pomice.Rotation()`
+  - `lava_lyra.Rotation()`
   -  Produces a stereo-like panning effect, which sounds like the audio is being rotated around the listener’s head
 
 * - Timescale
-  - `pomice.Timescale()`
+  - `lava_lyra.Timescale()`
   - Adjusts the speed and pitch of a track.
 
 * - Tremolo
-  - `pomice.Tremolo()`
+  - `lava_lyra.Tremolo()`
   - Rapidly changes the volume of the track, producing a wavering tone.
 
 * - Vibrato
-  - `pomice.Vibrato()`
+  - `lava_lyra.Vibrato()`
   - Rapidly changes the pitch of the track.
 
 :::
@@ -57,7 +57,7 @@ Here are the different types and what they do:
 
 Each filter has individual values you can adjust to fine-tune the sound of the filter. If you want to see what values each filter has, refer to [](../api/filters.md).
 
-If you are stuck on what values adjust what, some filters include presets that you can apply to get a certain sound, i.e: `pomice.Timescale` has the `vaporwave()` and `nightcore()` and so on. You can also play around with the values and generate your own unique sound if you'd like.
+If you are stuck on what values adjust what, some filters include presets that you can apply to get a certain sound, i.e: `lava_lyra.Timescale` has the `vaporwave()` and `nightcore()` and so on. You can also play around with the values and generate your own unique sound if you'd like.
 
 ## Adding a filter
 

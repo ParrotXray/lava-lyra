@@ -2,7 +2,7 @@
 Filters
 ---------------------
 
-.. automodule:: pomice.filters
+.. automodule:: lava_lyra.filters
    :members:
    :undoc-members:
    :show-inheritance:

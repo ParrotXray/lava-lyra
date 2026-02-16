@@ -1,6 +1,6 @@
 # Use the Node class
 
-The `Node` class is one of the main classes you will be interacting with when using Pomice.
+The `Node` class is one of the main classes you will be interacting with when using Lyra.
 
 The `Node` class has a couple functions you will be using frequently:
 
@@ -121,10 +121,10 @@ await Node.get_tracks(
 
 ```
 
-:::{important}
+:::{note}
 
-All querying of Spotify and Apple Music tracks or playlists is handled in this function if you enabled that functionality when creating your node.
-If you want to enable it, refer to [](pool.md#adding-a-node)
+Platform support (Spotify, Apple Music, etc.) is resolved by your Lavalink server's plugins.
+No credentials are needed on the client side — configure them in your `application.yml` instead.
 
 :::
 

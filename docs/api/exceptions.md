@@ -2,7 +2,7 @@
 Exceptions
 ------------------------
 
-.. automodule:: pomice.exceptions
+.. automodule:: lava_lyra.exceptions
    :members:
    :undoc-members:
    :show-inheritance:

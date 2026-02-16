@@ -2,13 +2,11 @@
 hide-toc: true
 ---
 
-# Pomice
+# Lyra
 
-![](https://raw.githubusercontent.com/cloudwithax/pomice/main/banner.jpg)
+Lyra is a fully asynchronous Python library designed for communicating with [Lavalink v4](https://github.com/lavalink-devs/Lavalink) seamlessly within [discord.py](https://github.com/Rapptz/discord.py) or [py-cord](https://github.com/Pycord-Development/pycord). It provides 100% API coverage of the Lavalink v4 spec through easy-to-use functions. Platform support (Spotify, Apple Music, Bilibili, etc.) is handled server-side via Lavalink plugins such as [LavaSrc](https://github.com/topi314/LavaSrc).
 
-
-
-Pomice is a fully asynchronous Python library designed for communicating with [Lavalink](https://github.com/freyacodes/Lavalink) seamlessly within the [discord.py](https://github.com/Rapptz/discord.py) library. It features 100% API coverage of the entire [Lavalink](https://github.com/freyacodes/Lavalink) spec that can be accessed with easy-to-understand functions. We also include Spotify and Apple Music querying capabilites using built-in custom clients, making it easier to develop your next big music bot.
+Lyra is a fork of the original [Pomice](https://github.com/cloudwithax/pomice) library, fully refactored for Lavalink v4.
 
 
 ## Quick Links:

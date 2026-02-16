@@ -1,8 +1,8 @@
 ```{eval-rst}
-Utils
--------------------
+Lyrics
+--------------------
 
-.. automodule:: lava_lyra.utils
+.. automodule:: lava_lyra.lyrics
    :members:
    :undoc-members:
    :show-inheritance:

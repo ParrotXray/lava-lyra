@@ -2,7 +2,7 @@
 Enums
 -------------------
 
-.. automodule:: pomice.enums
+.. automodule:: lava_lyra.enums
    :members:
    :undoc-members:
    :show-inheritance:

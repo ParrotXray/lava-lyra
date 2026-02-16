@@ -2,7 +2,7 @@
 Queue
 ------------------
 
-.. automodule:: pomice.queue
+.. automodule:: lava_lyra.queue
    :members:
    :undoc-members:
    :show-inheritance:

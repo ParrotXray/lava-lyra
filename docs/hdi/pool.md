@@ -1,6 +1,6 @@
 # Use the NodePool class
 
-The `NodePool` class is the first class you will use when using Pomice.
+The `NodePool` class is the first class you will use when using Lyra.
 
 The `NodePool` Class has three main functions you can use:
 
@@ -49,26 +49,18 @@ After you have initialized your function, we need to fill in the proper paramete
   - `str`
   - The password used to connect to your node.
 
-* - `spotify_client_id`
-  - `Optional[str]`
-  - Your Spotify client ID goes here. You need this along with the client secret if you want to use Spotify functionality within Pomice.
-
-* - `spotify_client_secret`
-  - `Optional[str]`
-  - Your Spotify client secret goes here. You need this along with the client ID if you want to use Spotify functionality within Pomice.
-
-* - `apple_music`
+* - `search`
   - `bool`
-  - Set this value to `True` if you want to use Apple Music functionality within Pomice. Apple Music will **not work** if you don't enable this.
+  - Set this value to `True` to enable [LavaSearch](https://github.com/topi314/LavaSearch) plugin support on this node. Requires the plugin to be installed on your Lavalink server.
 
 * - `fallback`
   - `bool`
-  - Set this value to `True` if you want Pomice to automatically switch all players to another available node if one disconnects.
+  - Set this value to `True` if you want Lyra to automatically switch all players to another available node if one disconnects.
     You must have two or more nodes to be able to do this.
 
 * - `logger`
   - `Optional[logging.Logger]`
-  - If you would like to receive logging information from Pomice, set this to your logger class
+  - If you would like to receive logging information from Lyra, set this to your logger class
 
 
 :::
@@ -86,17 +78,15 @@ await NodePool.create_node(
     port=<your port here>,
     identifier="<your id here>",
     password="<your password here>",
-    spotify_client_id="<your spotify client id here>",
-    spotify_client_secret="<your spotify client secret here>"
-    apple_music=<True/False>,
+    search=<True/False>,
     fallback=<True/False>,
     logger=<your logger here>
 )
 
 ```
-:::{important}
+:::{note}
 
-For features like Spotify and Apple Music, you are **not required** to fill in anything for them if you do not want to use them. If you do end up queuing a Spotify or Apple Music track, it is **up to you** on how you decide to handle it, whether it be through your own methods or a Lavalink plugin.
+Platform support (Spotify, Apple Music, Deezer, etc.) is handled entirely by your Lavalink server's plugins — no credentials are needed in Lyra. Install [LavaSrc](https://github.com/topi314/LavaSrc) on your server and configure it in `application.yml`.
 
 :::
 

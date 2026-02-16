@@ -2,7 +2,7 @@
 Pool
 ------------------
 
-.. automodule:: pomice.pool
+.. automodule:: lava_lyra.pool
    :members:
    :undoc-members:
    :show-inheritance:

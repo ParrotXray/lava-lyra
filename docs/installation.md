@@ -1,30 +1,50 @@
 # Installation
 
-This library is designed to work with the Lavalink audio delivery system,
+This library is designed to work with the Lavalink v4 audio delivery system,
 which directly interfaces with Discord to provide buttery smooth audio without
 wasting your precious system resources.
 
-Pomice is made with convenience to the user, in that everything is easy to use
-and is out of your way, while also being customizable.
+Lyra is made with convenience in mind — everything is easy to use and out of
+your way, while also being customizable.
 
-In order to start using this library, please download a Lavalink node to start,
-you can get it [here](https://github.com/freyacodes/Lavalink/releases/latest)
+## Setting up Lavalink
 
-After you have your Lavalink node set up, you can install Pomice:
+In order to start using this library, you need a running Lavalink v4 node.
+You can download the latest release [here](https://github.com/lavalink-devs/Lavalink/releases/latest).
+
+A minimal `application.yml` for Lavalink v4:
+
+```yaml
+server:
+  port: 2333
+  address: 0.0.0.0
+lavalink:
+  server:
+    password: "youshallnotpass"
+    sources:
+      youtube: true
+      soundcloud: true
+```
+
+For extended platform support (Spotify, Apple Music, Deezer, etc.) install the
+[LavaSrc](https://github.com/topi314/LavaSrc) plugin on your Lavalink server.
+
+## Installing Lyra
+
+After your Lavalink node is up and running, install Lyra with pip:
 
 ```
-pip install pomice
+pip install lava-lyra
 ```
 
-Pomice will handle installing all required dependencies for you so you can
-start coding with it without a hitch.
+Lyra will handle installing all required dependencies automatically.
 
-After you installed Pomice, get familiar with how it works by starting out with [an example.](quickstart.md)
+## Next Steps
 
-If you need more than just a quick example, get our drop-in [advanced cog](https://github.com/cloudwithax/pomice/blob/main/examples/advanced.py)
-to take advantage of all of Pomice's features.
-You are free to use this as a base to add on to for any music features you want to implement within your application.
+After installing Lyra, get familiar with how it works by starting with [an example.](quickstart.md)
 
-If you want to jump into the library and learn how to do everything you need, refer to the [How Do I?](hdi/index.md) section.
+If you want to jump into the library and learn how to do everything you need,
+refer to the [How Do I?](hdi/index.md) section.
 
-If you want a deeper look into how the library works beyond the [How Do I?](hdi/index.md) guide, refer to the [API Reference](api/index.md) section.
+If you want a deeper look into how the library works beyond the [How Do I?](hdi/index.md)
+guide, refer to the [API Reference](api/index.md) section.

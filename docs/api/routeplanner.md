@@ -1,8 +1,8 @@
 ```{eval-rst}
-Player
+Route Planner
 --------------------
 
-.. automodule:: lava_lyra.player
+.. automodule:: lava_lyra.routeplanner
    :members:
    :undoc-members:
    :show-inheritance:
