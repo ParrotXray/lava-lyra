@@ -391,7 +391,8 @@ class Player(VoiceProtocolType):
             "REPLACED",
             "replaced",
         ):
-            self._current = None
+            if self._current is self._ending_track:
+                self._current = None
 
         event.dispatch(self._bot)
 

@@ -59,7 +59,8 @@ extras_require = {
 }
 
 install_requires = [
-    "aiohttp>=3.8.0",
+    "aiohttp>=3.13.0",
+    "zstandard>=0.25.0",
     "orjson>=3.8.0",
     "websockets>=10.0",
     "typing-extensions;python_version<'3.11'",
