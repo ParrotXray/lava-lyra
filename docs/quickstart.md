@@ -7,9 +7,6 @@ If you want a quick example on how to get started with Lyra, look below:
 ```py
 import lava_lyra
 import discord
-import re
-
-URL_REG = re.compile(r"https?://(?:www\.)?.+")
 
 
 class MyBot(discord.Bot):
@@ -90,8 +87,6 @@ import discord
 import re
 
 from discord.ext import commands
-
-URL_REG = re.compile(r"https?://(?:www\.)?.+")
 
 
 class MyBot(commands.Bot):
