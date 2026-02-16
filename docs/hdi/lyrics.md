@@ -6,7 +6,7 @@ Lyrics are managed through the `LyricsManager` class, which is accessible from a
 :::{note}
 
 Lyrics support requires either:
-- **Lavalink v4** with a lyrics-capable plugin (e.g. [java-lyrics-plugin](https://github.com/topi314/LavaLyrics))
+- **Lavalink v4** with a lyrics-capable plugin (e.g. [topi314/LavaLyrics](https://github.com/topi314/LavaLyrics))
 - **NodeLink** (which has lyrics support built-in)
 
 :::
