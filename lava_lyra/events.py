@@ -40,20 +40,21 @@ __all__ = (
 
 class LyraEvent(ABC):
     """The base class for all events dispatched by a node.
+
     Every event must be formatted within your bot's code as a listener.
-    i.e: If you want to listen for when a track starts, the event would be:
+    For example, to listen for when a track starts.
 
-    ```py
-    # Example for py-cord
-    @bot.listen
-    async def on_lyra_track_start(self, event):
-        pass
+    py-cord::
 
-    # Example for discord.py
-    @bot.event
-    async def on_lyra_track_start(event):
-        pass
-    ```
+        @bot.listen()
+        async def on_lyra_track_start(self, event):
+            pass
+
+    discord.py::
+
+        @bot.event
+        async def on_lyra_track_start(event):
+            pass
     """
 
     name = "event"
