@@ -41,7 +41,7 @@ __all__ = (
 class LyraEvent(ABC):
     """The base class for all events dispatched by a node.
     Every event must be formatted within your bot's code as a listener.
-    i.e: If you want to listen for when a track starts, the event would be:  
+    i.e: If you want to listen for when a track starts, the event would be:
 
     ```py
     # Example for py-cord
