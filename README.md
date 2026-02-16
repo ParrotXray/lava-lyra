@@ -7,6 +7,10 @@
 
 A modern Lavalink v4 wrapper designed for py-cord, based on the excellent [Pomice](https://github.com/cloudwithax/pomice) library by cloudwithax.
 
+## Quick Links
+- [Read the Docs](https://lava-lyra.readthedocs.io/en/latest/)
+- [PyPI Homepage](https://pypi.org/project/lava-lyra/)
+
 ## What's New in Lyra
 
 Lyra is a complete refactor of Pomice for **Lavalink v4.X or NodeLink v3.X**, bringing significant improvements:
