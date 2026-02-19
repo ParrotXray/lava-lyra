@@ -73,6 +73,7 @@ class Node:
         "_pool",
         "_password",
         "_identifier",
+        "_enabled",
         "_heartbeat",
         "_resume_key",
         "_resume_timeout",
@@ -101,7 +102,6 @@ class Node:
         "_health_monitor",
         "_connect_timeout",
         "_total_timeout",
-        "available",
     )
 
     def __init__(
@@ -113,6 +113,7 @@ class Node:
         port: int,
         password: str,
         identifier: str,
+        enabled: bool = True,
         secure: bool = False,
         heartbeat: int = 120,
         resume_key: Optional[str] = None,
@@ -143,6 +144,7 @@ class Node:
         self._resume_timeout: int = resume_timeout
         self._secure: bool = secure
         self._fallback: bool = fallback
+        self._enabled: bool = enabled
         self._connect_timeout: float = connect_timeout
         self._total_timeout: float = total_timeout
 
@@ -191,6 +193,11 @@ class Node:
             f"<Lyra.node ws_uri={self._websocket_uri} rest_uri={self._rest_uri} "
             f"player_count={len(self._players)}>"
         )
+
+    @property
+    def enabled(self) -> bool:
+        """Whether this node is enabled and allowed to connect."""
+        return self._enabled
 
     @property
     def is_connected(self) -> bool:
@@ -252,6 +259,18 @@ class Node:
         """Property which returns the current health score of the node"""
         current_latency = self.latency
         return self._health_monitor.get_health_score(current_latency, self.player_count)
+
+    async def enable(self) -> None:
+        """Enable this node and attempt to connect if not already connected."""
+        self._enabled = True
+        if not self.is_connected:
+            await self.connect()
+
+    async def disable(self) -> None:
+        """Disable this node and disconnect if connected."""
+        self._enabled = False
+        if self.is_connected:
+            await self._websocket.close()
 
     async def _handle_version_check(self, version: str) -> None:
         if version.endswith("-SNAPSHOT"):
@@ -428,6 +447,10 @@ class Node:
                 await asyncio.sleep(retry)
 
                 if not self.is_connected:
+                    if not self._enabled:
+                        if self._log:
+                            self._log.info(f"Node {self._identifier} is disabled, stopping reconnection.")
+                        return
                     try:
                         await self.connect(reconnect=True)
 
@@ -611,6 +634,11 @@ class Node:
 
         start = time.perf_counter()
 
+        if not self._enabled:
+            if self._log:
+                self._log.info(f"Node {self._identifier} is disabled, skipping connection.")
+            return self
+
         if not self._session:
             # Configure connection pooling for optimal concurrent request performance
             connector = aiohttp.TCPConnector(
@@ -727,7 +755,7 @@ class Node:
             self._log.debug("Websocket and http session closed.")
 
         del self._pool._nodes[self._identifier]
-        self.available = False
+        self._available = False
         self._task.cancel()
 
         end = time.perf_counter()
@@ -1121,6 +1149,7 @@ class NodePool:
         port: int,
         password: str,
         identifier: str,
+        enabled: bool = True,
         secure: bool = False,
         heartbeat: int = 120,
         resume_key: Optional[str] = None,
@@ -1168,6 +1197,7 @@ class NodePool:
             port=port,
             password=password,
             identifier=identifier,
+            enabled=enabled,
             secure=secure,
             heartbeat=heartbeat,
             resume_key=resume_key,
