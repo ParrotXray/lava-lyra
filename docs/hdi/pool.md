@@ -78,6 +78,7 @@ await NodePool.create_node(
     port=<your port here>,
     identifier="<your id here>",
     password="<your password here>",
+    enabled=<True/False>,
     search=<True/False>,
     fallback=<True/False>,
     logger=<your logger here>
