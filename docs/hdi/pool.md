@@ -49,6 +49,10 @@ After you have initialized your function, we need to fill in the proper paramete
   - `str`
   - The password used to connect to your node.
 
+* - `enabled`
+  - `bool`
+  - Set this value to `True` to enable this node. If you set this to `False`, the node will be added to the pool but will not be used until you set it to `True`.
+
 * - `search`
   - `bool`
   - Set this value to `True` to enable [LavaSearch](https://github.com/topi314/LavaSearch) plugin support on this node. Requires the plugin to be installed on your Lavalink server.
