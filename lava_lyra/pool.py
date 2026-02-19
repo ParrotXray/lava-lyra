@@ -449,7 +449,9 @@ class Node:
                 if not self.is_connected:
                     if not self._enabled:
                         if self._log:
-                            self._log.info(f"Node {self._identifier} is disabled, stopping reconnection.")
+                            self._log.info(
+                                f"Node {self._identifier} is disabled, stopping reconnection."
+                            )
                         return
                     try:
                         await self.connect(reconnect=True)
