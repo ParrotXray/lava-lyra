@@ -420,7 +420,7 @@ class Player(VoiceProtocolType):
         if self.current:
             data = {
                 "position": self.position,
-                "encodedTrack": self.current.track_id,
+                "track": {"encoded": self.current.track_id},
                 "volume": self._volume,
                 "paused": self._paused,
                 "filters": self.filters.get_all_payloads() if not self.filters.empty else None,
