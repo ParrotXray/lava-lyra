@@ -341,6 +341,7 @@ class Player(VoiceProtocolType):
             "token": state["event"]["token"],
             "endpoint": state["event"]["endpoint"],
             "sessionId": state["sessionId"],
+            "channelId": str(self.channel.id) if self.channel else None,
         }
 
         await self._node.send(
