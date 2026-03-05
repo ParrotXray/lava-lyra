@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union, overload
 
 from .compat import ClientUserType, ContextType, MemberType, UserType
 from .enums import PlaylistType, SearchType, TrackType
 from .filters import Filter
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 __all__ = (
     "Track",
@@ -147,6 +150,36 @@ class Playlist:
 
     def __repr__(self) -> str:
         return f"<Lyra.playlist name={self.name!r} track_count={len(self.tracks)}>"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Playlist):
+            return NotImplemented
+
+        return self.name == other.name and self.tracks == other.tracks
+
+    def __len__(self) -> int:
+        return len(self.tracks)
+
+    @overload
+    def __getitem__(self, index: int) -> Track: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[Track]: ...
+
+    def __getitem__(self, index: int | slice) -> Track | list[Track]:
+        return self.tracks[index]
+
+    def __iter__(self) -> Iterator[Track]:
+        return self.tracks.__iter__()
+
+    def __reversed__(self) -> Iterator[Track]:
+        return self.tracks.__reversed__()
+
+    def __contains__(self, item: Track) -> bool:
+        return item in self.tracks
+
+    def pop(self, index: int = -1) -> Track:
+        return self.tracks.pop(index)
 
     @property
     def uri(self) -> Optional[str]:
