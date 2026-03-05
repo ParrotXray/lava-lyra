@@ -274,8 +274,7 @@ class Node:
 
     async def _handle_version_check(self, version: str) -> None:
         if version.endswith("-SNAPSHOT"):
-            # we're just gonna assume all snapshot versions correlate with v4
-            self._version = LavalinkVersion(major=4, minor=0, fix=0)
+            self._version = LavalinkVersion(major=4, minor=2, fix=0)
             return
 
         _version_rx = VERSION_REGEX.match(version)
@@ -283,7 +282,7 @@ class Node:
             self._available = False
             raise LavalinkVersionIncompatible(
                 "The Lavalink version you're using is incompatible. "
-                "Lavalink version 4.0.0 or above is required to use this library.",
+                "Lavalink version 4.2.0 or above is required to use this library.",
             )
 
         _version_groups = _version_rx.groups()
@@ -296,13 +295,14 @@ class Node:
         if self._log:
             self._log.debug(f"Parsed Lavalink version: {major}.{minor}.{fix}")
         self._version = LavalinkVersion(major=major, minor=minor, fix=fix)
-        if self._version < LavalinkVersion(4, 0, 0) or (
+
+        if (not self._is_nodelink and self._version < LavalinkVersion(4, 2, 0)) or (
             self._is_nodelink and self._version < LavalinkVersion(3, 0, 0)
         ):
             self._available = False
             raise LavalinkVersionIncompatible(
                 "The Lavalink version you're using is incompatible. "
-                "Lavalink version 4.0.0 or above is required to use this library.",
+                "Lavalink version 4.2.0 or above is required to use this library.",
             )
 
     # async def _set_ext_client_session(self, session: aiohttp.ClientSession) -> None:
