@@ -190,7 +190,7 @@ class Playlist:
     def thumbnail(self) -> Optional[str]:
         """Returns either an Apple Music/Spotify album/playlist thumbnail, or None if its neither of those."""
         return self._thumbnail
-    
+
     @property
     def length(self) -> Optional[int]:
         """Returns the total length of all tracks in the playlist in milliseconds."""
