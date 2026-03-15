@@ -18,9 +18,10 @@ class Queue(Iterable[Track]):
         "max_size",
         "_queue",
         "_overflow",
+        "_history",
         "_loop_mode",
         "_current_item",
-        "_history"
+        "_track_history"
     )
 
     def __init__(
@@ -28,13 +29,15 @@ class Queue(Iterable[Track]):
         max_size: Optional[int] = None,
         *,
         overflow: bool = True,
+        history: bool = False,
     ):
         self.max_size: Optional[int] = max_size
         self._current_item: Track
         self._queue: List[Track] = []
         self._overflow: bool = overflow
+        self._history: bool = history
         self._loop_mode: Optional[LoopMode] = None
-        self._history: List[Track] = []
+        self._track_history: List[Track] = []
 
     def __str__(self) -> str:
         """String showing all Track objects appearing as a list."""
@@ -61,14 +64,14 @@ class Queue(Iterable[Track]):
         Does not remove item from queue.
         """
         if not isinstance(index, int):
-            raise ValueError("'int' type required.'")
+            raise ValueError("'int' type required.")
 
         return self._queue[index]
 
     def __setitem__(self, index: int, item: Track) -> None:
         """Inserts an item at given position."""
         if not isinstance(index, int):
-            raise ValueError("'int' type required.'")
+            raise ValueError("'int' type required.")
 
         self.put_at_index(index, item)
 
@@ -139,13 +142,13 @@ class Queue(Iterable[Track]):
         return random.random()
     
     def _handle_history(self, track: Track) -> None:
-        if self._loop_mode:
+        if self._loop_mode or not self._history:
             return
-        if self.max_size and len(self._history) >= (self.max_size + 10):
-            self._history.pop(0)
-        elif len(self._history) >= 80:
-            self._history.pop(0)
-        self._history.append(track)
+        if self.max_size and len(self._track_history) >= (self.max_size + 10):
+            self._track_history.pop(0)
+        elif len(self._track_history) >= 80:
+            self._track_history.pop(0)
+        self._track_history.append(track)
 
     @staticmethod
     def _check_track(item: Track) -> Track:
@@ -203,7 +206,7 @@ class Queue(Iterable[Track]):
 
     def get_history(self) -> List[Track]:
         """Return play history as a List"""
-        return self._history
+        return self._track_history
     
     def get(self) -> Track:
         """Return next immediately available item in queue if any.
@@ -346,7 +349,7 @@ class Queue(Iterable[Track]):
     def clear(self) -> None:
         """Remove all items from the queue."""
         self._queue.clear()
-        self._history.clear()
+        self._track_history.clear()
 
     def set_loop_mode(self, mode: LoopMode) -> None:
         """
