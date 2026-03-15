@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from copy import copy
-from typing import Iterable, Iterator, List, Optional, Union
+from typing import Iterable, Iterator, List, Optional, Union, SupportsIndex, overload
 
 from .enums import LoopMode
 from .exceptions import QueueEmpty, QueueException, QueueFull
@@ -54,13 +54,16 @@ class Queue(Iterable[Track]):
         """Return the number of members in the queue."""
         return self.count
 
-    def __getitem__(self, index: int) -> Track:
+    @overload
+    def __getitem__(self, index: SupportsIndex, /) -> Track: ...
+
+    @overload
+    def __getitem__(self, index: slice, /) -> list[Track]: ...
+
+    def __getitem__(self, index: SupportsIndex | slice, /) -> Track | list[Track]:
         """Returns a member at the given position.
         Does not remove item from queue.
         """
-        if not isinstance(index, int):
-            raise ValueError("'int' type required.'")
-
         return self._queue[index]
 
     def __setitem__(self, index: int, item: Track) -> None:
