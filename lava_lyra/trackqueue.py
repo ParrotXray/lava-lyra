@@ -20,6 +20,7 @@ class Queue(Iterable[Track]):
         "_overflow",
         "_loop_mode",
         "_current_item",
+        "_history"
     )
 
     def __init__(
@@ -33,6 +34,7 @@ class Queue(Iterable[Track]):
         self._queue: List[Track] = []
         self._overflow: bool = overflow
         self._loop_mode: Optional[LoopMode] = None
+        self._history: List[Track] = []
 
     def __str__(self) -> str:
         """String showing all Track objects appearing as a list."""
@@ -135,6 +137,15 @@ class Queue(Iterable[Track]):
 
     def _get_random_float(self) -> float:
         return random.random()
+    
+    def _handle_history(self, track: Track) -> None:
+        if self._loop_mode:
+            return
+        if self.max_size and len(self._history) >= (self.max_size + 10):
+            self._history.pop(0)
+        elif len(self._history) >= 80:
+            self._history.pop(0)
+        self._history.append(track)
 
     @staticmethod
     def _check_track(item: Track) -> Track:
@@ -180,11 +191,20 @@ class Queue(Iterable[Track]):
     def size(self) -> int:
         """Returns the amount of items in the queue"""
         return len(self._queue)
+    
+    @property
+    def total_duration(self) -> int:
+        """Return total duration in the queue"""
+        return sum(track.length for track in self._queue)
 
-    def get_queue(self) -> List:
+    def get_queue(self) -> List[Track]:
         """Returns the queue as a List"""
         return self._queue
 
+    def get_history(self) -> List[Track]:
+        """Return play history as a List"""
+        return self._history
+    
     def get(self) -> Track:
         """Return next immediately available item in queue if any.
         Raises QueueEmpty if no items in queue.
@@ -221,6 +241,7 @@ class Queue(Iterable[Track]):
         else:
             item = self._get()
 
+        self._handle_history(item)
         self._current_item = item
         return item
 
@@ -303,9 +324,29 @@ class Queue(Iterable[Track]):
 
         return new_queue
 
+    def swap(self, index1: int, index2: int) -> None:
+        """Swap two track from index"""
+        try:
+            self._queue[index1], self._queue[index2] = self._queue[index2], self._queue[index1]
+        except IndexError:
+            raise QueueException("Index out of queue range")
+    
+    def remove_duplicates(self) -> List[Track]:
+        """Remove duplicate tracks in the queue"""
+        seen = []
+        new_queue = []
+        for track in self._queue:
+            identifier = track.uri
+            if identifier not in seen:
+                new_queue.append(track)
+                seen.append(identifier)
+        self._queue = new_queue
+        return seen
+    
     def clear(self) -> None:
         """Remove all items from the queue."""
         self._queue.clear()
+        self._history.clear()
 
     def set_loop_mode(self, mode: LoopMode) -> None:
         """
