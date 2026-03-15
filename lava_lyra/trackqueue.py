@@ -21,7 +21,7 @@ class Queue(Iterable[Track]):
         "_history",
         "_loop_mode",
         "_current_item",
-        "_track_history"
+        "_track_history",
     )
 
     def __init__(
@@ -140,7 +140,7 @@ class Queue(Iterable[Track]):
 
     def _get_random_float(self) -> float:
         return random.random()
-    
+
     def _handle_history(self, track: Track) -> None:
         if self._loop_mode or not self._history:
             return
@@ -194,7 +194,7 @@ class Queue(Iterable[Track]):
     def size(self) -> int:
         """Returns the amount of items in the queue"""
         return len(self._queue)
-    
+
     @property
     def total_duration(self) -> int:
         """Return total duration in the queue"""
@@ -207,7 +207,7 @@ class Queue(Iterable[Track]):
     def get_history(self) -> List[Track]:
         """Return play history as a List"""
         return self._track_history
-    
+
     def get(self) -> Track:
         """Return next immediately available item in queue if any.
         Raises QueueEmpty if no items in queue.
@@ -333,7 +333,7 @@ class Queue(Iterable[Track]):
             self._queue[index1], self._queue[index2] = self._queue[index2], self._queue[index1]
         except IndexError:
             raise QueueException("Index out of queue range")
-    
+
     def remove_duplicates(self) -> List[Track]:
         """Remove duplicate tracks in the queue"""
         seen = []
@@ -345,7 +345,7 @@ class Queue(Iterable[Track]):
                 seen.append(identifier)
         self._queue = new_queue
         return seen
-    
+
     def clear(self) -> None:
         """Remove all items from the queue."""
         self._queue.clear()

@@ -3,8 +3,8 @@ Compatibility layer for py-cord, discord.py, disnake, and nextcord
 """
 
 from __future__ import annotations
-from importlib.metadata import PackageNotFoundError, version
 
+from importlib.metadata import PackageNotFoundError, version
 
 # Try to import Discord library
 
