@@ -6,7 +6,7 @@ from typing import Iterable, Iterator, List, Optional, Union, SupportsIndex, ove
 
 from .enums import LoopMode
 from .exceptions import QueueEmpty, QueueException, QueueFull
-from .objects import Track
+from .objects import Track, Playlist
 
 __all__ = ("Queue",)
 
@@ -247,7 +247,7 @@ class Queue(Iterable[Track]):
         """
         return self._index(self._check_track(item))
 
-    def put(self, item: Track) -> None:
+    def put(self, item: list[Track] | Track | Playlist, /) -> None:
         """Put the given item into the back of the queue."""
         if self.is_full:
             if not self._overflow:
@@ -257,7 +257,18 @@ class Queue(Iterable[Track]):
 
             self._drop()
 
-        return self._put(self._check_track(item))
+        added = 0
+
+        if isinstance(item, Iterable):
+            passing_items = [track for track in item if self._check_track(track)]
+            self._queue.extend(passing_items)
+            added = len(passing_items)
+        else:
+            self._check_track(item)
+            self._queue.append(item)
+            added = 1
+
+        return added
 
     def put_at_index(self, index: int, item: Track) -> None:
         """Put the given item into the queue at the specified index."""
