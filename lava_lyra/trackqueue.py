@@ -66,12 +66,10 @@ class Queue(Iterable[Track]):
         """
         return self._queue[index]
 
-    def __setitem__(self, index: int, item: Track) -> None:
+    def __setitem__(self, index: SupportsIndex, item: Track, /) -> None:
         """Inserts an item at given position."""
-        if not isinstance(index, int):
-            raise ValueError("'int' type required.'")
-
-        self.put_at_index(index, item)
+        self._check_track(item)
+        self._queue[index] = item
 
     def __delitem__(self, index: int) -> None:
         """Delete item at given position."""
