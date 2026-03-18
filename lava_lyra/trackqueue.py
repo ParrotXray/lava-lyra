@@ -206,8 +206,8 @@ class Queue(Iterable[Track]):
         return len(self._queue)
 
     @property
-    def total_duration(self) -> int:
-        """Return total duration in the queue"""
+    def duration(self) -> int:
+        """Return duration of the queue"""
         return sum(track.length for track in self._queue)
 
     def get_queue(self) -> List[Track]:
