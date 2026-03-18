@@ -118,7 +118,7 @@ class QueueEmpty(QueueException):
     pass
 
 class HistoryFull(QueueException):
-    """Exception raised when attempting to add to a full History."""
+    """Exception raised when attempting to add to a full track History."""
 
     pass
 
