@@ -999,7 +999,7 @@ class Node:
                 ctx=ctx,
             )
 
-        elif track.track_type == TrackType.YOUTUBE:
+        elif track.track_type == TrackType.YOUTUBE or track.track_type == TrackType.YOUTUBE_MUSIC:
             # Use YouTube autoplay/radio playlist
             return await self.get_tracks(
                 query=f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}",

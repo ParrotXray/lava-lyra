@@ -55,6 +55,8 @@ class TrackType(Enum):
 
     TrackType.YOUTUBE defines that the track is from YouTube
 
+    TrackType.YOUTUBE_MUSIC defines that the track is from YouTube Music
+
     TrackType.SOUNDCLOUD defines that the track is from SoundCloud.
 
     TrackType.SPOTIFY defines that the track is from Spotify
@@ -70,6 +72,7 @@ class TrackType(Enum):
 
     # We don't have to define anything special for these, since these just serve as flags
     YOUTUBE = "youtube"
+    YOUTUBE_MUSIC = "ytmusic"
     SOUNDCLOUD = "soundcloud"
     SPOTIFY = "spotify"
     APPLE_MUSIC = "applemusic"
@@ -274,7 +277,7 @@ class URLRegex:
     )
 
     YOUTUBE_URL = re.compile(
-        r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))"
+        r"^((?:https?:)?\/\/)?((?:www|m|music)\.)?((?:youtube\.com|youtu.be))"
         r"(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$",
     )
 
