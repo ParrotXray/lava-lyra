@@ -5,7 +5,7 @@ from copy import copy
 from typing import Iterable, Iterator, List, Optional, Union
 
 from .enums import LoopMode
-from .exceptions import QueueEmpty, QueueException, QueueFull
+from .exceptions import HistoryFull, QueueEmpty, QueueException, QueueFull
 from .objects import Track
 
 __all__ = ("Queue",)
@@ -16,9 +16,9 @@ class Queue(Iterable[Track]):
 
     __slots__ = (
         "max_size",
+        "max_history",
         "_queue",
         "_overflow",
-        "_history",
         "_loop_mode",
         "_current_item",
         "_track_history",
@@ -27,15 +27,15 @@ class Queue(Iterable[Track]):
     def __init__(
         self,
         max_size: Optional[int] = None,
+        max_history: Optional[int] = None,
         *,
         overflow: bool = True,
-        history: bool = False,
     ):
         self.max_size: Optional[int] = max_size
+        self.max_history: Optional[int] = max_history
         self._current_item: Track
         self._queue: List[Track] = []
         self._overflow: bool = overflow
-        self._history: bool = history
         self._loop_mode: Optional[LoopMode] = None
         self._track_history: List[Track] = []
 
@@ -142,11 +142,13 @@ class Queue(Iterable[Track]):
         return random.random()
 
     def _handle_history(self, track: Track) -> None:
-        if self._loop_mode or not self._history:
+        if self._loop_mode or not self.max_history:
             return
-        if self.max_size and len(self._track_history) >= (self.max_size + 10):
-            self._track_history.pop(0)
-        elif len(self._track_history) >= 80:
+        if self.max_size and len(self._track_history) >= self.max_history:
+            if not self._overflow:
+                raise HistoryFull(
+                    f"History max_history of {self.max_history} has been reached.",
+                )
             self._track_history.pop(0)
         self._track_history.append(track)
 
