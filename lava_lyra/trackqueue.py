@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import random
 from copy import copy
-from typing import Iterable, Iterator, List, Optional, Union, SupportsIndex, overload
+from typing import Iterable, Iterator, List, Optional, SupportsIndex, Union, overload
 
 from .enums import LoopMode
 from .exceptions import HistoryFull, QueueEmpty, QueueException, QueueFull
-from .objects import Track, Playlist
+from .objects import Playlist, Track
 
 __all__ = ("Queue",)
 
