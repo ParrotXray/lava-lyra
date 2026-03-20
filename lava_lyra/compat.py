@@ -1,5 +1,5 @@
 """
-Compatibility layer for py-cord, discord.py, disnake, and nextcord
+Compatibility layer for py-cord and discord.py
 """
 
 from __future__ import annotations
