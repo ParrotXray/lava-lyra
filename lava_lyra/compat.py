@@ -11,9 +11,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     import discord
 except ImportError:
-    raise ImportError(
-        "You must have py-cord or discord.py installed."
-    )
+    raise ImportError("You must have py-cord or discord.py installed.")
 
 
 # Detect which library is being used
@@ -28,9 +26,7 @@ except PackageNotFoundError:
         version("discord.py")
         IS_DPY = True
     except PackageNotFoundError:
-        raise ImportError(
-            "You must have py-cord or discord.py installed."
-        )
+        raise ImportError("You must have py-cord or discord.py installed.")
 
 
 # Type aliases
