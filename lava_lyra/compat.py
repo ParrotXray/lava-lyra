@@ -11,15 +11,9 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     import discord
 except ImportError:
-    try:
-        import disnake as discord
-    except ImportError:
-        try:
-            import nextcord as discord
-        except ImportError:
-            raise ImportError(
-                "You must have py-cord or discord.py installed."
-            )
+    raise ImportError(
+        "You must have py-cord or discord.py installed."
+    )
 
 
 # Detect which library is being used
@@ -62,8 +56,6 @@ elif IS_DPY:
 __all__ = (
     "IS_PYCORD",
     "IS_DPY",
-    "IS_DISNAKE",
-    "IS_NEXTCORD",
     "ContextType",
     "InteractionType",
     "BotType",
