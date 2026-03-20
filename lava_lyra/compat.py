@@ -18,13 +18,13 @@ except ImportError:
             import nextcord as discord
         except ImportError:
             raise ImportError(
-                "You must have one of py-cord, discord.py, disnake, or nextcord installed."
+                "You must have py-cord or discord.py installed."
             )
 
 
 # Detect which library is being used
 
-IS_PYCORD = IS_DPY = IS_DISNAKE = IS_NEXTCORD = False
+IS_PYCORD = IS_DPY = False
 
 try:
     version("py-cord")
@@ -34,17 +34,9 @@ except PackageNotFoundError:
         version("discord.py")
         IS_DPY = True
     except PackageNotFoundError:
-        try:
-            version("disnake")
-            IS_DISNAKE = True
-        except PackageNotFoundError:
-            try:
-                version("nextcord")
-                IS_NEXTCORD = True
-            except PackageNotFoundError:
-                raise ImportError(
-                    "You must have one of py-cord, discord.py, disnake, or nextcord installed."
-                )
+        raise ImportError(
+            "You must have py-cord or discord.py installed."
+        )
 
 
 # Type aliases
@@ -57,7 +49,7 @@ from discord import User as UserType
 from discord import VoiceChannel as VoiceChannelType
 from discord import VoiceProtocol as VoiceProtocolType
 
-if IS_PYCORD or IS_DISNAKE or IS_NEXTCORD:
+if IS_PYCORD:
     from discord import ApplicationContext as ContextType
     from discord import Bot as BotType
 elif IS_DPY:
