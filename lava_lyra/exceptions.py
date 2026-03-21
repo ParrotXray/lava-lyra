@@ -15,6 +15,7 @@ __all__ = (
     "QueueException",
     "QueueFull",
     "QueueEmpty",
+    "HistoryFull",
     "LavalinkVersionIncompatible",
     "RequirementNotFound",
     # Removed in v4: Platform-specific client exceptions
@@ -113,6 +114,12 @@ class QueueFull(QueueException):
 
 class QueueEmpty(QueueException):
     """Exception raised when attempting to retrieve from an empty Queue."""
+
+    pass
+
+
+class HistoryFull(QueueException):
+    """Exception raised when attempting to add to a full track History."""
 
     pass
 
