@@ -35,88 +35,81 @@ class Filters:
     __slots__ = ("_filters",)
 
     def __init__(self) -> None:
-        self._filters: List[Filter] = []
+        self._filters: Dict[str, Filter] = {}
 
     @property
     def has_preload(self) -> bool:
         """Property which checks if any applied filters were preloaded"""
-        return any(f for f in self._filters if f.preload == True)
+        return any(f.preload for f in self._filters.values())
 
     @property
     def has_global(self) -> bool:
-        """Property which checks if any applied filters are global"""
-        return any(f for f in self._filters if f.preload == False)
+        """Property which checks if any applied filters are global (not preloaded)"""
+        return any(not f.preload for f in self._filters.values())
 
     @property
     def empty(self) -> bool:
-        """Property which checks if the filter list is empty"""
-        return len(self._filters) == 0
+        """Property which checks if the filter dict is empty"""
+        return not self._filters
 
     def add_filter(self, *, filter: Filter) -> None:
-        """Adds a filter to the list of filters applied"""
-        if any(f for f in self._filters if f.tag == filter.tag):
-            raise FilterTagAlreadyInUse(
-                "A filter with that tag is already in use.",
-            )
-        self._filters.append(filter)
+        """Adds a filter to the collection of filters applied"""
+        if filter.tag in self._filters:
+            raise FilterTagAlreadyInUse("A filter with that tag is already in use.")
+        self._filters[filter.tag] = filter
 
     def remove_filter(self, *, filter_tag: str) -> None:
-        """Removes a filter from the list of filters applied using its filter tag"""
-        if not any(f for f in self._filters if f.tag == filter_tag):
+        """Removes a filter from the collection using its filter tag"""
+        if filter_tag not in self._filters:
             raise FilterTagInvalid("A filter with that tag was not found.")
-
-        for index, filter in enumerate(self._filters):
-            if filter.tag == filter_tag:
-                del self._filters[index]
+        del self._filters[filter_tag]
 
     def edit_filter(self, *, filter_tag: str, to_apply: Filter) -> None:
-        """Edits a filter in the list of filters applied using its filter tag and replaces it with the new filter."""
-        if not any(f for f in self._filters if f.tag == filter_tag):
+        """Edits a filter in the collection and replaces it with the new filter."""
+        current_filter = self._filters.get(filter_tag)
+        
+        if current_filter is None:
             raise FilterTagInvalid("A filter with that tag was not found.")
 
-        for index, filter in enumerate(self._filters):
-            if filter.tag == filter_tag:
-                if not type(filter) == type(to_apply):
-                    raise FilterInvalidArgument(
-                        "Edited filter is not the same type as the current filter.",
-                    )
-                if self._filters[index] == to_apply:
-                    raise FilterInvalidArgument("Edited filter is the same as the current filter.")
+        if type(current_filter) is not type(to_apply):
+            raise FilterInvalidArgument("Edited filter is not the same type as the current filter.")
+            
+        if current_filter == to_apply:
+            raise FilterInvalidArgument("Edited filter is the same as the current filter.")
 
-                if to_apply.tag != filter_tag:
-                    raise FilterInvalidArgument(
-                        "Edited filter tag is not the same as the current filter tag.",
-                    )
+        if to_apply.tag != filter_tag:
+            raise FilterInvalidArgument("Edited filter tag is not the same as the current filter tag.")
 
-                self._filters[index] = to_apply
+        self._filters[filter_tag] = to_apply
 
     def has_filter(self, *, filter_tag: str) -> bool:
-        """Checks if a filter exists in the list of filters using its filter tag"""
-        return any(f for f in self._filters if f.tag == filter_tag)
+        """Checks if a filter exists in the collection using its filter tag"""
+        return filter_tag in self._filters
 
     def has_filter_type(self, *, filter_type: Filter) -> bool:
         """Checks if any filters applied match the specified filter type."""
-        return any(f for f in self._filters if type(f) == type(filter_type))
+        target_type = type(filter_type)
+        return any(type(f) is target_type for f in self._filters.values())
 
     def reset_filters(self) -> None:
-        """Removes all filters from the list"""
-        self._filters = []
+        """Removes all filters from the collection"""
+        self._filters.clear()
 
     def get_preload_filters(self) -> List[Filter]:
         """Get all preloaded filters"""
-        return [f for f in self._filters if f.preload == True]
+        return [f for f in self._filters.values() if f.preload]
 
     def get_all_payloads(self) -> Dict[str, Any]:
         """Returns a formatted dict of all the filter payloads"""
         payload: Dict[str, Any] = {}
-        for _filter in self._filters:
-            if _filter.payload:
-                payload.update(_filter.payload)
+        for f in self._filters.values():
+            if f.payload:
+                payload.update(f.payload)
         return payload
 
     def get_filters(self) -> List[Filter]:
         """Returns the current list of applied filters"""
-        return self._filters
+        return list(self._filters.values())
 
 
 class Player(VoiceProtocolType):
