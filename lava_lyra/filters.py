@@ -35,7 +35,7 @@ class Filter:
         self.tag: str = tag
         self.preload: bool = False
 
-    def set_preload(self, status: bool = True) -> 'Filter':
+    def set_preload(self, status: bool = True) -> "Filter":
         """
         Internal method to set whether or not the filter was preloaded.
         Returns self to allow method chaining.
