@@ -1,5 +1,6 @@
 import collections
 from typing import Any, Dict, List, Optional, Tuple
+from typing_extensions import Self
 
 from .exceptions import FilterInvalidArgument
 
@@ -35,7 +36,7 @@ class Filter:
         self.tag: str = tag
         self.preload: bool = False
 
-    def set_preload(self, status: bool = True) -> "Filter":
+    def set_preload(self, status: bool = True) -> Self:
         """
         Internal method to set whether or not the filter was preloaded.
         Returns self to allow method chaining.
