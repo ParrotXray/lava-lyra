@@ -50,9 +50,11 @@ class Filter:
         if not isinstance(other, Filter):
             return NotImplemented
 
-        return (type(self) is type(other) and 
-                self.tag == other.tag and 
-                self.payload == other.payload)
+        return (
+            type(self) is type(other)
+            and self.tag == other.tag
+            and self.payload == other.payload
+        )
 
 
 class Equalizer(Filter):
