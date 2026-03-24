@@ -31,14 +31,28 @@ class Filter:
     __slots__ = ("payload", "tag", "preload")
 
     def __init__(self, *, tag: str):
-        self.payload: Optional[Dict] = None
+        self.payload: Optional[Dict[str, Any]] = None
         self.tag: str = tag
         self.preload: bool = False
 
-    def set_preload(self) -> bool:
-        """Internal method to set whether or not the filter was preloaded."""
-        self.preload = True
-        return self.preload
+    def set_preload(self, status: bool = True) -> 'Filter':
+        """
+        Internal method to set whether or not the filter was preloaded.
+        Returns self to allow method chaining.
+        """
+        self.preload = status
+        return self
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Checks if two filters are identical based on their type, tag, and payload.
+        """
+        if not isinstance(other, Filter):
+            return NotImplemented
+
+        return (type(self) is type(other) and 
+                self.tag == other.tag and 
+                self.payload == other.payload)
 
 
 class Equalizer(Filter):
