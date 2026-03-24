@@ -37,6 +37,9 @@ class Filters:
     def __init__(self) -> None:
         self._filters: Dict[str, Filter] = {}
 
+    def __len__(self):
+        return len(self._filters)
+
     @property
     def has_preload(self) -> bool:
         """Property which checks if any applied filters were preloaded"""
