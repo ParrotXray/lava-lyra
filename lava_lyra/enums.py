@@ -63,6 +63,10 @@ class TrackType(Enum):
 
     TrackType.APPLE_MUSIC defines that the track is from Apple Music.
 
+    TrackType.DEEZER defines that the track is from Deezer.
+
+    TrackType.BANDCAMP defines that the track is from Bandcamp.
+
     TrackType.HTTP defines that the track is from an HTTP source.
 
     TrackType.LOCAL defines that the track is from a local source.
@@ -76,6 +80,8 @@ class TrackType(Enum):
     SOUNDCLOUD = "soundcloud"
     SPOTIFY = "spotify"
     APPLE_MUSIC = "applemusic"
+    DEEZER = "deezer"
+    BANDCAMP = "bandcamp"
     BILIBILI = "bilibili"
     FACEBOOK = "facebook"
     INSTAGRAM = "instagram"
