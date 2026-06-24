@@ -556,6 +556,10 @@ class Node:
                 f"The node '{self._identifier}' has no active session.",
             )
 
+        if query:
+            query = query.replace('noReplace=False', 'noReplace=false')
+            query = query.replace('noReplace=True', 'noReplace=true')
+
         uri: str = (
             f"{self._rest_uri}/"
             f'{f"v4/" if include_version else ""}'
@@ -563,6 +567,13 @@ class Node:
             f'{f"/{guild_id}" if guild_id else ""}'
             f'{f"?{query}" if query else ""}'
         )
+
+        if data and self._is_nodelink and isinstance(data, dict):
+            if 'encodedTrack' in data and 'track' not in data:
+                data['track'] = {'encoded': data['encodedTrack']} if data['encodedTrack'] is not None else None
+                del data['encodedTrack']
+            if data.get('endTime') is None:
+                data.pop('endTime', None)
 
         try:
             resp = await self._session.request(
@@ -965,6 +976,29 @@ class Node:
                 )
                 for track in data[data_type]
             ]
+
+        elif load_type == "album":
+            track_list = data[data_type]["tracks"]
+            playlist_info = data[data_type]["info"]
+            tracks = [
+                Track(
+                    track_id=t["encoded"],
+                    info=t["info"],
+                    ctx=ctx,
+                    track_type=TrackType(t["info"]["sourceName"]),
+                    filters=filters,
+                )
+                for t in track_list
+            ]
+            if not tracks:
+                return None
+            return Playlist(
+                playlist_info=playlist_info,
+                tracks=tracks,
+                playlist_type=PlaylistType(tracks[0].track_type.value),
+                thumbnail=tracks[0].thumbnail,
+                uri=query,
+            )
 
         else:
             raise TrackLoadError(
