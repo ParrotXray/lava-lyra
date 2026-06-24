@@ -141,7 +141,8 @@ class Playlist:
 
         self.selected_track: Optional[Track] = None
         if (index := playlist_info.get("selectedTrack", -1)) != -1:
-            self.selected_track = self.tracks[index]
+            if 0 <= index < len(self.tracks):
+                self.selected_track = self.tracks[index]
 
         self.track_count: int = len(self.tracks)
 

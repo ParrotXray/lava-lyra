@@ -161,6 +161,16 @@ class Node:
         self._is_nodelink: bool = False
         self._version: LavalinkVersion = LavalinkVersion(0, 0, 0)
 
+        self._stats: NodeStats = NodeStats(
+            {
+                "memory": {"used": 0, "free": 0, "reservable": 0, "allocated": 0},
+                "cpu": {"cores": 0, "systemLoad": 0.0, "lavalinkLoad": 0.0},
+                "playingPlayers": 0,
+                "players": 0,
+                "uptime": 0,
+            }
+        )
+
         self._route_planner: RoutePlanner = RoutePlanner(self)
         self._search_manager: SearchManager = SearchManager(self)
         self._log: Optional[logging.Logger] = logger
@@ -557,8 +567,8 @@ class Node:
             )
 
         if query:
-            query = query.replace('noReplace=False', 'noReplace=false')
-            query = query.replace('noReplace=True', 'noReplace=true')
+            query = query.replace("noReplace=False", "noReplace=false")
+            query = query.replace("noReplace=True", "noReplace=true")
 
         uri: str = (
             f"{self._rest_uri}/"
@@ -569,11 +579,13 @@ class Node:
         )
 
         if data and self._is_nodelink and isinstance(data, dict):
-            if 'encodedTrack' in data and 'track' not in data:
-                data['track'] = {'encoded': data['encodedTrack']} if data['encodedTrack'] is not None else None
-                del data['encodedTrack']
-            if data.get('endTime') is None:
-                data.pop('endTime', None)
+            if "encodedTrack" in data and "track" not in data:
+                data["track"] = (
+                    {"encoded": data["encodedTrack"]} if data["encodedTrack"] is not None else None
+                )
+                del data["encodedTrack"]
+            if data.get("endTime") is None:
+                data.pop("endTime", None)
 
         try:
             resp = await self._session.request(
@@ -762,14 +774,15 @@ class Node:
             if self._log:
                 self._log.debug("All players disconnected from node.")
 
+        self._available = False
+        self._task.cancel()
+
         await self._websocket.close()
         await self._session.close()
         if self._log:
             self._log.debug("Websocket and http session closed.")
 
         del self._pool._nodes[self._identifier]
-        self._available = False
-        self._task.cancel()
 
         end = time.perf_counter()
         if self._log:

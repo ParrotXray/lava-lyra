@@ -603,7 +603,7 @@ class Player(VoiceProtocolType):
                     )[
                         0
                     ]  # type: ignore
-                except:
+                except Exception:
                     # The song wasn't able to be found, raise error
                     raise TrackLoadError(
                         "No equivalent track was able to be found.",

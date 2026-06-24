@@ -259,19 +259,13 @@ class LavalinkVersion(NamedTuple):
         if not isinstance(other, LavalinkVersion):
             return False
 
-        if self.major > other.major:
-            return False
-        if self.minor > other.minor:
-            return False
-        if self.fix > other.fix:
-            return False
-        return True
+        return (self.major, self.minor, self.fix) < (other.major, other.minor, other.fix)
 
     def __gt__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
             return False
 
-        return not (self < other)
+        return (self.major, self.minor, self.fix) > (other.major, other.minor, other.fix)
 
     def __le__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
