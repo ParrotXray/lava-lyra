@@ -29,7 +29,7 @@ class Queue(Iterable[Track]):
         overflow: bool = True,
     ):
         self.max_size: Optional[int] = max_size
-        self._current_item: Track
+        self._current_item: Optional[Track] = None
         self._queue: List[Track] = []
         self._overflow: bool = overflow
         self._loop_mode: Optional[LoopMode] = None
@@ -192,24 +192,17 @@ class Queue(Iterable[Track]):
         """
 
         if self._loop_mode == LoopMode.TRACK:
-            return self._current_item
+            if self._current_item is not None:
+                return self._current_item
 
         if self.is_empty:
             raise QueueEmpty("No items in the queue.")
 
         if self._loop_mode == LoopMode.QUEUE:
-            # set current item to first track in queue if not set already
-            # otherwise exception will be raised
             if not self._current_item or self._current_item not in self._queue:
-                if self._queue:
-                    item = self._queue[0]
-                else:
+                if not self._queue:
                     raise QueueEmpty("No items in the queue.")
-
-            # set current item to first track in queue if not set already
-            if not self._current_item:
                 self._current_item = self._queue[0]
-                item = self._current_item
 
             # we reached the end of the queue, go back to first track
             if self._index(self._current_item) == len(self._queue) - 1:
@@ -247,7 +240,7 @@ class Queue(Iterable[Track]):
         """
         return self._index(self._check_track(item))
 
-    def put(self, item: list[Track] | Track | Playlist, /) -> None:
+    def put(self, item: list[Track] | Track | Playlist, /) -> int:
         """Put the given item into the back of the queue."""
         if self.is_full:
             if not self._overflow:
@@ -260,7 +253,7 @@ class Queue(Iterable[Track]):
         added = 0
 
         if isinstance(item, Iterable):
-            passing_items = [track for track in item if self._check_track(track)]
+            passing_items = self._check_track_container(item)
             self._queue.extend(passing_items)
             added = len(passing_items)
         else:
@@ -343,8 +336,12 @@ class Queue(Iterable[Track]):
             raise QueueException("Queue loop is already disabled.")
 
         if self._loop_mode == LoopMode.QUEUE:
-            index = self.find_position(self._current_item) + 1
-            self._queue = self._queue[index:]
+            try:
+                index = self.find_position(self._current_item) + 1
+            except ValueError:
+                index = 0
+            if index < len(self._queue):
+                self._queue = self._queue[index:]
 
         self._loop_mode = None
 

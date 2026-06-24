@@ -1,5 +1,6 @@
 import collections
 from typing import Any, Dict, List, Optional, Tuple
+
 from typing_extensions import Self
 
 from .exceptions import FilterInvalidArgument
@@ -51,11 +52,7 @@ class Filter:
         if not isinstance(other, Filter):
             return NotImplemented
 
-        return (
-            type(self) is type(other)
-            and self.tag == other.tag
-            and self.payload == other.payload
-        )
+        return type(self) is type(other) and self.tag == other.tag and self.payload == other.payload
 
 
 class Equalizer(Filter):
@@ -196,6 +193,7 @@ class Equalizer(Filter):
             (11, 0.5),
             (12, 0.25),
             (13, -0.025),
+            (14, 0.0),
         ]
         return cls(tag="piano", levels=levels)
 
@@ -435,19 +433,19 @@ class ChannelMix(Filter):
     ):
         super().__init__(tag=tag)
 
-        if 0 > left_to_left > 1:
+        if left_to_left < 0 or left_to_left > 1:
             raise ValueError(
                 "'left_to_left' value must be more than or equal to 0 or less than or equal to 1.",
             )
-        if 0 > right_to_right > 1:
+        if right_to_right < 0 or right_to_right > 1:
             raise ValueError(
                 "'right_to_right' value must be more than or equal to 0 or less than or equal to 1.",
             )
-        if 0 > left_to_right > 1:
+        if left_to_right < 0 or left_to_right > 1:
             raise ValueError(
                 "'left_to_right' value must be more than or equal to 0 or less than or equal to 1.",
             )
-        if 0 > right_to_left > 1:
+        if right_to_left < 0 or right_to_left > 1:
             raise ValueError(
                 "'right_to_left' value must be more than or equal to 0 or less than or equal to 1.",
             )

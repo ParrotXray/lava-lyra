@@ -522,7 +522,7 @@ class MixEndedEvent(LyraEvent):
     def __init__(self, data: dict, player: Player):
         self.player: Player = player
         self.mix_id: str = data.get("mixId", "")
-        self.reason: str = data.get("reason", MixEndReason.FINISHED)
+        self.reason: MixEndReason = MixEndReason(data.get("reason", "FINISHED"))
 
         # on_lyra_mix_ended(player, mix_id, reason)
         self.handler_args = (self.player, self.mix_id, self.reason)
