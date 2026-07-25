@@ -218,14 +218,15 @@ class Queue(Iterable[Track]):
         self._current_item = item
         return item
 
-    def pop(self) -> Track:
-        """Return item from the right end side of the queue.
+    def pop(self, index: int = -1) -> Track:
+        """Remove and return item at index (default last item).
         Raises QueueEmpty if no items in queue.
+        Raises IndexError if index is out of range.
         """
         if self.is_empty:
             raise QueueEmpty("No items in the queue.")
 
-        return self._queue.pop()
+        return self._queue.pop(index)
 
     def remove(self, item: Track) -> None:
         """
