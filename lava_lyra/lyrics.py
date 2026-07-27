@@ -201,7 +201,7 @@ class LyricsManager:
         try:
             # NodeLink uses different endpoint structure
             if self.is_nodelink:
-                return await self._fetch_lyrics_nodelink(target_track, skip_track_source, lang)
+                return await self._fetch_lyrics_nodelink(target_track, lang)
             else:
                 return await self._fetch_lyrics_lavalink(target_track, skip_track_source)
 
