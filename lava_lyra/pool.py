@@ -580,9 +580,9 @@ class Node:
 
         if data and self._is_nodelink and isinstance(data, dict):
             if "encodedTrack" in data and "track" not in data:
-                data["track"] = (
-                    {"encoded": data["encodedTrack"] if data["encodedTrack"] is not None else None}
-                )
+                data["track"] = {
+                    "encoded": data["encodedTrack"] if data["encodedTrack"] is not None else None
+                }
                 del data["encodedTrack"]
             if data.get("endTime") is None:
                 data.pop("endTime", None)
