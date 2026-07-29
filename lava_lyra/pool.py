@@ -505,7 +505,7 @@ class Node:
                     self._log.info(
                         f"Session ID changed from {old_session_id} to {self._session_id}, updating players"
                     )
-                for player in self._players.values():
+                for player in self._players.copy().values():
                     await player._refresh_endpoint_uri(self._session_id)
 
             await self._configure_resuming()
@@ -623,7 +623,7 @@ class Node:
                     self._log.debug(
                         f"REST request to Node {self._identifier} with method {method} to {uri} completed sucessfully and returned no data.",
                     )
-                return await resp.json(content_type=None)
+                return None
 
             if resp.content_type == "text/plain":
                 if self._log:
@@ -751,7 +751,7 @@ class Node:
             raise NodeConnectionFailure(
                 f"The connection to node '{self._identifier}' failed: {e}",
             ) from None
-        except exceptions.InvalidHandshake:
+        except exceptions.InvalidHandshake as e:
             self._health_monitor.record_failure()
             raise NodeConnectionFailure(
                 f"The password for node '{self._identifier}' is invalid: {e}",
@@ -775,14 +775,28 @@ class Node:
                 self._log.debug("All players disconnected from node.")
 
         self._available = False
-        self._task.cancel()
+        if self._task:
+            self._task.cancel()
 
-        await self._websocket.close()
-        await self._session.close()
+        if self._websocket and not getattr(self._websocket, "closed", True):
+            try:
+                await self._websocket.close()
+            except Exception:
+                pass
+        if self._session and not getattr(self._session, "closed", True):
+            try:
+                await self._session.close()
+            except Exception:
+                pass
         if self._log:
             self._log.debug("Websocket and http session closed.")
 
-        del self._pool._nodes[self._identifier]
+        try:
+            self._bot.remove_listener(self._update_handler, "on_socket_response")
+        except Exception:
+            pass
+
+        self._pool._nodes.pop(self._identifier, None)
 
         end = time.perf_counter()
         if self._log:
@@ -921,6 +935,9 @@ class Node:
                 )
                 for track in track_list
             ]
+
+            if not tracks:
+                return None
 
             return Playlist(
                 playlist_info=playlist_info,
@@ -1186,6 +1203,11 @@ class NodePool:
 
         if identifier is None:
             return random.choice(list(available_nodes.values()))
+
+        if identifier not in available_nodes:
+            raise NoNodesAvailable(
+                f"Node '{identifier}' is not available.",
+            )
 
         return available_nodes[identifier]
 

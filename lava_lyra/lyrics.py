@@ -82,14 +82,14 @@ class Lyrics:
             if isinstance(line_data, dict):
                 lyric_line = LyricLine(
                     text=line_data.get("line", line_data.get("text", "")),
-                    time=line_data.get("timestamp", line_data.get("time", 0)) / 1000.0,
+                    time=(line_data.get("timestamp", line_data.get("time", 0)) or 0) / 1000.0,
                     duration=line_data.get("duration"),
                 )
                 self.lines.append(lyric_line)
 
     def __bool__(self) -> bool:
         """Check if lyrics exist"""
-        return bool(self.lines)
+        return bool(self.lines) or bool(self.text)
 
     def __len__(self) -> int:
         """Return number of lyric lines"""
@@ -292,7 +292,7 @@ class LyricsManager:
 
         Note:
             - Lavalink v4: Full support via POST endpoint
-            - NodeLink: Not supported (this is a no-op)
+            - NodeLink: Full support via POST endpoint
 
         Returns:
             bool: True if successful, False otherwise
@@ -300,15 +300,6 @@ class LyricsManager:
         if not self.enabled:
             if self._log:
                 self._log.debug("Lyrics feature is not enabled on this node")
-            return False
-
-        # NodeLink does not support subscribe
-        if self.is_nodelink:
-            if self._log:
-                self._log.warning(
-                    "Subscribe to live lyrics is not supported on NodeLink. "
-                    "Use fetch_lyrics() instead for one-time retrieval."
-                )
             return False
 
         # Lavalink v4 subscribe
@@ -337,25 +328,15 @@ class LyricsManager:
 
         Note:
             - Lavalink v4: Full support via DELETE endpoint
-            - NodeLink: Not supported (resets local state instead)
+            - NodeLink: Full support via DELETE endpoint
 
         Returns:
-            bool: True if successful (or no-op for NodeLink), False otherwise
+            bool: True if successful, False otherwise
         """
         if not self.enabled:
             if self._log:
                 self._log.debug("Lyrics feature is not enabled on this node")
             return False
-
-        # NodeLink does not support unsubscribe, reset local state
-        if self.is_nodelink:
-            if self._log:
-                self._log.debug(
-                    "NodeLink does not support unsubscribe endpoint. "
-                    "Resetting local lyrics state."
-                )
-            self.reset()
-            return True
 
         # Lavalink v4 unsubscribe
         try:

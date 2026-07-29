@@ -385,8 +385,11 @@ class Player(VoiceProtocolType):
         await self._dispatch_voice_update({**self._voice_state, "event": data})
 
     async def _dispatch_event(self, data: dict) -> None:
-        event_type: str = data["type"]
-        event: LyraEvent = getattr(events, event_type)(data, self)
+        event_type: str = data.get("type", "")
+        event_cls = getattr(events, event_type, None)
+        if event_cls is None:
+            return
+        event: LyraEvent = event_cls(data, self)
 
         if isinstance(event, TrackEndEvent) and event.reason not in (
             "REPLACED",
@@ -585,8 +588,7 @@ class Player(VoiceProtocolType):
             # First lets try using the tracks ISRC, every track has one (hopefully)
             try:
                 if not track.isrc:
-                    # We have to bare raise here because theres no other way to skip this block feasibly
-                    raise
+                    raise ValueError("Track has no ISRC")
                 search = (
                     await self._node.get_tracks(f"{track._search_type}:{track.isrc}", ctx=track.ctx)
                 )[
@@ -619,7 +621,7 @@ class Player(VoiceProtocolType):
             else:
                 data = {
                     "encodedTrack": search.track_id,
-                    "position": str(start),
+                    "position": start,
                     "endTime": self._adjust_end_time(),
                 }
 
@@ -637,7 +639,7 @@ class Player(VoiceProtocolType):
             else:
                 data = {
                     "encodedTrack": track.track_id,
-                    "position": str(start),
+                    "position": start,
                     "endTime": self._adjust_end_time(),
                 }
 
@@ -672,7 +674,7 @@ class Player(VoiceProtocolType):
         # Otherwise, it'll be set here:
 
         if end > 0:
-            data["endTime"] = str(end) if not self._node._is_nodelink else end
+            data["endTime"] = end
 
         try:
             await self._node.send(
@@ -869,7 +871,7 @@ class Player(VoiceProtocolType):
         (You must have a song playing in order for `fast_apply` to work.)
         """
 
-        if not self._filters:
+        if self._filters.empty:
             raise FilterInvalidArgument(
                 "You must have filters applied first in order to use this method.",
             )

@@ -27,7 +27,7 @@ class LyraException(Exception):
     """Base of all Lyra exceptions."""
 
 
-class NodeException(Exception):
+class NodeException(LyraException):
     """Base exception for nodes."""
 
 
@@ -99,7 +99,7 @@ class FilterTagAlreadyInUse(LyraException):
     pass
 
 
-class QueueException(Exception):
+class QueueException(LyraException):
     """Base Lyra queue exception."""
 
     pass

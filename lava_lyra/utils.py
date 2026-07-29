@@ -1,7 +1,7 @@
 import random
 import socket
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from itertools import zip_longest
 from timeit import default_timer as timer
 from typing import Any, Callable, Dict, Iterable, NamedTuple, Optional
@@ -117,6 +117,7 @@ class FailingIPBlock:
         self.address = data.get("address")
         self.failing_time = datetime.fromtimestamp(
             float(data.get("failingTimestamp", 0)),
+            tz=timezone.utc,
         )
 
     def __repr__(self) -> str:
@@ -243,7 +244,7 @@ class LavalinkVersion(NamedTuple):
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
-            return False
+            return NotImplemented
 
         return (
             (self.major == other.major) and (self.minor == other.minor) and (self.fix == other.fix)
@@ -251,31 +252,31 @@ class LavalinkVersion(NamedTuple):
 
     def __ne__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
-            return False
+            return NotImplemented
 
         return not (self == other)
 
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
-            return False
+            return NotImplemented
 
         return (self.major, self.minor, self.fix) < (other.major, other.minor, other.fix)
 
     def __gt__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
-            return False
+            return NotImplemented
 
         return (self.major, self.minor, self.fix) > (other.major, other.minor, other.fix)
 
     def __le__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
-            return False
+            return NotImplemented
 
         return (self < other) or (self == other)
 
     def __ge__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
-            return False
+            return NotImplemented
 
         return (self > other) or (self == other)
 
@@ -308,7 +309,7 @@ class ConnectionQualityTracker:
     def record_reconnection(self) -> None:
         """Record a reconnection event."""
         current_time = time.time()
-        if self._last_reconnection_time > 0:
+        if self._last_reconnection_time > 0 and self._consecutive_failures > 0:
             downtime = current_time - self._last_reconnection_time
             self._total_downtime += downtime
 
