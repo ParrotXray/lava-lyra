@@ -397,5 +397,9 @@ class MixEndReason(Enum):
     ERROR = "ERROR"
     MAIN_ENDED = "MAIN_ENDED"
 
+    @classmethod
+    def _missing_(cls, value: object) -> "MixEndReason":
+        return cls.FINISHED
+
     def __str__(self) -> str:
         return self.value

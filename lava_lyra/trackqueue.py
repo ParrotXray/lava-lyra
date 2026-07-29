@@ -254,6 +254,11 @@ class Queue(Iterable[Track]):
 
         if isinstance(item, Iterable):
             passing_items = self._check_track_container(item)
+            if self.max_size is not None and self._overflow:
+                while self._queue and self.count + len(passing_items) > self.max_size:
+                    self._drop()
+                if len(passing_items) > self.max_size:
+                    passing_items = passing_items[: self.max_size]
             self._queue.extend(passing_items)
             added = len(passing_items)
         else:
@@ -302,9 +307,12 @@ class Queue(Iterable[Track]):
             self.put(item)
 
     def copy(self) -> Queue:
-        """Create a copy of the current queue including it's members."""
+        """Create a copy of the current queue including its members."""
         new_queue = self.__class__(max_size=self.max_size)
         new_queue._queue = copy(self._queue)
+        new_queue._overflow = self._overflow
+        new_queue._loop_mode = self._loop_mode
+        new_queue._current_item = self._current_item
 
         return new_queue
 
@@ -319,6 +327,11 @@ class Queue(Iterable[Track]):
         """
         self._loop_mode = mode
         if self._loop_mode == LoopMode.QUEUE:
+            if self._current_item is None:
+                if not self._queue:
+                    return
+                self._current_item = self._queue[0]
+                return
             try:
                 index = self._index(self._current_item)
             except ValueError:
@@ -336,9 +349,12 @@ class Queue(Iterable[Track]):
             raise QueueException("Queue loop is already disabled.")
 
         if self._loop_mode == LoopMode.QUEUE:
+            if self._current_item is None:
+                self._loop_mode = None
+                return
             try:
                 index = self.find_position(self._current_item) + 1
-            except ValueError:
+            except (ValueError, TypeError):
                 index = 0
             if index < len(self._queue):
                 self._queue = self._queue[index:]

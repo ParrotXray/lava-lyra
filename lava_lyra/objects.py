@@ -91,7 +91,7 @@ class Track:
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Track):
-            return False
+            return NotImplemented
 
         return other.track_id == self.track_id
 

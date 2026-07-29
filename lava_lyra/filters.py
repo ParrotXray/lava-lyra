@@ -89,9 +89,9 @@ class Equalizer(Filter):
 
     def __eq__(self, __value: object) -> bool:
         if not isinstance(__value, Equalizer):
-            return False
+            return NotImplemented
 
-        return self.raw == __value.raw
+        return self.raw == __value.raw and self.tag == __value.tag
 
     @classmethod
     def flat(cls) -> "Equalizer":
@@ -319,9 +319,9 @@ class Tremolo(Filter):
     def __init__(self, *, tag: str, frequency: float = 2.0, depth: float = 0.5):
         super().__init__(tag=tag)
 
-        if frequency < 0:
+        if frequency <= 0:
             raise FilterInvalidArgument(
-                "Tremolo frequency must be more than 0.",
+                "Tremolo frequency must be greater than 0.",
             )
         if depth < 0 or depth > 1:
             raise FilterInvalidArgument(
@@ -358,9 +358,9 @@ class Vibrato(Filter):
     def __init__(self, *, tag: str, frequency: float = 2.0, depth: float = 0.5):
         super().__init__(tag=tag)
 
-        if frequency < 0 or frequency > 14:
+        if frequency <= 0 or frequency > 14:
             raise FilterInvalidArgument(
-                "Vibrato frequency must be between 0 and 14.",
+                "Vibrato frequency must be greater than 0 and at most 14.",
             )
         if depth < 0 or depth > 1:
             raise FilterInvalidArgument(
@@ -434,20 +434,20 @@ class ChannelMix(Filter):
         super().__init__(tag=tag)
 
         if left_to_left < 0 or left_to_left > 1:
-            raise ValueError(
-                "'left_to_left' value must be more than or equal to 0 or less than or equal to 1.",
+            raise FilterInvalidArgument(
+                "'left_to_left' must be between 0 and 1 (inclusive).",
             )
         if right_to_right < 0 or right_to_right > 1:
-            raise ValueError(
-                "'right_to_right' value must be more than or equal to 0 or less than or equal to 1.",
+            raise FilterInvalidArgument(
+                "'right_to_right' must be between 0 and 1 (inclusive).",
             )
         if left_to_right < 0 or left_to_right > 1:
-            raise ValueError(
-                "'left_to_right' value must be more than or equal to 0 or less than or equal to 1.",
+            raise FilterInvalidArgument(
+                "'left_to_right' must be between 0 and 1 (inclusive).",
             )
         if right_to_left < 0 or right_to_left > 1:
-            raise ValueError(
-                "'right_to_left' value must be more than or equal to 0 or less than or equal to 1.",
+            raise FilterInvalidArgument(
+                "'right_to_left' must be between 0 and 1 (inclusive).",
             )
 
         self.left_to_left: float = left_to_left

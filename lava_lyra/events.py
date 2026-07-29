@@ -4,7 +4,7 @@ from abc import ABC
 from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 from .compat import BotType, GuildType
-from .enums import MixEndReason
+from .enums import MixEndReason, TrackType
 from .lyrics import LyricLine, Lyrics
 from .objects import Track
 
@@ -278,9 +278,11 @@ class LyricsLineEvent(LyraEvent):
 
         # Create a lyric line object
         line_data = data.get("line", {})
+        if not isinstance(line_data, dict):
+            line_data = {}
         self.line: LyricLine = LyricLine(
-            text=line_data.get("line", ""),
-            time=line_data.get("timestamp", 0) / 1000.0,
+            text=line_data.get("line", line_data.get("text", "")),
+            time=(line_data.get("timestamp", line_data.get("time", 0)) or 0) / 1000.0,
             duration=line_data.get("duration"),
         )
 
@@ -483,8 +485,12 @@ class MixStartedEvent(LyraEvent):
 
         # Parse track data if present
         track_data = data.get("track")
-        if track_data:
-            self.track: Optional[Track] = Track(track_data)
+        if track_data and isinstance(track_data, dict):
+            self.track: Optional[Track] = Track(
+                track_id=track_data.get("encoded", ""),
+                info=track_data.get("info", {}),
+                track_type=TrackType(track_data.get("info", {}).get("sourceName", "other")),
+            )
         else:
             self.track: Optional[Track] = None
 

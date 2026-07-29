@@ -22,6 +22,10 @@ class RoutePlanner:
     async def get_status(self) -> RouteStats:
         """Gets the status of the route planner API."""
         data: dict = await self.node.send(method="GET", path="routeplanner/status")
+        if not data:
+            from .exceptions import NodeRestException
+
+            raise NodeRestException("Empty routeplanner status response")
         return RouteStats(data)
 
     async def free_address(self, ip: str) -> None:
