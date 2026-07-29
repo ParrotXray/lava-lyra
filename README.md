@@ -453,6 +453,8 @@ We extend our heartfelt thanks to **cloudwithax** and all Pomice contributors fo
 ### Key Contributors
 - **cloudwithax** - Original Pomice library creator
 - **ParrotXray** - Lavalink v4 refactoring and Lyra development  
+- **GDjkhp** - Fixes and improvements to issue handling
+- **Akinori107** - Fixes and improvements to issue handling
 - **Community contributors** - Bug reports, features, and improvements
 
 ## Star History
