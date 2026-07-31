@@ -533,7 +533,7 @@ class Player(VoiceProtocolType):
         )
 
         if self._log:
-            self._log.debug(f"Player has been stopped.")
+            self._log.debug("Player has been stopped.")
 
     async def disconnect(self, *, force: bool = False) -> None:
         """Disconnects the player from voice."""
@@ -800,7 +800,7 @@ class Player(VoiceProtocolType):
             self._log.debug(f"Filter has been applied to player with tag {_filter.tag}")
         if fast_apply:
             if self._log:
-                self._log.debug(f"Fast apply passed, now applying filter instantly.")
+                self._log.debug("Fast apply passed, now applying filter instantly.")
             await self.seek(self.position)
 
         return self._filters
@@ -825,7 +825,7 @@ class Player(VoiceProtocolType):
             self._log.debug(f"Filter has been removed from player with tag {filter_tag}")
         if fast_apply:
             if self._log:
-                self._log.debug(f"Fast apply passed, now removing filter instantly.")
+                self._log.debug("Fast apply passed, now removing filter instantly.")
             await self.seek(self.position)
 
         return self._filters
@@ -858,7 +858,7 @@ class Player(VoiceProtocolType):
             self._log.debug(f"Filter with tag {filter_tag} has been edited to {edited_filter!r}")
         if fast_apply:
             if self._log:
-                self._log.debug(f"Fast apply passed, now editing filter instantly.")
+                self._log.debug("Fast apply passed, now editing filter instantly.")
             await self.seek(self.position)
 
         return self._filters
@@ -883,9 +883,9 @@ class Player(VoiceProtocolType):
             data={"filters": {}},
         )
         if self._log:
-            self._log.debug(f"All filters have been removed from player.")
+            self._log.debug("All filters have been removed from player.")
 
         if fast_apply:
             if self._log:
-                self._log.debug(f"Fast apply passed, now removing all filters instantly.")
+                self._log.debug("Fast apply passed, now removing all filters instantly.")
             await self.seek(self.position)

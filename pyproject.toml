@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lava-lyra"
 dynamic = ["version"]
-description = "A modern Lavalink v4 wrapper for py-cord, based on Pomice"
+description = "A modern Lavalink v4 wrapper supporting both py-cord and discord.py, based on Pomice"
 readme = "README.md"
 license = {text = "GPL-3.0"}
 authors = [
@@ -47,19 +47,17 @@ dependencies = [
 
 [project.optional-dependencies]
 pycord = [
-    "py-cord>=2.6.0",
+    "py-cord[voice]>=2.6.0",
 ]
 discordpy = [
-    "discord.py>=2.6.0",
+    "discord.py[voice]>=2.6.0",
 ]
 docs = [
     "sphinx>=5.0.0",
-    "sphinx-rtd-theme>=1.0.0",
-    "sphinxcontrib-asyncio>=0.3.0",
+    "furo>=2024.0.0",
+    "myst-parser>=2.0.0",
 ]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.20.0",
     "mypy>=0.991",
     "black>=22.0.0",
     "isort>=5.10.0",
@@ -68,7 +66,6 @@ dev = [
 ]
 speed = [
     "aiohttp[speedups]",
-    "cchardet",
     "aiodns",
     "orjson",
 ]
@@ -154,20 +151,3 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "websockets.*"
 ignore_missing_imports = true
-
-# Pytest configuration
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "-v",
-    "--tb=short",
-]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "lavalink: marks tests that require a running Lavalink server",
-]

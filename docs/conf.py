@@ -4,7 +4,6 @@ import inspect
 import os
 import sys
 from typing import Any
-from typing import Dict
 
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath(".."))
@@ -14,7 +13,9 @@ project = "Lyra"
 copyright = "2026, ParrotXray"
 author = "ParrotXray"
 
-release = "1.6.1"
+from lava_lyra import __version__
+
+release = __version__
 
 
 extensions = [
@@ -65,7 +66,7 @@ html_title = "Lyra"
 
 language = "en"
 
-html_theme_options: Dict[str, Any] = {
+html_theme_options: dict[str, Any] = {
     "footer_icons": [
         {
             "name": "GitHub",
@@ -117,5 +118,5 @@ def linkcode_resolve(domain, info):
         start, end = lines[1], lines[1] + len(lines[0]) - 1
 
         return f"https://github.com/ParrotXray/lava-lyra/blob/main/{file}#L{start}-L{end}"
-    except:
+    except Exception:
         pass

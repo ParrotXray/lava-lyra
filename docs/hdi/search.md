@@ -25,12 +25,14 @@ await NodePool.create_node(
 
 ## Accessing the SearchManager
 
-The `SearchManager` is available from any `Node` via `Node.search`:
+`Node` does not expose a `SearchManager` as a public property. Instead, `Node` provides a `load_search()` convenience method that wraps `SearchManager.load_search()`:
 
 ```py
 node = await NodePool.get_node(identifier="MAIN")
-search_manager = node.search
+result = await node.load_search(query="...", types=[...])
 ```
+
+You can also check whether search is enabled for a node via `Node.search_enabled`.
 
 ## Performing a search
 

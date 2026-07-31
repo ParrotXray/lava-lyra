@@ -19,7 +19,7 @@ entirely by Lavalink server plugins. Configure these in your Lavalink
 server's application.yml file instead of the client.
 
 Original Pomice Copyright (c) 2023, cloudwithax
-Lavalink v4 refactoring Copyright (c) 2025, ParrotXray
+Lavalink v4 refactoring Copyright (c) 2026, ParrotXray
 
 Licensed under GPL-3.0
 """

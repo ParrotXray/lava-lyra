@@ -1,7 +1,12 @@
 # python cache
 __pycache__/
+*.pyc
 
 # python package-index
 build/
 dist/
 *.egg-info/
+
+# IDE cache
+.vscode/
+.idea/

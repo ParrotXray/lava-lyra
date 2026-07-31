@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from .player import Player
-    from .pool import Node
 
 __all__ = (
     "LyricLine",

@@ -8,8 +8,8 @@ Here is the full list of events:
 - `TrackEndEvent` → `on_lyra_track_end`
 - `TrackStuckEvent` → `on_lyra_track_stuck`
 - `TrackExceptionEvent` → `on_lyra_track_exception`
-- `WebsocketClosedEvent` → `on_lyra_websocket_closed`
-- `WebsocketOpenEvent` → `on_lyra_websocket_open`
+- `WebSocketClosedEvent` → `on_lyra_websocket_closed`
+- `WebSocketOpenEvent` → `on_lyra_websocket_open`
 - `LyricsFoundEvent` → `on_lyra_lyrics_found`
 - `LyricsUnavailableEvent` → `on_lyra_lyrics_unavailable`
 - `LyricsUpdateEvent` → `on_lyra_lyrics_update`

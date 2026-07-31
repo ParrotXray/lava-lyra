@@ -129,7 +129,7 @@ await NodePool.get_best_node(...)
 ```
 
 After you have initialized your function, you need to specify a `NodeAlgorithm` to use to grab your node from the pool.
-The available algorithms are `by_ping` and `by_players`.
+The available algorithms are `by_ping`, `by_total_players`, `by_playing_players`, and `by_health`.
 If you want to view what they do, refer to the `NodeAlgorithm` enum in the [](../api/enums.md) section.
 
 ```py

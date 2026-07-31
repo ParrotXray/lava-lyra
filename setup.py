@@ -1,7 +1,7 @@
 import re
-import setuptools
 from pathlib import Path
 
+import setuptools
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -31,19 +31,17 @@ classifiers = [
 
 extras_require = {
     "pycord": [
-        "py-cord>=2.6.0",
+        "py-cord[voice]>=2.6.0",
     ],
     "discordpy": [
-        "discord.py>=2.6.0",
+        "discord.py[voice]>=2.6.0",
     ],
     "docs": [
         "sphinx>=5.0.0",
-        "sphinx-rtd-theme>=1.0.0",
-        "sphinxcontrib-asyncio>=0.3.0",
+        "furo>=2024.0.0",
+        "myst-parser>=2.0.0",
     ],
     "dev": [
-        "pytest>=7.0.0",
-        "pytest-asyncio>=0.20.0",
         "mypy>=0.991",
         "black>=22.0.0",
         "isort>=5.10.0",
@@ -52,7 +50,6 @@ extras_require = {
     ],
     "speed": [
         "aiohttp[speedups]",
-        "cchardet",
         "aiodns",
         "orjson",
     ],
@@ -87,7 +84,7 @@ if init_file.exists():
         else:
             raise RuntimeError("Cannot find version string in __init__.py")
 else:
-    version = "1.0.0"
+    raise RuntimeError("Cannot find lava_lyra/__init__.py")
 
 if "dev" in version or "alpha" in version or "beta" in version or "rc" in version:
     try:
@@ -129,7 +126,6 @@ setuptools.setup(
     name="lava-lyra",
     version=version,
     author="ParrotXray",
-    author_email="",
     description="A modern Lavalink v4 wrapper supporting both py-cord and discord.py, based on Pomice",
     long_description=long_description,
     long_description_content_type=long_description_content_type,

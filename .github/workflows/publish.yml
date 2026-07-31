@@ -6,8 +6,6 @@ on:
       - 'v*'
   release:
     types: [published]
-  pull_request:
-    branches: [ main, develop ]
 
 jobs:
   build:
@@ -16,12 +14,12 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.10"
 
@@ -39,7 +37,7 @@ jobs:
         python -m twine check dist/*
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: dist-files
         path: dist/
@@ -54,7 +52,7 @@ jobs:
 
     steps:
     - name: Download build artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: dist-files
         path: dist/
@@ -75,28 +73,10 @@ jobs:
 
     steps:
     - name: Download build artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: dist-files
         path: dist/
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-
-  notify:
-    needs: [publish-pypi]
-    runs-on: ubuntu-latest
-    if: always()
-
-    steps:
-    - name: Notify success
-      if: needs.publish-pypi.result == 'success'
-      run: |
-        echo "Successfully published to PyPI!"
-        echo "Package URL: https://pypi.org/project/lava-lyra/"
-
-    - name: Notify failure
-      if: needs.publish-pypi.result == 'failure'
-      run: |
-        echo "Failed to publish to PyPI!"
-        exit 1
