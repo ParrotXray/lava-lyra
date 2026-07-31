@@ -2,7 +2,7 @@
 Queue
 ------------------
 
-.. automodule:: lava_lyra.queue
+.. automodule:: lava_lyra.trackqueue
    :members:
    :undoc-members:
    :show-inheritance:

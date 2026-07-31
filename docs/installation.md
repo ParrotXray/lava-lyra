@@ -46,12 +46,12 @@ plugins:
       spotify: true
       applemusic: true
       deezer: true
-    
+
     spotify:
       clientId: ""
       clientSecret: ""
       spDc: ""
-      countryCode: "US"      
+      countryCode: "US"
       customTokenEndpoint: "http://localhost:8080/api/token"
 
     applemusic:

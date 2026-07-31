@@ -3,9 +3,9 @@
 [![PyPI](https://img.shields.io/pypi/v/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
 [![downloads](https://img.shields.io/pypi/dm/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
 [![Python](https://img.shields.io/pypi/pyversions/lava-lyra.svg)](https://pypi.org/project/lava-lyra/)
-[![License](https://img.shields.io/github/license/ParrotXray/lava-lyra.svg)](https://github.com/ParrotXray/Lyra/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/ParrotXray/lava-lyra.svg)](https://github.com/ParrotXray/lava-lyra/blob/main/LICENSE)
 
-A modern Lavalink v4 wrapper designed for py-cord, based on the excellent [Pomice](https://github.com/cloudwithax/pomice) library by cloudwithax.
+A modern Lavalink v4 wrapper supporting both py-cord and discord.py, based on the excellent [Pomice](https://github.com/cloudwithax/pomice) library by cloudwithax.
 
 ## Quick Links
 - [Read the Docs](https://lava-lyra.readthedocs.io/en/latest/)
@@ -18,14 +18,14 @@ Lyra is a complete refactor of Pomice for **Lavalink v4.X or NodeLink v3.X**, br
 - **Full Lavalink v4 REST API support**
 - **Server-side plugin integration** (LavaSrc, YouTube plugin, etc.)
 - **Simplified setup** - No more API credentials needed in client
-- **Better error handling** and plugin support  
+- **Better error handling** and plugin support
 - **Removed deprecated modules** (client-side Spotify/Apple Music parsing)
 - **Optimized for py-cord** instead of discord.py
 - **Improved documentation** and examples
 
 ## Key Differences from Pomice
 
-| Feature | Pomice (v2.x) | Lyra (v1.x) |
+| Feature | Pomice (v2.x) | Lyra (v2.x) |
 |---------|---------------|-------------|
 | Lavalink Support | v3.x & v4.x | **v4.x** |
 | Nodelink Support | Unknown | **v3.x** |
@@ -40,12 +40,12 @@ Lyra is a complete refactor of Pomice for **Lavalink v4.X or NodeLink v3.X**, br
 ### Installation
 
 ```bash
-pip install lava_lyra
+pip install lava-lyra
 ```
 
-### Basic Usage
+## Basic Usage
 
-## Pycord Example
+### Pycord Example
 ```python
 import discord
 import lava_lyra
@@ -75,7 +75,7 @@ bot = Bot()
 bot.run('your_bot_token')
 ```
 
-## Discordpy
+### Discord.py Example
 ```python
 import discord
 from discord.ext import commands
@@ -108,47 +108,46 @@ class Bot(commands.Bot):
 bot = Bot()
 bot.run('your_bot_token')
 ```
+## Playing Music
 
-### Playing Music
-
-## Pycord Example
+### Pycord Example
 ```python
 @bot.slash_command(description="Play music")
 async def play(ctx, query: str):
     # Connect to voice channel
     if not ctx.author.voice:
         return await ctx.respond("You need to be in a voice channel!")
-    
+
     player = await ctx.author.voice.channel.connect(cls=lava_lyra.Player)
-    
+
     # Search for tracks (supports Spotify, YouTube, Apple Music via plugins!)
     results = await player.get_tracks(query)
-    
+
     if not results:
         return await ctx.respond("No tracks found!")
-    
+
     # Play the track
     track = results[0]
     await player.play(track)
     await ctx.respond(f"Now playing: **{track.title}**")
 ```
 
-## Discordpy Example
+### Discord.py Example
 ```python
 @bot.tree.command(description="Play music")
 async def play(interaction, query: str):
     # Connect to voice channel
     if not interaction.user.voice:
         return await interaction.response.send_message("You need to be in a voice channel!")
-    
+
     player = await ctx.author.voice.channel.connect(cls=lava_lyra.Player)
-    
+
     # Search for tracks (supports Spotify, YouTube, Apple Music via plugins!)
     results = await player.get_tracks(query)
-    
+
     if not results:
         return await interaction.response.send_message("No tracks found!")
-    
+
     # Play the track
     track = results[0]
     await player.play(track)
@@ -172,7 +171,7 @@ node = await lava_lyra.NodePool.create_node(
 )
 ```
 
-## Pycord Example
+### Pycord Example
 ```python
 @bot.slash_command(description="Search for music")
 async def search(ctx, query: str, platform: str = "youtube"):
@@ -235,7 +234,7 @@ async def search(ctx, query: str, platform: str = "youtube"):
     await ctx.respond("\n".join(response))
 ```
 
-## Discordpy Example
+### Discord.py Example
 ```python
 @bot.tree.command(description="Search for music")
 async def search(interaction, query: str, platform: str = "youtube"):
@@ -312,15 +311,15 @@ server:
 lavalink:
   plugins:
     # Required for YouTube support
-    - dependency: "dev.lavalink.youtube:youtube-plugin:VERSION"
+    - dependency: "dev.lavalink.youtube:youtube-plugin:x.y.z"
     - repository: "https://maven.lavalink.dev/releases"
 
     # Required for Spotify, Apple Music, Deezer, etc.
-    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:VERSION"
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:x.y.z"
       repository: "https://maven.lavalink.dev/releases"
 
     # Optional: LavaSearch for advanced search functionality
-    - dependency: "com.github.topi314.lavasearch:lavasearch-plugin:VERSION"
+    - dependency: "com.github.topi314.lavasearch:lavasearch-plugin:x.y.z"
       repository: "https://maven.lavalink.dev/releases"
 
   server:
@@ -336,12 +335,16 @@ plugins:
       spotify: true
       applemusic: true
       deezer: true
-    
+
     spotify:
       clientId: "your_spotify_client_id"
       clientSecret: "your_spotify_client_secret"
       countryCode: "US"
 ```
+Replace `x.y.z` with the latest version:
+- [youtube-plugin](https://github.com/lavalink-devs/youtube-source/releases)
+- [lavasrc-plugin](https://github.com/topi314/LavaSrc/releases)
+- [lavasearch-plugin](https://github.com/topi314/LavaSearch/releases)
 
 ## Supported Platforms
 
@@ -411,10 +414,6 @@ result = await node.load_search(
 )
 ```
 
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
 ## License and Credits
 
 ### License
@@ -425,37 +424,23 @@ This project is licensed under the **GPL-3.0 License** - see the [LICENSE](LICEN
 **Lyra** is based on the excellent [**Pomice**](https://github.com/cloudwithax/pomice) library:
 
 - **Original Pomice**: Copyright (c) 2023, [cloudwithax](https://github.com/cloudwithax)
-- **Lyra (Lavalink v4 refactor)**: Copyright (c) 2025, ParrotXray
+- **Lyra (Lavalink v4 refactor)**: Copyright (c) 2026, [ParrotXray](https://github.com/ParrotXray)
 
 We extend our heartfelt thanks to **cloudwithax** and all Pomice contributors for creating the solid foundation that made Lyra possible. This project builds upon their excellent work to provide Lavalink v4 compatibility and modern server-side plugin support.
 
 ### Key Contributors
 - **cloudwithax** - Original Pomice library creator
-- **ParrotXray** - Lavalink v4 refactoring and Lyra development  
+- **ParrotXray** - Lavalink v4 refactoring and Lyra development
+- **GDjkhp** - Fixes and improvements to issue handling
+- **Akinori107** - Fixes and improvements to issue handling
 - **Community contributors** - Bug reports, features, and improvements
 
 ## Links
 
 - [PyPI Package](https://pypi.org/project/lava-lyra/)
-- [GitHub Repository](https://github.com/ParrotXray/Lyra)
-- [Bug Reports](https://github.com/ParrotXray/lyra/issues)
+- [GitHub Repository](https://github.com/ParrotXray/lava-lyra)
+- [Bug Reports](https://github.com/ParrotXray/lava-lyra/issues)
 - [Original Pomice](https://github.com/cloudwithax/pomice)
-
-### Credits and Attribution
-
-**Lyra** is based on the excellent [**Pomice**](https://github.com/cloudwithax/pomice) library:
-
-- **Original Pomice**: Copyright (c) 2023, [cloudwithax](https://github.com/cloudwithax)
-- **Lyra (Lavalink v4 refactor)**: Copyright (c) 2025, [ParrotXray](https://github.com/ParrotXray)
-
-We extend our heartfelt thanks to **cloudwithax** and all Pomice contributors for creating the solid foundation that made Lyra possible. This project builds upon their excellent work to provide Lavalink v4 compatibility and modern server-side plugin support.
-
-### Key Contributors
-- **cloudwithax** - Original Pomice library creator
-- **ParrotXray** - Lavalink v4 refactoring and Lyra development  
-- **GDjkhp** - Fixes and improvements to issue handling
-- **Akinori107** - Fixes and improvements to issue handling
-- **Community contributors** - Bug reports, features, and improvements
 
 ## Star History
 

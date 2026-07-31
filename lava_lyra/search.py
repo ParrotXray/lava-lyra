@@ -6,7 +6,7 @@ from urllib.parse import quote
 
 from .compat import ContextType
 from .enums import LavaSearchType, PlaylistType, SearchType, TrackType, URLRegex
-from .exceptions import NodeRestException, TrackLoadError
+from .exceptions import NodeRestException
 from .objects import Playlist, Track
 
 if TYPE_CHECKING:
@@ -117,8 +117,8 @@ class SearchManager:
             SearchResult object containing the search results, or None if no results found
 
         Raises:
-            TrackLoadError: If there was an error loading the search results
             NodeRestException: If the LavaSearch plugin is not installed or there was an API error
+            ValueError: If no search types are specified
 
         Example:
             ```python
