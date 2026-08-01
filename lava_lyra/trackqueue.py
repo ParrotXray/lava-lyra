@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import random
+from collections.abc import Iterable, Iterator
 from copy import copy
-from typing import Iterable, Iterator, List, Optional, SupportsIndex, Union, overload
+from typing import TYPE_CHECKING, SupportsIndex, overload
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 from .enums import LoopMode
 from .exceptions import QueueEmpty, QueueException, QueueFull
@@ -15,28 +19,28 @@ class Queue(Iterable[Track]):
     """Queue for Lyra. This queue takes lyra.Track as an input and includes looping and shuffling."""
 
     __slots__ = (
-        "max_size",
-        "_queue",
-        "_overflow",
-        "_loop_mode",
         "_current_item",
+        "_loop_mode",
+        "_overflow",
+        "_queue",
+        "max_size",
     )
 
     def __init__(
         self,
-        max_size: Optional[int] = None,
+        max_size: int | None = None,
         *,
         overflow: bool = True,
     ):
-        self.max_size: Optional[int] = max_size
-        self._current_item: Optional[Track] = None
-        self._queue: List[Track] = []
+        self.max_size: int | None = max_size
+        self._current_item: Track | None = None
+        self._queue: list[Track] = []
         self._overflow: bool = overflow
-        self._loop_mode: Optional[LoopMode] = None
+        self._loop_mode: LoopMode | None = None
 
     def __str__(self) -> str:
         """String showing all Track objects appearing as a list."""
-        return str(list(f"'{t}'" for t in self))
+        return str([f"'{t}'" for t in self])
 
     def __repr__(self) -> str:
         """Official representation with max_size and member count."""
@@ -102,7 +106,7 @@ class Queue(Iterable[Track]):
         new_queue.extend(other)
         return new_queue
 
-    def __iadd__(self, other: Union[Iterable[Track], Track]) -> Queue:
+    def __iadd__(self, other: Iterable[Track] | Track) -> Self:
         """Add items to queue."""
         if isinstance(other, Track):
             self.put(other)
@@ -145,7 +149,7 @@ class Queue(Iterable[Track]):
         return item
 
     @classmethod
-    def _check_track_container(cls, iterable: Iterable) -> List[Track]:
+    def _check_track_container(cls, iterable: Iterable) -> list[Track]:
         iterable = list(iterable)
         for item in iterable:
             cls._check_track(item)
@@ -173,7 +177,7 @@ class Queue(Iterable[Track]):
         return bool(self._loop_mode)
 
     @property
-    def loop_mode(self) -> Optional[LoopMode]:
+    def loop_mode(self) -> LoopMode | None:
         """Returns the LoopMode enum set in the queue object"""
         return self._loop_mode
 
@@ -182,7 +186,7 @@ class Queue(Iterable[Track]):
         """Returns the amount of items in the queue"""
         return len(self._queue)
 
-    def get_queue(self) -> List:
+    def get_queue(self) -> list:
         """Returns the queue as a List"""
         return self._queue
 
@@ -300,8 +304,7 @@ class Queue(Iterable[Track]):
 
                 if (new_len + self.count) > self.max_size:
                     raise QueueFull(
-                        f"Queue has {self.count}/{self.max_size} items, "
-                        f"cannot add {new_len} more.",
+                        f"Queue has {self.count}/{self.max_size} items, cannot add {new_len} more.",
                     )
 
         for item in iterable:

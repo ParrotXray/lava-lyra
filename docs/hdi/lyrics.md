@@ -75,8 +75,7 @@ Use `Lyrics.get_lyrics_at_time()` to retrieve lines near a specific timestamp:
 lyrics = player.lyrics.lyrics
 if lyrics:
     current_lines = lyrics.get_lyrics_at_time(
-        time_seconds=player.position / 1000.0,
-        range_seconds=3.0
+        time_seconds=player.position / 1000.0, range_seconds=3.0
     )
     for line in current_lines:
         print(line.text)
@@ -212,6 +211,7 @@ Each `LyricLine` has:
 @commands.Cog.listener()
 async def on_lyra_lyrics_found(self, player, track, lyrics):
     print(f"Lyrics found for {track.title}: {len(lyrics)} lines")
+
 
 @commands.Cog.listener()
 async def on_lyra_lyrics_unavailable(self, player, track):

@@ -1,22 +1,23 @@
 import random
 import socket
 import time
+from collections.abc import Callable, Iterable
 from datetime import datetime, timezone
 from itertools import zip_longest
 from timeit import default_timer as timer
-from typing import Any, Callable, Dict, Iterable, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 from .enums import RouteIPType, RouteStrategy
 
 __all__ = (
+    "ConnectionQualityTracker",
     "ExponentialBackoff",
-    "NodeStats",
     "FailingIPBlock",
-    "RouteStats",
-    "Ping",
     "LavalinkVersion",
     "NodeHealthMonitor",
-    "ConnectionQualityTracker",
+    "NodeStats",
+    "Ping",
+    "RouteStats",
 )
 
 
@@ -72,19 +73,19 @@ class NodeStats:
     """
 
     __slots__ = (
-        "used",
-        "free",
-        "reservable",
         "allocated",
         "cpu_cores",
-        "cpu_system_load",
         "cpu_process_load",
+        "cpu_system_load",
+        "free",
         "players_active",
         "players_total",
+        "reservable",
         "uptime",
+        "used",
     )
 
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         memory: dict = data.get("memory", {})
         self.used = memory.get("used")
         self.free = memory.get("free")
@@ -131,15 +132,15 @@ class RouteStats:
     """
 
     __slots__ = (
-        "strategy",
-        "ip_block_type",
-        "ip_block_size",
-        "failing_addresses",
-        "block_index",
         "address_index",
+        "block_index",
+        "failing_addresses",
+        "ip_block_size",
+        "ip_block_type",
+        "strategy",
     )
 
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         self.strategy = RouteStrategy(data.get("class"))
 
         details: dict = data.get("details", {})
@@ -174,7 +175,7 @@ class Ping:
         self._timeout = timeout
 
     class Socket:
-        def __init__(self, family: int, type_: int, timeout: Optional[float]) -> None:
+        def __init__(self, family: int, type_: int, timeout: float | None) -> None:
             s = socket.socket(family, type_)
             s.settimeout(timeout)
             self._s = s
@@ -228,7 +229,7 @@ class Ping:
             s_runtime = 1000 * (cost_time)
             s.close()
             return s_runtime
-        except (ConnectionRefusedError, OSError, socket.timeout, socket.error):
+        except (TimeoutError, ConnectionRefusedError, OSError):
             # Node is unreachable or offline
             try:
                 s.close()
@@ -288,13 +289,13 @@ class ConnectionQualityTracker:
     """
 
     __slots__ = (
-        "_reconnection_count",
-        "_last_reconnection_time",
         "_connection_start_time",
-        "_total_downtime",
+        "_consecutive_failures",
+        "_last_reconnection_time",
         "_latency_samples",
         "_max_latency_samples",
-        "_consecutive_failures",
+        "_reconnection_count",
+        "_total_downtime",
     )
 
     def __init__(self, max_latency_samples: int = 10) -> None:
@@ -379,13 +380,13 @@ class NodeHealthMonitor:
     """
 
     __slots__ = (
-        "_quality_tracker",
-        "_last_health_check",
-        "_health_check_interval",
         "_circuit_breaker_threshold",
         "_circuit_open",
         "_circuit_open_time",
         "_circuit_timeout",
+        "_health_check_interval",
+        "_last_health_check",
+        "_quality_tracker",
     )
 
     def __init__(

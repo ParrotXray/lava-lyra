@@ -71,9 +71,7 @@ To add a filter, we need to use `Player.add_filter()`
 
 
 ```py
-
 await Player.add_filter(...)
-
 ```
 
 
@@ -121,9 +119,7 @@ You must have the `Player` class initialized first before using this. Refer to [
 To remove a filter, we need to use `Player.remove_filter()`
 
 ```py
-
 await Player.remove_filter(...)
-
 ```
 
 
@@ -171,9 +167,7 @@ You must have the `Player` class initialized first before using this. Refer to [
 To reset all filters, we need to use `Player.reset_filters()`
 
 ```py
-
 await Player.reset_filters()
-
 ```
 
 

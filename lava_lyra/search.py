@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 from .compat import ContextType
@@ -12,7 +12,7 @@ from .objects import Playlist, Track
 if TYPE_CHECKING:
     from .pool import Node
 
-__all__ = ("SearchManager", "Text", "SearchResult")
+__all__ = ("SearchManager", "SearchResult", "Text")
 
 
 class Text:
@@ -20,9 +20,9 @@ class Text:
     Represents a text-based search suggestion or result.
     """
 
-    __slots__ = ("text", "plugin_info")
+    __slots__ = ("plugin_info", "text")
 
-    def __init__(self, *, text: str, plugin_info: Optional[dict] = None):
+    def __init__(self, *, text: str, plugin_info: dict | None = None):
         self.text: str = text
         self.plugin_info: dict = plugin_info or {}
 
@@ -39,29 +39,29 @@ class SearchResult:
     """
 
     __slots__ = (
-        "tracks",
         "albums",
         "artists",
         "playlists",
-        "texts",
         "plugin_info",
+        "texts",
+        "tracks",
     )
 
     def __init__(
         self,
         *,
-        tracks: Optional[List[Track]] = None,
-        albums: Optional[List[Playlist]] = None,
-        artists: Optional[List[Playlist]] = None,
-        playlists: Optional[List[Playlist]] = None,
-        texts: Optional[List["Text"]] = None,
-        plugin_info: Optional[dict] = None,
+        tracks: list[Track] | None = None,
+        albums: list[Playlist] | None = None,
+        artists: list[Playlist] | None = None,
+        playlists: list[Playlist] | None = None,
+        texts: list[Text] | None = None,
+        plugin_info: dict | None = None,
     ):
-        self.tracks: List[Track] = tracks or []
-        self.albums: List[Playlist] = albums or []
-        self.artists: List[Playlist] = artists or []
-        self.playlists: List[Playlist] = playlists or []
-        self.texts: List[Text] = texts or []
+        self.tracks: list[Track] = tracks or []
+        self.albums: list[Playlist] = albums or []
+        self.artists: list[Playlist] = artists or []
+        self.playlists: list[Playlist] = playlists or []
+        self.texts: list[Text] = texts or []
         self.plugin_info: dict = plugin_info or {}
 
     def __repr__(self) -> str:
@@ -96,10 +96,10 @@ class SearchManager:
         self,
         *,
         query: str,
-        types: List[LavaSearchType],
-        search_type: Optional[SearchType] = None,
-        ctx: Optional[ContextType] = None,
-    ) -> Optional[SearchResult]:
+        types: list[LavaSearchType],
+        search_type: SearchType | None = None,
+        ctx: ContextType | None = None,
+    ) -> SearchResult | None:
         """
         Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.
 

@@ -147,6 +147,7 @@ if result:
 ```py
 from lava_lyra import LavaSearchType, SearchType
 
+
 @commands.command(name="search")
 async def search(self, ctx, *, query: str):
     if not ctx.voice_client:

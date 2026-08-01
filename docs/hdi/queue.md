@@ -6,24 +6,21 @@ Lyra has an optional queue system that works seamlessly with the library. This q
 To use the queue system with Lyra, you must first subclass the `Player` class within your application like so:
 
 ```py
-
 from lava_lyra import Player
 
-class CustomPlayer(Player):
-    ...
 
+class CustomPlayer(Player): ...
 ```
 
 After you have initialized your subclass, you can add a `queue` variable to your class so you can access your queue when you initialize your player:
 
 ```py
-
 from lava_lyra import Player, Queue
+
 
 class CustomPlayer(Player):
     ...
     self.queue = Queue()
-
 ```
 
 ## Adding a song to the queue
@@ -31,9 +28,7 @@ class CustomPlayer(Player):
 To add a song to the queue, we must use `Queue.put()`
 
 ```py
-
 Queue.put()
-
 ```
 
 After you have initialized your function, we need to include the `item` parameter, which is a `Track`:
@@ -57,9 +52,7 @@ To get a track using its position within the queue, you first need to get the po
 If you have the `Track` object and want to get its index within the queue, we can use `Queue.find_position()`
 
 ```py
-
 Queue.find_position()
-
 ```
 
 After you have initialized your function, we need to include the `item` parameter, which is a `Track`:
@@ -78,9 +71,7 @@ After running the function, it should return the position of the track as an int
 If you have the index of the track and want to get the `Track` object, you first need to get the raw queue list:
 
 ```py
-
 queue = Queue.get_queue()
-
 ```
 
 After you have your queue, you can use basic list splicing to get the track object:
@@ -96,9 +87,7 @@ track = queue[<index>]
 To get the next track in the queue, we need to use `Queue.get()`
 
 ```py
-
 Queue.get()
-
 ```
 
 After running this function, it'll return the first track from the queue and remove it.
@@ -115,9 +104,7 @@ If you have a queue loop mode set, this behavior will be overridden since the qu
 To remove a track from the queue, we must use `Queue.remove()`
 
 ```py
-
 Queue.remove()
-
 ```
 
 After you have initialized your function, we need to include the `item` parameter, which is a `Track`:
@@ -142,9 +129,7 @@ After running this function, your track should be removed from the queue.
 To shuffle the queue, we must use `Queue.shuffle()`
 
 ```py
-
 Queue.shuffle()
-
 ```
 
 After running this function, your queue should be in a different order than it was originally.
@@ -161,9 +146,7 @@ This function works best if theres atleast **3** tracks in the queue. The more t
 To loop the queue, we must use `Queue.set_loop_mode()`
 
 ```py
-
 Queue.set_loop_mode(...)
-
 ```
 
 After you have initialized your function, we need to include the `mode` parameter, which is a `LoopMode` enum:
@@ -183,9 +166,7 @@ After running the function, your queue will now loop using the mode you specify.
 To reset the loop mode, we must use `Queue.disable_loop()`
 
 ```py
-
 Queue.disable_loop()
-
 ```
 
 :::{important}
@@ -202,9 +183,7 @@ To jump to a track in the queue, we must use `Queue.jump()`
 
 
 ```py
-
 Queue.jump(...)
-
 ```
 
 After you have initialized your function, we need to include the `item` parameter, which is a `Track`:

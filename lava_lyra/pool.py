@@ -7,7 +7,7 @@ import re
 import time
 from os import path
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import quote
 
 import aiohttp
@@ -63,48 +63,48 @@ class Node:
     """
 
     __slots__ = (
+        "_available",
+        "_backoff",
         "_bot",
         "_bot_user",
-        "_host",
-        "_port",
-        "_pool",
-        "_password",
-        "_identifier",
+        "_connect_timeout",
         "_enabled",
+        "_fallback",
+        "_headers",
+        "_health_monitor",
         "_heartbeat",
+        "_host",
+        "_identifier",
+        "_is_nodelink",
+        "_log",
+        "_log_level",
+        "_loop",
+        "_lyrics_enabled",
+        "_password",
+        "_players",
+        "_pool",
+        "_port",
+        "_rest_uri",
         "_resume_key",
         "_resume_timeout",
-        "_is_nodelink",
-        "_secure",
-        "_fallback",
-        "_log_level",
-        "_websocket_uri",
-        "_rest_uri",
-        "_session",
-        "_websocket",
-        "_task",
-        "_loop",
-        "_session_id",
-        "_available",
-        "_version",
-        "_headers",
-        "_players",
-        "_lyrics_enabled",
-        "_search_enabled",
         "_route_planner",
+        "_search_enabled",
         "_search_manager",
-        "_log",
+        "_secure",
+        "_session",
+        "_session_id",
         "_stats",
-        "_backoff",
-        "_health_monitor",
-        "_connect_timeout",
+        "_task",
         "_total_timeout",
+        "_version",
+        "_websocket",
+        "_websocket_uri",
     )
 
     def __init__(
         self,
         *,
-        pool: Type[NodePool],
+        pool: type[NodePool],
         bot: BotType,
         host: str,
         port: int,
@@ -113,14 +113,14 @@ class Node:
         enabled: bool = True,
         secure: bool = False,
         heartbeat: int = 120,
-        resume_key: Optional[str] = None,
+        resume_key: str | None = None,
         resume_timeout: int = 60,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
-        session: Optional[aiohttp.ClientSession] = None,
+        loop: asyncio.AbstractEventLoop | None = None,
+        session: aiohttp.ClientSession | None = None,
         lyrics: bool = False,
         search: bool = False,
         fallback: bool = False,
-        logger: Optional[logging.Logger] = None,
+        logger: logging.Logger | None = None,
         health_check_interval: float = 30.0,
         circuit_breaker_threshold: int = 5,
         circuit_timeout: float = 60.0,
@@ -133,11 +133,11 @@ class Node:
         self._bot: BotType = bot
         self._host: str = host
         self._port: int = port
-        self._pool: Type[NodePool] = pool
+        self._pool: type[NodePool] = pool
         self._password: str = password
         self._identifier: str = identifier
         self._heartbeat: int = heartbeat
-        self._resume_key: Optional[str] = resume_key
+        self._resume_key: str | None = resume_key
         self._resume_timeout: int = resume_timeout
         self._secure: bool = secure
         self._fallback: bool = fallback
@@ -153,7 +153,7 @@ class Node:
         self._websocket: client.WebSocketClientProtocol = None
         self._task: asyncio.Task = None  # type: ignore
 
-        self._session_id: Optional[str] = None
+        self._session_id: str | None = None
         self._available: bool = False
         self._is_nodelink: bool = False
         self._version: LavalinkVersion = LavalinkVersion(0, 0, 0)
@@ -170,7 +170,7 @@ class Node:
 
         self._route_planner: RoutePlanner = RoutePlanner(self)
         self._search_manager: SearchManager = SearchManager(self)
-        self._log: Optional[logging.Logger] = logger
+        self._log: logging.Logger | None = logger
         self._lyrics_enabled: bool = lyrics
         self._search_enabled: bool = search
         self._backoff: ExponentialBackoff = ExponentialBackoff(base=7)
@@ -191,7 +191,7 @@ class Node:
             "Client-Name": f"lava-lyra/{__version__}",
         }
 
-        self._players: Dict[int, Player] = {}
+        self._players: dict[int, Player] = {}
 
         self._bot.add_listener(self._update_handler, "on_socket_response")
 
@@ -217,7 +217,7 @@ class Node:
         return self._stats
 
     @property
-    def players(self) -> Dict[int, Player]:
+    def players(self) -> dict[int, Player]:
         """Property which returns a dict containing the guild ID and the player object."""
         return self._players
 
@@ -232,7 +232,7 @@ class Node:
         return len(self.players.values())
 
     @property
-    def pool(self) -> Type[NodePool]:
+    def pool(self) -> type[NodePool]:
         """Property which returns the pool this node is apart of"""
         return self._pool
 
@@ -384,7 +384,7 @@ class Node:
         if not self._resume_key:
             return
 
-        data: Dict[str, Union[int, str, bool]] = {"timeout": self._resume_timeout}
+        data: dict[str, int | str | bool] = {"timeout": self._resume_timeout}
 
         if self._version.major == 3:
             data["resumingKey"] = self._resume_key
@@ -529,7 +529,7 @@ class Node:
         if not "guildId" in data:
             return
 
-        player: Optional[Player] = self._players.get(int(data["guildId"]))
+        player: Player | None = self._players.get(int(data["guildId"]))
         if not player:
             return
 
@@ -544,9 +544,9 @@ class Node:
         method: str,
         path: str,
         include_version: bool = True,
-        guild_id: Optional[Union[int, str]] = None,
-        query: Optional[str] = None,
-        data: Optional[Union[Dict, str]] = None,
+        guild_id: int | str | None = None,
+        query: str | None = None,
+        data: dict | str | None = None,
         ignore_if_available: bool = False,
     ) -> Any:
         if not ignore_if_available and not self._available:
@@ -569,10 +569,10 @@ class Node:
 
         uri: str = (
             f"{self._rest_uri}/"
-            f'{f"v4/" if include_version else ""}'
+            f"{'v4/' if include_version else ''}"
             f"{path}"
-            f'{f"/{guild_id}" if guild_id else ""}'
-            f'{f"?{query}" if query else ""}'
+            f"{f'/{guild_id}' if guild_id else ''}"
+            f"{f'?{query}' if query else ''}"
         )
 
         if data and self._is_nodelink and isinstance(data, dict):
@@ -612,7 +612,7 @@ class Node:
                         self._loop.create_task(self._websocket.close())
 
                 raise NodeRestException(
-                    f'Error from Node {self._identifier} fetching from Lavalink REST api: {resp.status} {resp.reason}: {resp_data["message"]}',
+                    f"Error from Node {self._identifier} fetching from Lavalink REST api: {resp.status} {resp.reason}: {resp_data['message']}",
                 )
 
             if method == "DELETE" or resp.status == 204:
@@ -646,7 +646,7 @@ class Node:
                 self._loop.create_task(self._websocket.close())
             raise NodeNotAvailable(f"HTTP error connecting to node {self._identifier}: {e}")
 
-    def get_player(self, guild_id: int) -> Optional[Player]:
+    def get_player(self, guild_id: int) -> Player | None:
         """Takes a guild ID as a parameter. Returns a lyra Player object or None."""
         return self._players.get(guild_id, None)
 
@@ -778,20 +778,23 @@ class Node:
         if self._websocket and not getattr(self._websocket, "closed", True):
             try:
                 await self._websocket.close()
-            except Exception:
-                pass
+            except Exception as e:
+                if self._log:
+                    self._log.debug(f"Error closing websocket during disconnect: {e}")
         if self._session and not getattr(self._session, "closed", True):
             try:
                 await self._session.close()
-            except Exception:
-                pass
+            except Exception as e:
+                if self._log:
+                    self._log.debug(f"Error closing http session during disconnect: {e}")
         if self._log:
             self._log.debug("Websocket and http session closed.")
 
         try:
             self._bot.remove_listener(self._update_handler, "on_socket_response")
-        except Exception:
-            pass
+        except Exception as e:
+            if self._log:
+                self._log.debug(f"Error removing socket listener during disconnect: {e}")
 
         self._pool._nodes.pop(self._identifier, None)
 
@@ -801,7 +804,7 @@ class Node:
                 f"Successfully disconnected from node {self._identifier} and closed all sessions. Took {end - start:.3f}s",
             )
 
-    async def build_track(self, identifier: str, ctx: Optional[ContextType] = None) -> Track:
+    async def build_track(self, identifier: str, ctx: ContextType | None = None) -> Track:
         """
         Builds a track using a valid track identifier
 
@@ -832,10 +835,10 @@ class Node:
         self,
         query: str,
         *,
-        ctx: Optional[ContextType] = None,
-        search_type: Optional[SearchType] = SearchType.ytsearch,
-        filters: Optional[List[Filter]] = None,
-    ) -> Optional[Union[Playlist, List[Track]]]:
+        ctx: ContextType | None = None,
+        search_type: SearchType | None = SearchType.ytsearch,
+        filters: list[Filter] | None = None,
+    ) -> Playlist | list[Track] | None:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
         In Lavalink v4, all platform support is handled by server-side plugins.
@@ -1036,8 +1039,8 @@ class Node:
         self,
         *,
         track: Track,
-        ctx: Optional[ContextType] = None,
-    ) -> Optional[Union[List[Track], Playlist]]:
+        ctx: ContextType | None = None,
+    ) -> list[Track] | Playlist | None:
         """
         Gets recommendations for a track.
 
@@ -1078,9 +1081,9 @@ class Node:
         self,
         *,
         query: str,
-        types: List[LavaSearchType],
-        search_type: Optional[SearchType] = None,
-        ctx: Optional[ContextType] = None,
+        types: list[LavaSearchType],
+        search_type: SearchType | None = None,
+        ctx: ContextType | None = None,
     ):
         """
         Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.
@@ -1111,13 +1114,13 @@ class NodePool:
     """
 
     __slots__ = ()
-    _nodes: Dict[str, Node] = {}
+    _nodes: ClassVar[dict[str, Node]] = {}
 
     def __repr__(self) -> str:
         return f"<Lyra.NodePool node_count={self.node_count}>"
 
     @property
-    def nodes(self) -> Dict[str, Node]:
+    def nodes(self) -> dict[str, Node]:
         """Property which returns a dict with the node identifier and the Node object."""
         return self._nodes
 
@@ -1148,7 +1151,7 @@ class NodePool:
         based on overall health score (latency, uptime, load, stability).
         This is recommended for production multi-node setups.
         """
-        available_nodes: List[Node] = [node for node in cls._nodes.values() if node._available]
+        available_nodes: list[Node] = [node for node in cls._nodes.values() if node._available]
 
         if not available_nodes:
             raise NoNodesAvailable("There are no nodes available.")
@@ -1187,7 +1190,7 @@ class NodePool:
             )
 
     @classmethod
-    def get_node(cls, *, identifier: Optional[str] = None) -> Node:
+    def get_node(cls, *, identifier: str | None = None) -> Node:
         """Fetches a node from the node pool using it's identifier.
         If no identifier is provided, it will choose a node at random.
         """
@@ -1220,14 +1223,14 @@ class NodePool:
         enabled: bool = True,
         secure: bool = False,
         heartbeat: int = 120,
-        resume_key: Optional[str] = None,
+        resume_key: str | None = None,
         resume_timeout: int = 60,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
-        session: Optional[aiohttp.ClientSession] = None,
+        loop: asyncio.AbstractEventLoop | None = None,
+        session: aiohttp.ClientSession | None = None,
         lyrics: bool = False,
         search: bool = False,
         fallback: bool = False,
-        logger: Optional[logging.Logger] = None,
+        logger: logging.Logger | None = None,
         health_check_interval: float = 30.0,
         circuit_breaker_threshold: int = 5,
         circuit_timeout: float = 60.0,
@@ -1253,7 +1256,7 @@ class NodePool:
             total_timeout (float): Total timeout in seconds for all operations. Default: 30.0
                 For foreign nodes, consider increasing to 60.0-120.0.
         """
-        if identifier in cls._nodes.keys():
+        if identifier in cls._nodes:
             raise NodeCreationError(
                 f"A node with identifier '{identifier}' already exists.",
             )
@@ -1291,7 +1294,7 @@ class NodePool:
     async def disconnect(cls) -> None:
         """Disconnects all available nodes from the node pool."""
 
-        available_nodes: List[Node] = [node for node in cls._nodes.values() if node._available]
+        available_nodes: list[Node] = [node for node in cls._nodes.values() if node._available]
 
         for node in available_nodes:
             await node.disconnect()

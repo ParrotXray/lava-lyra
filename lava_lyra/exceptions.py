@@ -1,22 +1,22 @@
 __all__ = (
-    "LyraException",
-    "NodeException",
-    "NodeCreationError",
-    "NodeConnectionFailure",
-    "NodeConnectionClosed",
-    "NodeRestException",
-    "NodeNotAvailable",
-    "NoNodesAvailable",
-    "TrackInvalidPosition",
-    "TrackLoadError",
     "FilterInvalidArgument",
-    "FilterTagInvalid",
     "FilterTagAlreadyInUse",
+    "FilterTagInvalid",
+    "LavalinkVersionIncompatible",
+    "LyraException",
+    "NoNodesAvailable",
+    "NodeConnectionClosed",
+    "NodeConnectionFailure",
+    "NodeCreationError",
+    "NodeException",
+    "NodeNotAvailable",
+    "NodeRestException",
+    "QueueEmpty",
     "QueueException",
     "QueueFull",
-    "QueueEmpty",
-    "LavalinkVersionIncompatible",
     "RequirementNotFound",
+    "TrackInvalidPosition",
+    "TrackLoadError",
     # Removed in v4: Platform-specific client exceptions
     # "InvalidSpotifyClientAuthorization",
     # "AppleMusicNotEnabled",
@@ -42,31 +42,21 @@ class NodeConnectionFailure(NodeException):
 class NodeConnectionClosed(NodeException):
     """The node's connection is closed."""
 
-    pass
-
 
 class NodeRestException(NodeException):
     """A request made using the node's REST uri failed"""
-
-    pass
 
 
 class NodeNotAvailable(LyraException):
     """The node is currently unavailable."""
 
-    pass
-
 
 class NoNodesAvailable(LyraException):
     """There are no nodes currently available."""
 
-    pass
-
 
 class TrackInvalidPosition(LyraException):
     """An invalid position was chosen for a track."""
-
-    pass
 
 
 class TrackLoadError(LyraException):
@@ -78,43 +68,29 @@ class TrackLoadError(LyraException):
     - Platform-specific issues handled by plugins
     """
 
-    pass
-
 
 class FilterInvalidArgument(LyraException):
     """An invalid argument was passed to a filter."""
-
-    pass
 
 
 class FilterTagInvalid(LyraException):
     """An invalid tag was passed or Lyra was unable to find a filter tag"""
 
-    pass
-
 
 class FilterTagAlreadyInUse(LyraException):
     """A filter with a tag is already in use by another filter"""
-
-    pass
 
 
 class QueueException(LyraException):
     """Base Lyra queue exception."""
 
-    pass
-
 
 class QueueFull(QueueException):
     """Exception raised when attempting to add to a full Queue."""
 
-    pass
-
 
 class QueueEmpty(QueueException):
     """Exception raised when attempting to retrieve from an empty Queue."""
-
-    pass
 
 
 class LavalinkVersionIncompatible(LyraException):
@@ -124,8 +100,6 @@ class LavalinkVersionIncompatible(LyraException):
     For Lavalink v3.x support, use an older version of Lyra.
     """
 
-    pass
-
 
 class RequirementNotFound(LyraException):
     """Couldn't found any of discord packages.
@@ -133,8 +107,6 @@ class RequirementNotFound(LyraException):
     Neither discord.py nor py-cord could be found.
     Please install one of them before using.
     """
-
-    pass
 
 
 # Platform-specific exceptions have been removed in v4

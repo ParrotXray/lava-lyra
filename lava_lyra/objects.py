@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Union, overload
+from typing import TYPE_CHECKING, overload
 
 from .compat import ClientUserType, ContextType, MemberType, UserType
 from .enums import PlaylistType, SearchType, TrackType
@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 __all__ = (
-    "Track",
     "Playlist",
+    "Track",
 )
 
 
@@ -21,26 +21,26 @@ class Track:
     """
 
     __slots__ = (
-        "track_id",
-        "info",
-        "track_type",
-        "filters",
-        "timestamp",
-        "original",
         "_search_type",
-        "playlist",
-        "title",
         "author",
-        "uri",
-        "identifier",
-        "isrc",
-        "thumbnail",
-        "length",
         "ctx",
-        "requester",
-        "is_stream",
+        "filters",
+        "identifier",
+        "info",
         "is_seekable",
+        "is_stream",
+        "isrc",
+        "length",
+        "original",
+        "playlist",
         "position",
+        "requester",
+        "thumbnail",
+        "timestamp",
+        "title",
+        "track_id",
+        "track_type",
+        "uri",
     )
 
     def __init__(
@@ -48,33 +48,33 @@ class Track:
         *,
         track_id: str,
         info: dict,
-        ctx: Optional[ContextType] = None,
+        ctx: ContextType | None = None,
         track_type: TrackType,
         search_type: SearchType = SearchType.ytsearch,
-        filters: Optional[List[Filter]] = None,
-        timestamp: Optional[float] = None,
-        requester: Optional[Union[MemberType, UserType, ClientUserType]] = None,
+        filters: list[Filter] | None = None,
+        timestamp: float | None = None,
+        requester: MemberType | UserType | ClientUserType | None = None,
     ):
         self.track_id: str = track_id
         self.info: dict = info
         self.track_type: TrackType = track_type
-        self.filters: Optional[List[Filter]] = filters
-        self.timestamp: Optional[float] = timestamp
+        self.filters: list[Filter] | None = filters
+        self.timestamp: float | None = timestamp
 
         if self.track_type == TrackType.SPOTIFY or self.track_type == TrackType.APPLE_MUSIC:
-            self.original: Optional[Track] = None
+            self.original: Track | None = None
         else:
             self.original = self
         self._search_type: SearchType = search_type
 
-        self.playlist: Optional[Playlist] = None
+        self.playlist: Playlist | None = None
 
         self.title: str = info.get("title", "Unknown Title")
         self.author: str = info.get("author", "Unknown Author")
         self.uri: str = info.get("uri", "")
         self.identifier: str = info.get("identifier", "")
-        self.isrc: Optional[str] = info.get("isrc", None)
-        self.thumbnail: Optional[str] = info.get("artworkUrl", None) or info.get("thumbnail", None)
+        self.isrc: str | None = info.get("isrc", None)
+        self.thumbnail: str | None = info.get("artworkUrl", None) or info.get("thumbnail", None)
 
         if not self.thumbnail and self.uri and self.track_type is TrackType.YOUTUBE:
             self.thumbnail = f"https://img.youtube.com/vi/{self.identifier}/mqdefault.jpg"
@@ -84,8 +84,8 @@ class Track:
         self.is_seekable: bool = info.get("isSeekable", False)
         self.position: int = info.get("position", 0)
 
-        self.ctx: Optional[ContextType] = ctx
-        self.requester: Optional[Union[MemberType, UserType, ClientUserType]] = requester
+        self.ctx: ContextType | None = ctx
+        self.requester: MemberType | UserType | ClientUserType | None = requester
         if not self.requester and self.ctx:
             self.requester = self.ctx.author
 
@@ -109,14 +109,14 @@ class Playlist:
     """
 
     __slots__ = (
-        "playlist_info",
-        "tracks",
-        "name",
-        "playlist_type",
         "_thumbnail",
         "_uri",
+        "name",
+        "playlist_info",
+        "playlist_type",
         "selected_track",
         "track_count",
+        "tracks",
     )
 
     def __init__(
@@ -125,21 +125,21 @@ class Playlist:
         playlist_info: dict,
         tracks: list,
         playlist_type: PlaylistType,
-        thumbnail: Optional[str] = None,
-        uri: Optional[str] = None,
+        thumbnail: str | None = None,
+        uri: str | None = None,
     ):
         self.playlist_info: dict = playlist_info
-        self.tracks: List[Track] = tracks
+        self.tracks: list[Track] = tracks
         self.name: str = playlist_info.get("name", "Unknown Playlist")
         self.playlist_type: PlaylistType = playlist_type
 
-        self._thumbnail: Optional[str] = thumbnail
-        self._uri: Optional[str] = uri
+        self._thumbnail: str | None = thumbnail
+        self._uri: str | None = uri
 
         for track in self.tracks:
             track.playlist = self
 
-        self.selected_track: Optional[Track] = None
+        self.selected_track: Track | None = None
         if (index := playlist_info.get("selectedTrack", -1)) != -1:
             if 0 <= index < len(self.tracks):
                 self.selected_track = self.tracks[index]
@@ -183,16 +183,16 @@ class Playlist:
         return self.tracks.pop(index)
 
     @property
-    def uri(self) -> Optional[str]:
+    def uri(self) -> str | None:
         """Returns either an Apple Music/Spotify URL/URI, or None if its neither of those."""
         return self._uri
 
     @property
-    def thumbnail(self) -> Optional[str]:
+    def thumbnail(self) -> str | None:
         """Returns either an Apple Music/Spotify album/playlist thumbnail, or None if its neither of those."""
         return self._thumbnail
 
     @property
-    def length(self) -> Optional[int]:
+    def length(self) -> int | None:
         """Returns the total length of all tracks in the playlist in milliseconds."""
         return sum(track.length for track in self.tracks)

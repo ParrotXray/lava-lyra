@@ -12,9 +12,7 @@ import discord
 class MyBot(discord.Bot):
     def __init__(self) -> None:
         super().__init__(
-            activity=discord.Activity(
-                type=discord.ActivityType.listening, name="to music!"
-            ),
+            activity=discord.Activity(type=discord.ActivityType.listening, name="to music!"),
         )
 
         self.add_cog(Music(self))
@@ -93,9 +91,7 @@ class MyBot(commands.Bot):
     def __init__(self) -> None:
         super().__init__(
             command_prefix="!",
-            activity=discord.Activity(
-                type=discord.ActivityType.listening, name="to music!"
-            ),
+            activity=discord.Activity(type=discord.ActivityType.listening, name="to music!"),
         )
 
         self.add_cog(Music(self))
@@ -122,9 +118,7 @@ class Music(commands.Cog):
         print("Node is ready!")
 
     @commands.command(name="join", aliases=["connect"])
-    async def join(
-        self, ctx: commands.Context, *, channel: discord.VoiceChannel = None
-    ) -> None:
+    async def join(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None) -> None:
         if not channel:
             channel = getattr(ctx.author.voice, "channel", None)
             if not channel:
