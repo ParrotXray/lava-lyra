@@ -67,6 +67,22 @@ class TrackType(Enum):
 
     TrackType.BANDCAMP defines that the track is from Bandcamp.
 
+    TrackType.BILIBILI defines that the track is from Bilibili.
+
+    TrackType.FACEBOOK defines that the track is from Facebook.
+
+    TrackType.INSTAGRAM defines that the track is from Instagram.
+
+    TrackType.NEWGROUNDS defines that the track is from Newgrounds.
+
+    TrackType.QOBUZ defines that the track is from Qobuz.
+
+    TrackType.TIDAL defines that the track is from Tidal.
+
+    TrackType.JIOSAAVN defines that the track is from JioSaavn.
+
+    TrackType.YTDLP defines that the track is from yt-dlp.
+
     TrackType.HTTP defines that the track is from an HTTP source.
 
     TrackType.LOCAL defines that the track is from a local source.
@@ -85,6 +101,10 @@ class TrackType(Enum):
     BILIBILI = "bilibili"
     FACEBOOK = "facebook"
     INSTAGRAM = "instagram"
+    NEWGROUNDS = "newgrounds"
+    QOBUZ = "qobuz"
+    TIDAL = "tidal"
+    JIOSAAVN = "jiosaavn"
     YTDLP = "ytdlp"
     HTTP = "http"
     LOCAL = "local"
