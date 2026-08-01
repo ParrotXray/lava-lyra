@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 from . import events
 from .compat import BotType, ContextType, GuildType, VoiceChannelType, VoiceProtocolType
@@ -35,7 +35,7 @@ class Filters:
     __slots__ = ("_filters",)
 
     def __init__(self) -> None:
-        self._filters: List[Filter] = []
+        self._filters: list[Filter] = []
 
     @property
     def has_preload(self) -> bool:
@@ -102,19 +102,19 @@ class Filters:
         """Removes all filters from the list"""
         self._filters = []
 
-    def get_preload_filters(self) -> List[Filter]:
+    def get_preload_filters(self) -> list[Filter]:
         """Get all preloaded filters"""
         return [f for f in self._filters if f.preload == True]
 
-    def get_all_payloads(self) -> Dict[str, Any]:
+    def get_all_payloads(self) -> dict[str, Any]:
         """Returns a formatted dict of all the filter payloads"""
-        payload: Dict[str, Any] = {}
+        payload: dict[str, Any] = {}
         for _filter in self._filters:
             if _filter.payload:
                 payload.update(_filter.payload)
         return payload
 
-    def get_filters(self) -> List[Filter]:
+    def get_filters(self) -> list[Filter]:
         """Returns the current list of applied filters"""
         return self._filters
 
@@ -128,23 +128,23 @@ class Player(VoiceProtocolType):
     """
 
     __slots__ = (
-        "client",
-        "channel",
         "_bot",
-        "_guild",
-        "_node",
         "_current",
+        "_ending_track",
         "_filters",
-        "_volume",
-        "_paused",
+        "_guild",
         "_is_connected",
         "_last_position",
         "_last_update",
-        "_ending_track",
         "_log",
-        "_voice_state",
-        "_player_endpoint_uri",
         "_lyrics_manager",
+        "_node",
+        "_paused",
+        "_player_endpoint_uri",
+        "_voice_state",
+        "_volume",
+        "channel",
+        "client",
     )
 
     def __call__(self, client: BotType, channel: VoiceChannelType) -> Player:
@@ -159,7 +159,7 @@ class Player(VoiceProtocolType):
         client: BotType,
         channel: VoiceChannelType,
         *,
-        node: Optional[Node] = None,
+        node: Node | None = None,
     ) -> None:
         self.client: BotType = client
         self.channel: VoiceChannelType = channel
@@ -168,7 +168,7 @@ class Player(VoiceProtocolType):
         self._bot: BotType = client
         self._node: Node = node if node else NodePool.get_node()
         self._lyrics_manager = LyricsManager(self)
-        self._current: Optional[Track] = None
+        self._current: Track | None = None
         self._filters: Filters = Filters()
         self._volume: int = 100
         self._paused: bool = False
@@ -176,7 +176,7 @@ class Player(VoiceProtocolType):
 
         self._last_position: int = 0
         self._last_update: float = 0
-        self._ending_track: Optional[Track] = None
+        self._ending_track: Track | None = None
         self._log = self._node._log
 
         self._voice_state: dict = {}
@@ -243,7 +243,7 @@ class Player(VoiceProtocolType):
         return self._is_connected and self._paused
 
     @property
-    def current(self) -> Optional[Track]:
+    def current(self) -> Track | None:
         """Property which returns the currently playing track"""
         return self._current
 
@@ -315,7 +315,7 @@ class Player(VoiceProtocolType):
         """Reset lyrics state"""
         self._lyrics_manager.reset()
 
-    def _adjust_end_time(self) -> Optional[str]:
+    def _adjust_end_time(self) -> str | None:
         if self._node._version >= LavalinkVersion(4, 0, 0) or (
             self._node._is_nodelink and self._node._version >= LavalinkVersion(3, 0, 0)
         ):
@@ -331,7 +331,7 @@ class Player(VoiceProtocolType):
         if self._log:
             self._log.debug(f"Got player update state with data {state}")
 
-    async def _dispatch_voice_update(self, voice_data: Optional[Dict[str, Any]] = None) -> None:
+    async def _dispatch_voice_update(self, voice_data: dict[str, Any] | None = None) -> None:
         if {"sessionId", "event"} != self._voice_state.keys():
             return
 
@@ -406,7 +406,7 @@ class Player(VoiceProtocolType):
         if self._log:
             self._log.debug(f"Dispatched event {data['type']} to player.")
 
-    async def _refresh_endpoint_uri(self, session_id: Optional[str]) -> None:
+    async def _refresh_endpoint_uri(self, session_id: str | None) -> None:
         if session_id:
             old_uri = self._player_endpoint_uri
             self._player_endpoint_uri = f"sessions/{session_id}/players"
@@ -465,10 +465,10 @@ class Player(VoiceProtocolType):
         self,
         query: str,
         *,
-        ctx: Optional[ContextType] = None,
+        ctx: ContextType | None = None,
         search_type: SearchType | None = SearchType.ytsearch,
-        filters: Optional[List[Filter]] = None,
-    ) -> Optional[Union[List[Track], Playlist]]:
+        filters: list[Filter] | None = None,
+    ) -> list[Track] | Playlist | None:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
         If you passed in Spotify API credentials when you created the node,
@@ -483,7 +483,7 @@ class Player(VoiceProtocolType):
         """
         return await self._node.get_tracks(query, ctx=ctx, search_type=search_type, filters=filters)
 
-    async def build_track(self, identifier: str, ctx: Optional[ContextType] = None) -> Track:
+    async def build_track(self, identifier: str, ctx: ContextType | None = None) -> Track:
         """
         Builds a track using a valid track identifier
 
@@ -497,8 +497,8 @@ class Player(VoiceProtocolType):
         self,
         *,
         track: Track,
-        ctx: Optional[ContextType] = None,
-    ) -> Optional[Union[List[Track], Playlist]]:
+        ctx: ContextType | None = None,
+    ) -> list[Track] | Playlist | None:
         """
         Gets recommendations from either YouTube or Spotify.
         You can pass in a discord.py Context object to get a
@@ -591,9 +591,7 @@ class Player(VoiceProtocolType):
                     raise ValueError("Track has no ISRC")
                 search = (
                     await self._node.get_tracks(f"{track._search_type}:{track.isrc}", ctx=track.ctx)
-                )[
-                    0
-                ]  # type: ignore
+                )[0]  # type: ignore
             except Exception:
                 # First method didn't work, lets try just searching it up
                 try:
@@ -602,9 +600,7 @@ class Player(VoiceProtocolType):
                             f"{track._search_type}:{track.title} - {track.author}",
                             ctx=track.ctx,
                         )
-                    )[
-                        0
-                    ]  # type: ignore
+                    )[0]  # type: ignore
                 except Exception:
                     # The song wasn't able to be found, raise error
                     raise TrackLoadError(
@@ -709,7 +705,7 @@ class Player(VoiceProtocolType):
         return self._current
 
     async def _send_player_request(
-        self, data: dict, method: str = "PATCH", query: Optional[str] = None
+        self, data: dict, method: str = "PATCH", query: str | None = None
     ) -> Any:
         """Auxiliary method for sending player requests, including error handling"""
         try:

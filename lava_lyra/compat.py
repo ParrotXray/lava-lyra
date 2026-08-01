@@ -8,7 +8,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 # Try to import discord library
 try:
-    import discord
+    import discord  # noqa: F401
 except ImportError:
     raise ImportError("You must have either py-cord or discord.py installed to use this library.")
 
@@ -44,13 +44,13 @@ elif IS_DPY:
 
 __all__ = (
     "IS_PYCORD",
-    "ContextType",
-    "InteractionType",
     "BotType",
-    "MemberType",
     "ClientUserType",
+    "ContextType",
+    "GuildType",
+    "InteractionType",
+    "MemberType",
     "UserType",
     "VoiceChannelType",
     "VoiceProtocolType",
-    "GuildType",
 )

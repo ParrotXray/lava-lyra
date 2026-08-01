@@ -92,9 +92,7 @@ To get tracks using Lavalink, we need to use `Player.get_tracks()`
 You can also use `Node.get_tracks()` to do the same thing but without having a player.
 
 ```py
-
 await Player.get_tracks(...)
-
 ```
 
 After you have initialized your function, we need to fill in the proper parameters:
@@ -158,9 +156,7 @@ To get recommendations using Lavalink, we need to use `Player.get_recommendation
 You can also use `Node.get_recommendations()` to do the same thing without having a player.
 
 ```py
-
 await Player.get_recommendations(...)
-
 ```
 
 After you have initialized your function, we need to fill in the proper parameters:
@@ -202,9 +198,7 @@ our queue implementation, you can refer to [](queue.md)
 To connect a player to a channel you need to pass the `Player` class into your `channel.connect()` function:
 
 ```py
-
 await voice_channel.connect(cls=Player)
-
 ```
 
 This will instance the player and make it available to your guild. If you want to access your player after instancing it,
@@ -226,9 +220,7 @@ There are a few functions to control the player:
 To destroy a player, we need to use `Player.destroy()`
 
 ```py
-
 await Player.destroy()
-
 ```
 
 ### Playing a track
@@ -236,9 +228,7 @@ await Player.destroy()
 To play a track, we need to use `Player.play()`
 
 ```py
-
 await Player.play(...)
-
 ```
 
 After you have initialized your function, we need to fill in the proper parameters:
@@ -291,9 +281,7 @@ After running this function, it should return the `Track` you specified when run
 To seek to a position, we need to use `Player.seek()`
 
 ```py
-
 await Player.seek(...)
-
 ```
 
 After you have initialized your function, we need to include the `position` parameter, which is an amount in milliseconds:
@@ -313,9 +301,7 @@ After running this function, your currently playing track should seek to your sp
 To pause/unpause the player, we need to use `Player.set_pause()`
 
 ```py
-
 await Player.set_pause(...)
-
 ```
 
 After you have initialized your function, we need to include the `pause` parameter, which is a boolean:
@@ -332,9 +318,7 @@ After running this function, your currently playing track should either pause or
 To set the volume the player, we need to use `Player.set_volume()`
 
 ```py
-
 await Player.set_volume(...)
-
 ```
 
 :::{important}
@@ -356,9 +340,7 @@ After running this function, your currently playing track should adjust in volum
 To stop the player, we need to use `Player.stop()`
 
 ```py
-
 await Player.stop()
-
 ```
 
 ### Moving the player to another channel
@@ -366,17 +348,13 @@ await Player.stop()
 To move the player to another channel, we need to use `Player.move_to()`
 
 ```py
-
 await Player.move_to(...)
-
 ```
 
 After you have initialized your function, we need to include the `channel` parameter, which is a `VoiceChannel`:
 
 ```py
-
 await Player.move_to(channel)
-
 ```
 
 After running this function, your player should be in the new voice channel. All voice state updates should also be handled.
@@ -399,9 +377,7 @@ Here are some of the functions you will be using to control filters:
 To add a filter, we need to use `Player.add_filter()`
 
 ```py
-
 await Player.add_filter(...)
-
 ```
 
 
@@ -443,9 +419,7 @@ After running this function, you should see your currently playing track sound d
 To remove a filter, we need to use `Player.remove_filter()`
 
 ```py
-
 await Player.remove_filter(...)
-
 ```
 
 
@@ -487,9 +461,7 @@ After running this function, you should see your currently playing track sound d
 To reset all filters, we need to use `Player.reset_filters()`
 
 ```py
-
 await Player.reset_filters()
-
 ```
 
 After you have initialized your function, you can optionally include the `fast_apply` parameter, which is a boolean. If this is set to `True`, it'll remove all filters (almost) instantly if theres a track playing.

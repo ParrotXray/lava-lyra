@@ -50,29 +50,31 @@ pip install lava-lyra
 import discord
 import lava_lyra
 
+
 class Bot(discord.Bot):
     def __init__(self):
         super().__init__(intents=discord.Intents.default())
         self.node = None
 
     async def on_ready(self):
-        print(f'Logged in as {self.user}')
+        print(f"Logged in as {self.user}")
 
         # Create Lavalink nodes - much simpler than before!
         node = await lava_lyra.NodePool.create_node(
-          bot=self,
-          host='localhost',
-          port=2333,
-          password='youshallnotpass',
-          identifier='MAIN',
-          lyrics=False,
-          search=True,  # Enable LavaSearch plugin support
-          fallback=True,
+            bot=self,
+            host="localhost",
+            port=2333,
+            password="youshallnotpass",
+            identifier="MAIN",
+            lyrics=False,
+            search=True,  # Enable LavaSearch plugin support
+            fallback=True,
         )
         print(f"Created node: {node.identifier}")
 
+
 bot = Bot()
-bot.run('your_bot_token')
+bot.run("your_bot_token")
 ```
 
 ### Discord.py Example
@@ -81,32 +83,31 @@ import discord
 from discord.ext import commands
 import lava_lyra
 
+
 class Bot(commands.Bot):
     def __init__(self):
-        super().__init__(
-            intents=discord.Intents.default(),
-            command_prefix='!'
-        )
+        super().__init__(intents=discord.Intents.default(), command_prefix="!")
         self.node = None
 
     async def on_ready(self):
-        print(f'Logged in as {self.user}')
+        print(f"Logged in as {self.user}")
 
         # Create Lavalink nodes - much simpler than before!
         node = await lava_lyra.NodePool.create_node(
-          bot=self,
-          host='localhost',
-          port=2333,
-          password='youshallnotpass',
-          identifier='MAIN',
-          lyrics=False,
-          search=True,  # Enable LavaSearch plugin support
-          fallback=True,
+            bot=self,
+            host="localhost",
+            port=2333,
+            password="youshallnotpass",
+            identifier="MAIN",
+            lyrics=False,
+            search=True,  # Enable LavaSearch plugin support
+            fallback=True,
         )
         print(f"Created node: {node.identifier}")
 
+
 bot = Bot()
-bot.run('your_bot_token')
+bot.run("your_bot_token")
 ```
 ## Playing Music
 
@@ -163,11 +164,11 @@ LavaSearch plugin provides advanced search capabilities across tracks, albums, a
 ```python
 node = await lava_lyra.NodePool.create_node(
     bot=bot,
-    host='localhost',
+    host="localhost",
     port=2333,
-    password='youshallnotpass',
-    identifier='MAIN',
-    search=True  # Enable LavaSearch support
+    password="youshallnotpass",
+    identifier="MAIN",
+    search=True,  # Enable LavaSearch support
 )
 ```
 
@@ -194,10 +195,10 @@ async def search(ctx, query: str, platform: str = "youtube"):
             lava_lyra.LavaSearchType.ALBUM,
             lava_lyra.LavaSearchType.ARTIST,
             lava_lyra.LavaSearchType.PLAYLIST,
-            lava_lyra.LavaSearchType.TEXT
+            lava_lyra.LavaSearchType.TEXT,
         ],
         search_type=search_types.get(platform, lava_lyra.SearchType.ytsearch),
-        ctx=ctx
+        ctx=ctx,
     )
 
     if not result:
@@ -257,7 +258,7 @@ async def search(interaction, query: str, platform: str = "youtube"):
             lava_lyra.LavaSearchType.ALBUM,
             lava_lyra.LavaSearchType.ARTIST,
             lava_lyra.LavaSearchType.PLAYLIST,
-            lava_lyra.LavaSearchType.TEXT
+            lava_lyra.LavaSearchType.TEXT,
         ],
         search_type=search_types.get(platform, lava_lyra.SearchType.ytsearch),
         # ctx=ctx    # ctx in discord.py interaction could be "None"
@@ -391,26 +392,23 @@ result = await node.load_search(
         lava_lyra.LavaSearchType.ALBUM,
         lava_lyra.LavaSearchType.ARTIST,
         lava_lyra.LavaSearchType.PLAYLIST,
-        lava_lyra.LavaSearchType.TEXT
+        lava_lyra.LavaSearchType.TEXT,
     ],
-    search_type=lava_lyra.SearchType.ytsearch
+    search_type=lava_lyra.SearchType.ytsearch,
 )
 
 # Search Spotify for tracks and artists
 result = await node.load_search(
     query="metallica",
-    types=[
-        lava_lyra.LavaSearchType.TRACK,
-        lava_lyra.LavaSearchType.ARTIST
-    ],
-    search_type=lava_lyra.SearchType.spsearch
+    types=[lava_lyra.LavaSearchType.TRACK, lava_lyra.LavaSearchType.ARTIST],
+    search_type=lava_lyra.SearchType.spsearch,
 )
 
 # Search Apple Music for albums
 result = await node.load_search(
     query="taylor swift",
     types=[lava_lyra.LavaSearchType.ALBUM],
-    search_type=lava_lyra.SearchType.amsearch
+    search_type=lava_lyra.SearchType.amsearch,
 )
 ```
 

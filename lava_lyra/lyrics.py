@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .player import Player
@@ -20,7 +20,7 @@ class LyricLine:
 
     text: str
     time: float  # Timestamp (seconds)
-    duration: Optional[float] = None
+    duration: float | None = None
 
     def __repr__(self) -> str:
         return f"<LyricLine text='{self.text}' time={self.time}>"
@@ -29,16 +29,16 @@ class LyricLine:
 class Lyrics:
     """Lyrics class"""
 
-    def __init__(self, data: Optional[dict] = None):
-        self.source_name: Optional[str] = None
-        self.provider: Optional[str] = None
-        self.text: Optional[str] = None
-        self.lines: List[LyricLine] = []
+    def __init__(self, data: dict | None = None):
+        self.source_name: str | None = None
+        self.provider: str | None = None
+        self.text: str | None = None
+        self.lines: list[LyricLine] = []
 
         # NodeLink specific
         self.synced: bool = False
-        self.name: Optional[str] = None
-        self.lang: Optional[str] = None
+        self.name: str | None = None
+        self.lang: str | None = None
 
         if data:
             self._parse_data(data)
@@ -104,7 +104,7 @@ class Lyrics:
 
     def get_lyrics_at_time(
         self, time_seconds: float, range_seconds: float = 5.0
-    ) -> List[LyricLine]:
+    ) -> list[LyricLine]:
         """Get lyrics within specified time range"""
         result = []
         for line in self.lines:
@@ -118,13 +118,13 @@ class LyricsManager:
 
     def __init__(self, player: Player):
         self.player = player
-        self._lyrics: Optional[Lyrics] = None
+        self._lyrics: Lyrics | None = None
         self._lyrics_loaded: bool = False
         self._is_subscribed: bool = False
         self._log = logging.getLogger(__name__)
 
     @property
-    def lyrics(self) -> Optional[Lyrics]:
+    def lyrics(self) -> Lyrics | None:
         """Get lyrics of the current track"""
         return self._lyrics
 
@@ -176,8 +176,8 @@ class LyricsManager:
             self._log.debug("Marked lyrics as not found")
 
     async def fetch_lyrics(
-        self, track=None, skip_track_source: bool = False, lang: Optional[str] = None
-    ) -> Optional[Lyrics]:
+        self, track=None, skip_track_source: bool = False, lang: str | None = None
+    ) -> Lyrics | None:
         """Fetch lyrics
 
         Args:
@@ -209,7 +209,7 @@ class LyricsManager:
                 self._log.error(f"Failed to fetch lyrics: {e}")
             return None
 
-    async def _fetch_lyrics_nodelink(self, track, lang: Optional[str] = None) -> Optional[Lyrics]:
+    async def _fetch_lyrics_nodelink(self, track, lang: str | None = None) -> Lyrics | None:
         """Fetch lyrics from NodeLink"""
         query_params = []
 
@@ -247,9 +247,7 @@ class LyricsManager:
                 self.mark_not_found()
             return None
 
-    async def _fetch_lyrics_lavalink(
-        self, track, skip_track_source: bool = False
-    ) -> Optional[Lyrics]:
+    async def _fetch_lyrics_lavalink(self, track, skip_track_source: bool = False) -> Lyrics | None:
         """Fetch lyrics from Lavalink v4"""
         # Lavalink v4 endpoint structure
         if track == self.player._current:
@@ -355,7 +353,7 @@ class LyricsManager:
                 self._log.error(f"Failed to unsubscribe from live lyrics: {e}")
             return False
 
-    def get_current_lyrics_lines(self, range_seconds: float = 5.0) -> List[LyricLine]:
+    def get_current_lyrics_lines(self, range_seconds: float = 5.0) -> list[LyricLine]:
         """Get lyric lines near the current playback position"""
         if not self.enabled or not self._lyrics or not self.player.is_playing:
             return []

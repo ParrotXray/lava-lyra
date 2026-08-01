@@ -3,8 +3,11 @@ name: Auto Format Code
 on:
   pull_request:
     types: [opened, synchronize]
-  push:
   workflow_dispatch:
+
+concurrency:
+  group: auto-format-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   format:
@@ -30,27 +33,43 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-ruff-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        pip install black isort flake8
+        pip install ruff
 
-    - name: Run black formatter
+    - name: Detect fork PR
+      id: fork-check
       run: |
-        black lava_lyra
-        echo "Black formatting completed"
+        if [ "${{ github.event_name }}" == "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+          echo "is_fork=true" >> $GITHUB_OUTPUT
+        else
+          echo "is_fork=false" >> $GITHUB_OUTPUT
+        fi
 
-    - name: Run isort import sorter
-      run: |
-        isort lava_lyra
-        echo "Import sorting completed"
+    - name: Run ruff check (fork PR, read-only)
+      if: steps.fork-check.outputs.is_fork == 'true'
+      run: ruff check .
+
+    - name: Run ruff format check (fork PR, read-only)
+      if: steps.fork-check.outputs.is_fork == 'true'
+      run: ruff format --check .
+
+    - name: Run ruff lint fixes
+      if: steps.fork-check.outputs.is_fork == 'false'
+      run: ruff check --fix .
+
+    - name: Run ruff formatter
+      if: steps.fork-check.outputs.is_fork == 'false'
+      run: ruff format .
 
     - name: Check for changes
       id: verify-changed-files
+      if: steps.fork-check.outputs.is_fork == 'false'
       run: |
         if [ -n "$(git status --porcelain)" ]; then
           echo "changed=true" >> $GITHUB_OUTPUT
@@ -60,33 +79,23 @@ jobs:
           echo "No files were changed by formatting"
         fi
 
-    - name: Lint with flake8
-      run: |
-        echo "Running flake8 syntax checks..."
-        flake8 lava_lyra --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 lava_lyra --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-    - name: Verify code quality after formatting
-      run: |
-        echo "All checks passed! Code is ready for commit."
-
     - name: Commit changes
-      if: steps.verify-changed-files.outputs.changed == 'true'
+      if: steps.fork-check.outputs.is_fork == 'false' && steps.verify-changed-files.outputs.changed == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add -A
-        git commit -m "Auto-format code with black and isort"
+        git commit -m "Auto-format code with ruff"
 
     - name: Push changes
-      if: steps.verify-changed-files.outputs.changed == 'true'
+      if: steps.fork-check.outputs.is_fork == 'false' && steps.verify-changed-files.outputs.changed == 'true'
       uses: ad-m/github-push-action@v1.3.0
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ github.head_ref || github.ref_name }}
 
     - name: Comment on PR
-      if: steps.verify-changed-files.outputs.changed == 'true' && github.event_name == 'pull_request'
+      if: steps.fork-check.outputs.is_fork == 'false' && steps.verify-changed-files.outputs.changed == 'true' && github.event_name == 'pull_request'
       uses: actions/github-script@v9
       with:
         script: |
@@ -98,7 +107,7 @@ jobs:
           })
 
     - name: Comment on PR if no changes
-      if: steps.verify-changed-files.outputs.changed == 'false' && github.event_name == 'pull_request'
+      if: steps.fork-check.outputs.is_fork == 'false' && steps.verify-changed-files.outputs.changed == 'false' && github.event_name == 'pull_request'
       uses: actions/github-script@v9
       with:
         script: |

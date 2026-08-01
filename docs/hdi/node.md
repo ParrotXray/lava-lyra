@@ -53,9 +53,7 @@ There are also properties the `Node` class has to access certain values:
 To get a player from the nodes list of players, we need to use `Node.get_player()`
 
 ```py
-
 await Node.get_player(...)
-
 ```
 
 After you have initialized your function, you need to specify the `guild_id` of the player.
@@ -76,9 +74,7 @@ To get tracks using Lavalink, we need to use `Node.get_tracks()`
 You can also use `Player.get_tracks()` to do the same thing, but this can be used to fetch tracks regardless if a player exists.
 
 ```py
-
 await Node.get_tracks(...)
-
 ```
 
 After you have initialized your function, we need to fill in the proper parameters:
@@ -142,9 +138,7 @@ To get recommadations using Lavalink, we need to use `Node.get_recommendations()
 You can also use `Player.get_recommendations()` to do the same thing, but this can be used to fetch recommendations regardless if a player exists.
 
 ```py
-
 await Node.get_recommendations(...)
-
 ```
 
 After you have initialized your function, we need to fill in the proper parameters:

@@ -1,18 +1,19 @@
 import re
 from enum import Enum, IntEnum
+from typing import ClassVar
 
 __all__ = (
+    "LavaSearchType",
+    "LogLevel",
+    "LoopMode",
+    "MixEndReason",
+    "NodeAlgorithm",
+    "PlaylistType",
+    "RouteIPType",
+    "RouteStrategy",
     "SearchType",
     "TrackType",
-    "PlaylistType",
-    "NodeAlgorithm",
-    "LoopMode",
-    "RouteStrategy",
-    "RouteIPType",
     "URLRegex",
-    "LogLevel",
-    "LavaSearchType",
-    "MixEndReason",
 )
 
 
@@ -273,7 +274,7 @@ class URLRegex:
 
     """
 
-    YTDLP_SUPPORTED_URLS = [
+    YTDLP_SUPPORTED_URLS: ClassVar[list] = [
         # Bilibili
         # re.compile(r"https?://(?:www\.)?bilibili\.com/video/[a-zA-Z0-9]+"),
         # re.compile(r"https?://b23\.tv/[a-zA-Z0-9]+"),

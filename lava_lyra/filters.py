@@ -1,21 +1,21 @@
 import collections
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from typing_extensions import Self
 
 from .exceptions import FilterInvalidArgument
 
 __all__ = (
-    "Filter",
+    "ChannelMix",
+    "Distortion",
     "Equalizer",
-    "Timescale",
+    "Filter",
     "Karaoke",
+    "LowPass",
+    "Rotation",
+    "Timescale",
     "Tremolo",
     "Vibrato",
-    "Rotation",
-    "Distortion",
-    "ChannelMix",
-    "LowPass",
 )
 
 
@@ -30,10 +30,10 @@ class Filter:
     This is necessary for the removal of filters.
     """
 
-    __slots__ = ("payload", "tag", "preload")
+    __slots__ = ("payload", "preload", "tag")
 
     def __init__(self, *, tag: str):
-        self.payload: Optional[Dict[str, Any]] = None
+        self.payload: dict[str, Any] | None = None
         self.tag: str = tag
         self.preload: bool = False
 
@@ -76,8 +76,8 @@ class Equalizer(Filter):
 
         self.payload = {"equalizer": self.eq}
 
-    def _factory(self, levels: List[Tuple[Any, Any]]) -> List[Dict]:
-        _dict: Dict = collections.defaultdict(int)
+    def _factory(self, levels: list[tuple[Any, Any]]) -> list[dict]:
+        _dict: dict = collections.defaultdict(int)
 
         _dict.update(levels)
         data = [{"band": i, "gain": _dict[i]} for i in range(15)]
@@ -87,11 +87,11 @@ class Equalizer(Filter):
     def __repr__(self) -> str:
         return f"<Lyra.EqualizerFilter tag={self.tag} eq={self.eq} raw={self.raw}>"
 
-    def __eq__(self, __value: object) -> bool:
-        if not isinstance(__value, Equalizer):
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, Equalizer):
             return NotImplemented
 
-        return self.raw == __value.raw and self.tag == __value.tag
+        return self.raw == value.raw and self.tag == value.tag
 
     @classmethod
     def flat(cls) -> "Equalizer":
@@ -205,7 +205,7 @@ class Timescale(Filter):
     a certain amount to produce said effect.
     """
 
-    __slots__ = ("speed", "pitch", "rate")
+    __slots__ = ("pitch", "rate", "speed")
 
     def __init__(self, *, tag: str, speed: float = 1.0, pitch: float = 1.0, rate: float = 1.0):
         super().__init__(tag=tag)
@@ -248,15 +248,11 @@ class Timescale(Filter):
     def __repr__(self) -> str:
         return f"<Lyra.TimescaleFilter tag={self.tag} speed={self.speed} pitch={self.pitch} rate={self.rate}>"
 
-    def __eq__(self, __value: object) -> bool:
-        if not isinstance(__value, Timescale):
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, Timescale):
             return False
 
-        return (
-            self.speed == __value.speed
-            and self.pitch == __value.pitch
-            and self.rate == __value.rate
-        )
+        return self.speed == value.speed and self.pitch == value.pitch and self.rate == value.rate
 
 
 class Karaoke(Filter):
@@ -264,7 +260,7 @@ class Karaoke(Filter):
     Best for karaoke as the filter implies.
     """
 
-    __slots__ = ("level", "mono_level", "filter_band", "filter_width")
+    __slots__ = ("filter_band", "filter_width", "level", "mono_level")
 
     def __init__(
         self,
@@ -297,15 +293,15 @@ class Karaoke(Filter):
             f"filter_band={self.filter_band} filter_width={self.filter_width}>"
         )
 
-    def __eq__(self, __value: object) -> bool:
-        if not isinstance(__value, Karaoke):
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, Karaoke):
             return False
 
         return (
-            self.level == __value.level
-            and self.mono_level == __value.mono_level
-            and self.filter_band == __value.filter_band
-            and self.filter_width == __value.filter_width
+            self.level == value.level
+            and self.mono_level == value.mono_level
+            and self.filter_band == value.filter_band
+            and self.filter_width == value.filter_width
         )
 
 
@@ -314,7 +310,7 @@ class Tremolo(Filter):
     causing it to sound like the music is changing in volume rapidly.
     """
 
-    __slots__ = ("frequency", "depth")
+    __slots__ = ("depth", "frequency")
 
     def __init__(self, *, tag: str, frequency: float = 2.0, depth: float = 0.5):
         super().__init__(tag=tag)
@@ -341,11 +337,11 @@ class Tremolo(Filter):
     def __repr__(self) -> str:
         return f"<Lyra.TremoloFilter tag={self.tag} frequency={self.frequency} depth={self.depth}>"
 
-    def __eq__(self, __value: object) -> bool:
-        if not isinstance(__value, Tremolo):
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, Tremolo):
             return False
 
-        return self.frequency == __value.frequency and self.depth == __value.depth
+        return self.frequency == value.frequency and self.depth == value.depth
 
 
 class Vibrato(Filter):
@@ -353,7 +349,7 @@ class Vibrato(Filter):
     but changes in pitch rather than volume.
     """
 
-    __slots__ = ("frequency", "depth")
+    __slots__ = ("depth", "frequency")
 
     def __init__(self, *, tag: str, frequency: float = 2.0, depth: float = 0.5):
         super().__init__(tag=tag)
@@ -380,11 +376,11 @@ class Vibrato(Filter):
     def __repr__(self) -> str:
         return f"<Lyra.VibratoFilter tag={self.tag} frequency={self.frequency} depth={self.depth}>"
 
-    def __eq__(self, __value: object) -> bool:
-        if not isinstance(__value, Vibrato):
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, Vibrato):
             return False
 
-        return self.frequency == __value.frequency and self.depth == __value.depth
+        return self.frequency == value.frequency and self.depth == value.depth
 
 
 class Rotation(Filter):
@@ -403,11 +399,11 @@ class Rotation(Filter):
     def __repr__(self) -> str:
         return f"<Lyra.RotationFilter tag={self.tag} rotation_hertz={self.rotation_hertz}>"
 
-    def __eq__(self, __value: object) -> bool:
-        if not isinstance(__value, Rotation):
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, Rotation):
             return False
 
-        return self.rotation_hertz == __value.rotation_hertz
+        return self.rotation_hertz == value.rotation_hertz
 
 
 class ChannelMix(Filter):
@@ -417,9 +413,9 @@ class ChannelMix(Filter):
 
     __slots__ = (
         "left_to_left",
-        "right_to_right",
         "left_to_right",
         "right_to_left",
+        "right_to_right",
     )
 
     def __init__(
@@ -470,15 +466,15 @@ class ChannelMix(Filter):
             f"right_to_left={self.right_to_left} right_to_right={self.right_to_right}>"
         )
 
-    def __eq__(self, __value: object) -> bool:
-        if not isinstance(__value, ChannelMix):
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, ChannelMix):
             return False
 
         return (
-            self.left_to_left == __value.left_to_left
-            and self.left_to_right == __value.left_to_right
-            and self.right_to_left == __value.right_to_left
-            and self.right_to_right == __value.right_to_right
+            self.left_to_left == value.left_to_left
+            and self.left_to_right == value.left_to_right
+            and self.right_to_left == value.right_to_left
+            and self.right_to_right == value.right_to_right
         )
 
 
@@ -488,14 +484,14 @@ class Distortion(Filter):
     """
 
     __slots__ = (
-        "sin_offset",
-        "sin_scale",
         "cos_offset",
         "cos_scale",
-        "tan_offset",
-        "tan_scale",
         "offset",
         "scale",
+        "sin_offset",
+        "sin_scale",
+        "tan_offset",
+        "tan_scale",
     )
 
     def __init__(
@@ -542,19 +538,19 @@ class Distortion(Filter):
             f"tan_scale={self.tan_scale} offset={self.offset} scale={self.scale}"
         )
 
-    def __eq__(self, __value: object) -> bool:
-        if not isinstance(__value, Distortion):
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, Distortion):
             return False
 
         return (
-            self.sin_offset == __value.sin_offset
-            and self.sin_scale == __value.sin_scale
-            and self.cos_offset == __value.cos_offset
-            and self.cos_scale == __value.cos_scale
-            and self.tan_offset == __value.tan_offset
-            and self.tan_scale == __value.tan_scale
-            and self.offset == __value.offset
-            and self.scale == __value.scale
+            self.sin_offset == value.sin_offset
+            and self.sin_scale == value.sin_scale
+            and self.cos_offset == value.cos_offset
+            and self.cos_scale == value.cos_scale
+            and self.tan_offset == value.tan_offset
+            and self.tan_scale == value.tan_scale
+            and self.offset == value.offset
+            and self.scale == value.scale
         )
 
 
@@ -563,7 +559,7 @@ class LowPass(Filter):
     You can also do this with the Equalizer filter, but this is an easier way to do it.
     """
 
-    __slots__ = ("smoothing", "payload")
+    __slots__ = ("payload", "smoothing")
 
     def __init__(self, *, tag: str, smoothing: float = 20):
         super().__init__(tag=tag)
@@ -574,8 +570,8 @@ class LowPass(Filter):
     def __repr__(self) -> str:
         return f"<Lyra.LowPass tag={self.tag} smoothing={self.smoothing}>"
 
-    def __eq__(self, __value: object) -> bool:
-        if not isinstance(__value, LowPass):
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, LowPass):
             return False
 
-        return self.smoothing == __value.smoothing
+        return self.smoothing == value.smoothing
