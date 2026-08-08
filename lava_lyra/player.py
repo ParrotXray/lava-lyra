@@ -400,7 +400,11 @@ class Player(VoiceProtocolType):
             if self._current is self._ending_track:
                 self._current = None
 
-        if isinstance(event, TrackStartEvent) and self._current is None and self._next_track is not None:
+        if (
+            isinstance(event, TrackStartEvent)
+            and self._current is None
+            and self._next_track is not None
+        ):
             self._current = self._next_track
             self._next_track = None
 
