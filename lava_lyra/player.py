@@ -400,10 +400,7 @@ class Player(VoiceProtocolType):
             if self._current is self._ending_track:
                 self._current = None
 
-        if (
-            isinstance(event, TrackEndEvent)
-            and event.reason == "gapless"
-        ):
+        if isinstance(event, TrackEndEvent) and event.reason == "gapless":
             self._current = self._next_track
             self._next_track = None
 
