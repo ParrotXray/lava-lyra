@@ -138,6 +138,7 @@ class Player(VoiceProtocolType):
         "_last_update",
         "_log",
         "_lyrics_manager",
+        "_next_track",
         "_node",
         "_paused",
         "_player_endpoint_uri",
@@ -145,7 +146,6 @@ class Player(VoiceProtocolType):
         "_volume",
         "channel",
         "client",
-        "_next_track",
     )
 
     def __call__(self, client: BotType, channel: VoiceChannelType) -> Player:
