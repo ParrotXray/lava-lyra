@@ -145,6 +145,7 @@ class Player(VoiceProtocolType):
         "_volume",
         "channel",
         "client",
+        "_next_track",
     )
 
     def __call__(self, client: BotType, channel: VoiceChannelType) -> Player:
@@ -177,6 +178,7 @@ class Player(VoiceProtocolType):
         self._last_position: int = 0
         self._last_update: float = 0
         self._ending_track: Track | None = None
+        self._next_track: Track | None = None
         self._log = self._node._log
 
         self._voice_state: dict = {}
@@ -398,6 +400,10 @@ class Player(VoiceProtocolType):
             if self._current is self._ending_track:
                 self._current = None
 
+        if isinstance(event, TrackStartEvent) and self._current is None and self._next_track is not None:
+            self._current = self._next_track
+            self._next_track = None
+
         event.dispatch(self._bot)
 
         if isinstance(event, TrackStartEvent):
@@ -571,8 +577,12 @@ class Player(VoiceProtocolType):
         start: int = 0,
         end: int = 0,
         ignore_if_playing: bool = False,
+        gapless: bool = False,
     ) -> Track:
         """Plays a track. If a Spotify track is passed in, it will be handled accordingly."""
+
+        if gapless and not self._node._is_nodelink:
+            raise TrackLoadError("This is only a Nodelink exclusive feature!")
 
         if not track._search_type:
             track.original = track
@@ -610,7 +620,7 @@ class Player(VoiceProtocolType):
             # Build data based on node type
             if self._node._is_nodelink:
                 data = {
-                    "track": {"encoded": search.track_id},
+                    "nextTrack" if gapless else "track": {"encoded": search.track_id},
                     "position": start,
                     "endTime": self._adjust_end_time(),
                 }
@@ -628,7 +638,7 @@ class Player(VoiceProtocolType):
             # Build data based on node type
             if self._node._is_nodelink:
                 data = {
-                    "track": {"encoded": track.track_id},
+                    "nextTrack" if gapless else "track": {"encoded": track.track_id},
                     "position": start,
                     "endTime": self._adjust_end_time(),
                 }
@@ -645,7 +655,10 @@ class Player(VoiceProtocolType):
         # Lets set the current track before we play it so any
         # corresponding events can capture it correctly
 
-        self._current = track
+        if gapless:
+            self._next_track = track
+        else:
+            self._current = track
 
         # Remove preloaded filters if last track had any
         if self.filters.has_preload:
@@ -702,7 +715,7 @@ class Player(VoiceProtocolType):
             else:
                 raise
 
-        return self._current
+        return self._current if not gapless else self._next_track
 
     async def _send_player_request(
         self, data: dict, method: str = "PATCH", query: str | None = None
