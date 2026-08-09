@@ -127,17 +127,11 @@ class Queue(Iterable[Track]):
     def _index(self, item: Track) -> int:
         return self._queue.index(item)
 
-    def _put(self, item: Track) -> None:
-        self._queue.append(item)
-
     def _insert(self, index: int, item: Track) -> None:
         self._queue.insert(index, item)
 
     def _remove(self, item: Track) -> None:
         self._queue.remove(item)
-
-    def _get_random_float(self) -> float:
-        return random.random()
 
     @staticmethod
     def _check_track(item: Track) -> Track:

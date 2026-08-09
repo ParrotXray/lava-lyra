@@ -57,7 +57,7 @@ elif IS_DPY:
     from discord.types.voice import GuildVoiceState as GuildVoiceStateType  # pyrefly: ignore
     from discord.types.voice import VoiceServerUpdate as VoiceServerUpdateType  # pyrefly: ignore
 
-    ContextType = _Context[Any]
+    type ContextType = _Context[Any]
 
 __all__ = (
     "IS_DPY",
