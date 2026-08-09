@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Any, overload
 
 from .compat import ClientUserType, ContextType, MemberType, UserType
 from .enums import PlaylistType, SearchType, TrackType
@@ -47,7 +47,7 @@ class Track:
         self,
         *,
         track_id: str,
-        info: dict,
+        info: dict[str, Any] | None,
         ctx: ContextType | None = None,
         track_type: TrackType,
         search_type: SearchType = SearchType.ytsearch,
@@ -55,8 +55,11 @@ class Track:
         timestamp: float | None = None,
         requester: MemberType | UserType | ClientUserType | None = None,
     ):
+        if info is None:
+            info = {}
+
         self.track_id: str = track_id
-        self.info: dict = info
+        self.info: dict[str, Any] = info
         self.track_type: TrackType = track_type
         self.filters: list[Filter] | None = filters
         self.timestamp: float | None = timestamp
@@ -79,7 +82,7 @@ class Track:
         if not self.thumbnail and self.uri and self.track_type is TrackType.YOUTUBE:
             self.thumbnail = f"https://img.youtube.com/vi/{self.identifier}/mqdefault.jpg"
 
-        self.length: int = info.get("length", 0)
+        self.length: int = info.get("length") or 0
         self.is_stream: bool = info.get("isStream", False)
         self.is_seekable: bool = info.get("isSeekable", False)
         self.position: int = info.get("position", 0)
@@ -122,13 +125,13 @@ class Playlist:
     def __init__(
         self,
         *,
-        playlist_info: dict,
-        tracks: list,
+        playlist_info: dict[str, Any],
+        tracks: list[Track],
         playlist_type: PlaylistType,
         thumbnail: str | None = None,
         uri: str | None = None,
     ):
-        self.playlist_info: dict = playlist_info
+        self.playlist_info: dict[str, Any] = playlist_info
         self.tracks: list[Track] = tracks
         self.name: str = playlist_info.get("name", "Unknown Playlist")
         self.playlist_type: PlaylistType = playlist_type
@@ -140,9 +143,9 @@ class Playlist:
             track.playlist = self
 
         self.selected_track: Track | None = None
-        if (index := playlist_info.get("selectedTrack", -1)) != -1:
-            if 0 <= index < len(self.tracks):
-                self.selected_track = self.tracks[index]
+        index = playlist_info.get("selectedTrack", -1)
+        if index is not None and index != -1 and 0 <= index < len(self.tracks):
+            self.selected_track = self.tracks[index]
 
         self.track_count: int = len(self.tracks)
 
@@ -180,7 +183,9 @@ class Playlist:
         return item in self.tracks
 
     def pop(self, index: int = -1) -> Track:
-        return self.tracks.pop(index)
+        track = self.tracks.pop(index)
+        self.track_count = len(self.tracks)
+        return track
 
     @property
     def uri(self) -> str | None:
@@ -195,4 +200,4 @@ class Playlist:
     @property
     def length(self) -> int | None:
         """Returns the total length of all tracks in the playlist in milliseconds."""
-        return sum(track.length for track in self.tracks)
+        return sum(track.length or 0 for track in self.tracks)

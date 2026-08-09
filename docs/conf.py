@@ -88,7 +88,7 @@ html_theme_options: dict[str, Any] = {
 # so theres a point of reference
 
 
-def linkcode_resolve(domain, info):
+def linkcode_resolve(domain: str, info: dict[str, Any]) -> str | None:
     # i absolutely MUST add this here or else
     # the docs will not build. fuck sphinx
     try:
@@ -113,6 +113,8 @@ def linkcode_resolve(domain, info):
             lines = inspect.getsourcelines(obj)
         except TypeError:
             # e.g. object is a typing.Union
+            return None
+        if file is None:
             return None
         file = os.path.relpath(file, os.path.abspath(".."))
         start, end = lines[1], lines[1] + len(lines[0]) - 1

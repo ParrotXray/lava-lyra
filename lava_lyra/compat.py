@@ -5,6 +5,7 @@ Compatibility layer for py-cord and discord.py
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version
+from typing import Any
 
 # Try to import discord library
 try:
@@ -31,26 +32,47 @@ from discord import ClientUser as ClientUserType
 from discord import Guild as GuildType
 from discord import Interaction as InteractionType
 from discord import Member as MemberType
+from discord import StageChannel as StageChannelType
 from discord import User as UserType
 from discord import VoiceChannel as VoiceChannelType
 from discord import VoiceProtocol as VoiceProtocolType
 
+VoiceChannelTypes: tuple[type[VoiceChannelType], type[StageChannelType]] = (
+    VoiceChannelType,
+    StageChannelType,
+)
+
 if IS_PYCORD:
-    from discord import ApplicationContext as ContextType
-    from discord import Bot as BotType
+    from discord import ApplicationContext as ContextType  # pyrefly: ignore
+    from discord import Bot as BotType  # pyrefly: ignore
+    from discord.raw_models import (
+        RawVoiceServerUpdateEvent as VoiceServerUpdateType,  # pyrefly: ignore
+    )
+    from discord.raw_models import (
+        RawVoiceStateUpdateEvent as GuildVoiceStateType,  # pyrefly: ignore
+    )
 elif IS_DPY:
-    from discord.ext.commands import Bot as BotType
-    from discord.ext.commands import Context as ContextType
+    from discord.ext.commands import Bot as BotType  # pyrefly: ignore
+    from discord.ext.commands import Context as _Context  # pyrefly: ignore
+    from discord.types.voice import GuildVoiceState as GuildVoiceStateType  # pyrefly: ignore
+    from discord.types.voice import VoiceServerUpdate as VoiceServerUpdateType  # pyrefly: ignore
+
+    ContextType = _Context[Any]
 
 __all__ = (
+    "IS_DPY",
     "IS_PYCORD",
     "BotType",
     "ClientUserType",
     "ContextType",
     "GuildType",
+    "GuildVoiceStateType",
     "InteractionType",
     "MemberType",
+    "StageChannelType",
     "UserType",
     "VoiceChannelType",
+    "VoiceChannelTypes",
     "VoiceProtocolType",
+    "VoiceServerUpdateType",
 )

@@ -7,12 +7,14 @@ import re
 import time
 from os import path
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 from urllib.parse import quote
 
 import aiohttp
 import orjson as json
-from websockets import client, exceptions
+from websockets import State, exceptions
+from websockets.asyncio.client import ClientConnection
+from websockets.asyncio.client import connect as ws_connect
 
 from . import __version__
 from .compat import BotType, ContextType
@@ -30,7 +32,7 @@ from .exceptions import (
 from .filters import Filter
 from .objects import Playlist, Track
 from .routeplanner import RoutePlanner
-from .search import SearchManager
+from .search import SearchManager, SearchResult
 from .utils import (
     ExponentialBackoff,
     LavalinkVersion,
@@ -76,6 +78,9 @@ class Node:
         "_host",
         "_identifier",
         "_is_nodelink",
+        "_latency_cache",
+        "_latency_cache_time",
+        "_latency_task",
         "_log",
         "_log_level",
         "_loop",
@@ -100,6 +105,8 @@ class Node:
         "_websocket",
         "_websocket_uri",
     )
+
+    _LATENCY_CACHE_TTL: ClassVar[float] = 5.0
 
     def __init__(
         self,
@@ -148,15 +155,19 @@ class Node:
         self._websocket_uri: str = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}"
         self._rest_uri: str = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
 
-        self._session: aiohttp.ClientSession = session  # type: ignore
+        self._session: aiohttp.ClientSession | None = session
         self._loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
-        self._websocket: client.WebSocketClientProtocol = None
-        self._task: asyncio.Task = None  # type: ignore
+        self._websocket: ClientConnection | None = None
+        self._task: asyncio.Task[Any] | None = None
 
         self._session_id: str | None = None
         self._available: bool = False
         self._is_nodelink: bool = False
         self._version: LavalinkVersion = LavalinkVersion(0, 0, 0)
+
+        self._latency_cache: float | None = None
+        self._latency_cache_time: float = 0.0
+        self._latency_task: asyncio.Task[Any] | None = None
 
         self._stats: NodeStats = NodeStats(
             {
@@ -209,7 +220,7 @@ class Node:
     @property
     def is_connected(self) -> bool:
         """Property which returns whether this node is connected or not"""
-        return self._websocket is not None and not self._websocket.closed
+        return self._websocket is not None and self._websocket.state is not State.CLOSED
 
     @property
     def stats(self) -> NodeStats:
@@ -238,8 +249,31 @@ class Node:
 
     @property
     def latency(self) -> float:
-        """Property which returns the latency of the node"""
-        return Ping(self._host, port=self._port).get_ping()
+        if self._latency_cache is None:
+            if not self._latency_task or self._latency_task.done():
+                self._latency_task = self._loop.create_task(self._latency_probe_loop())
+            return -1.0
+
+        return self._latency_cache
+
+    async def _latency_probe_loop(self) -> None:
+        while True:
+            try:
+                value = await self._loop.run_in_executor(
+                    None,
+                    Ping(self._host, port=self._port).get_ping,
+                )
+                self._latency_cache = value
+                self._latency_cache_time = time.monotonic()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                if self._log:
+                    self._log.debug(
+                        f"Latency probe failed for node {self._identifier}",
+                        exc_info=True,
+                    )
+            await asyncio.sleep(self._LATENCY_CACHE_TTL)
 
     @property
     def ping(self) -> float:
@@ -276,7 +310,9 @@ class Node:
     async def disable(self) -> None:
         """Disable this node and disconnect if connected."""
         self._enabled = False
-        if self.is_connected:
+        if self._latency_task:
+            self._latency_task.cancel()
+        if self.is_connected and self._websocket:
             await self._websocket.close()
 
     async def _handle_version_check(self, version: str) -> None:
@@ -312,14 +348,7 @@ class Node:
                 "Lavalink version 4.2.0 or above is required to use this library.",
             )
 
-    # async def _set_ext_client_session(self, session: aiohttp.ClientSession) -> None:
-    #     if self._spotify_client:
-    #         await self._spotify_client._set_session(session=session)
-
-    #     if self._apple_music_client:
-    #         await self._apple_music_client._set_session(session=session)
-
-    async def _update_handler(self, data: dict) -> None:
+    async def _update_handler(self, data: dict[str, Any]) -> None:
         await self._bot.wait_until_ready()
 
         if not data:
@@ -358,8 +387,8 @@ class Node:
 
         # Select best node based on health score instead of random selection
         # This ensures players migrate to the healthiest available node
-        node_scores = {node: node.health_score for node in nodes}
-        new_node = max(node_scores, key=node_scores.get)  # type: ignore
+        node_scores: dict[Node, float] = {node: node.health_score for node in nodes}
+        new_node = max(node_scores, key=node_scores.__getitem__)
 
         if self._log:
             self._log.info(
@@ -409,10 +438,19 @@ class Node:
     async def _listen(self) -> None:
         while True:
             try:
+                if not self._websocket:
+                    break
                 msg = await self._websocket.recv()
-                data = json.loads(msg)
+                try:
+                    data = json.loads(msg)
+                except json.JSONDecodeError as e:
+                    if self._log:
+                        self._log.warning(
+                            f"Node {self._identifier} sent a malformed (non-JSON) websocket message, ignoring: {e}",
+                        )
+                    continue
                 if self._log:
-                    self._log.debug(f"Recieved raw websocket message {msg}")
+                    self._log.debug(f"Recieved raw websocket message {msg!r}")
                 self._loop.create_task(self._handle_ws_msg(data=data))
             except exceptions.ConnectionClosed:
                 if self._log:
@@ -426,8 +464,10 @@ class Node:
 
                 # Dispatch node disconnected event
                 player_count = self.player_count
-                event = NodeDisconnectedEvent(self._identifier, self._is_nodelink, player_count)
-                event.dispatch(self._bot)
+                disconnected_event = NodeDisconnectedEvent(
+                    self._identifier, self._is_nodelink, player_count
+                )
+                disconnected_event.dispatch(self._bot)
 
                 # If fallback is enabled, switch players to another node
                 # Otherwise, destroy them
@@ -438,7 +478,7 @@ class Node:
                         self._loop.create_task(_player.destroy())
 
                 # Close the websocket if it's not already closed
-                if self._websocket and not self._websocket.closed:
+                if self._websocket and self._websocket.state is not State.CLOSED:
                     self._loop.create_task(self._websocket.close())
 
                 retry = self._backoff.delay()
@@ -481,7 +521,7 @@ class Node:
                         # Continue the loop to retry again
                         continue
 
-    async def _handle_ws_msg(self, data: dict) -> None:
+    async def _handle_ws_msg(self, data: dict[str, Any]) -> None:
         if self._log:
             self._log.debug(f"Recieved raw payload from Node {self._identifier} with data {data}")
         op = data.get("op", None)
@@ -497,13 +537,13 @@ class Node:
             if self._log:
                 self._log.info(f"Node {self._identifier} ready with session {self._session_id}")
 
-            if old_session_id and old_session_id != self._session_id:
+            if old_session_id != self._session_id:
                 if self._log:
                     self._log.info(
                         f"Session ID changed from {old_session_id} to {self._session_id}, updating players"
                     )
-                for player in self._players.copy().values():
-                    await player._refresh_endpoint_uri(self._session_id)
+                for _player in self._players.copy().values():
+                    await _player._refresh_endpoint_uri(self._session_id)
 
             await self._configure_resuming()
             self._available = True
@@ -546,12 +586,17 @@ class Node:
         include_version: bool = True,
         guild_id: int | str | None = None,
         query: str | None = None,
-        data: dict | str | None = None,
+        data: dict[str, Any] | str | None = None,
         ignore_if_available: bool = False,
     ) -> Any:
         if not ignore_if_available and not self._available:
             raise NodeNotAvailable(
                 f"The node '{self._identifier}' is unavailable.",
+            )
+
+        if self._session is None:
+            raise NodeNotAvailable(
+                f"The node '{self._identifier}' has no active HTTP session; call connect() first.",
             )
 
         if not ignore_if_available and not self._session_id and "sessions/" in path:
@@ -598,7 +643,7 @@ class Node:
                 )
 
             if resp.status >= 300:
-                resp_data: dict = await resp.json()
+                resp_data: dict[str, Any] = await resp.json()
 
                 if resp.status == 404 and "session" in resp_data.get("message", "").lower():
                     if self._log:
@@ -608,11 +653,11 @@ class Node:
                     self._available = False
                     self._session_id = None
                     # Close websocket to trigger reconnection loop
-                    if self._websocket and not self._websocket.closed:
+                    if self._websocket and self._websocket.state is not State.CLOSED:
                         self._loop.create_task(self._websocket.close())
 
                 raise NodeRestException(
-                    f"Error from Node {self._identifier} fetching from Lavalink REST api: {resp.status} {resp.reason}: {resp_data['message']}",
+                    f"Error from Node {self._identifier} fetching from Lavalink REST api: {resp.status} {resp.reason}: {resp_data.get('message', resp_data)}",
                 )
 
             if method == "DELETE" or resp.status == 204:
@@ -635,6 +680,15 @@ class Node:
                 )
             return await resp.json()
 
+        except aiohttp.ContentTypeError as e:
+            if self._log:
+                self._log.error(
+                    f"Node {self._identifier} returned a non-JSON response for {method} {uri}: {e}"
+                )
+            raise NodeRestException(
+                f"Node {self._identifier} returned a non-JSON response: {e}"
+            ) from e
+
         except aiohttp.ClientError as e:
             if self._log:
                 self._log.error(
@@ -642,7 +696,7 @@ class Node:
                 )
             self._available = False
             # Close websocket to trigger reconnection loop
-            if self._websocket and not self._websocket.closed:
+            if self._websocket and self._websocket.state is not State.CLOSED:
                 self._loop.create_task(self._websocket.close())
             raise NodeNotAvailable(f"HTTP error connecting to node {self._identifier}: {e}")
 
@@ -661,6 +715,7 @@ class Node:
                 self._log.info(f"Node {self._identifier} is disabled, skipping connection.")
             return self
 
+        created_session = False
         if not self._session:
             # Configure connection pooling for optimal concurrent request performance
             connector = aiohttp.TCPConnector(
@@ -675,28 +730,33 @@ class Node:
                 connector=connector,
                 timeout=timeout,
             )
+            created_session = True
 
         try:
             if not reconnect:
-                version: str = await self.send(
-                    method="GET",
-                    path="version",
-                    ignore_if_available=True,
-                    include_version=False,
-                )
+                try:
+                    version: str = await self.send(
+                        method="GET",
+                        path="version",
+                        ignore_if_available=True,
+                        include_version=False,
+                    )
 
-                info: dict = await self.send(
-                    method="GET",
-                    path="info",
-                    ignore_if_available=True,
-                    include_version=True,
-                )
+                    info: dict[str, Any] = await self.send(
+                        method="GET",
+                        path="info",
+                        ignore_if_available=True,
+                        include_version=True,
+                    )
+                except (NodeNotAvailable, NodeRestException) as e:
+                    raise NodeConnectionFailure(
+                        f"Failed to establish initial connection to node '{self._identifier}': {e}",
+                    ) from e
 
                 if info.get("isNodelink", False):
                     self._is_nodelink = True
 
                 await self._handle_version_check(version=version)
-                # await self._set_ext_client_session(session=self._session)
 
                 if self._log:
                     self._log.debug(
@@ -706,9 +766,9 @@ class Node:
             # Note: _session_id and _available are already reset in _listen()
             # before calling connect(reconnect=True), so no redundant reset needed here
 
-            self._websocket = await client.connect(
+            self._websocket = await ws_connect(
                 f"{self._websocket_uri}/v4/websocket",
-                extra_headers=self._headers,
+                additional_headers=self._headers,
                 ping_interval=self._heartbeat,
             )
 
@@ -745,19 +805,34 @@ class Node:
 
         except (aiohttp.ClientConnectorError, OSError, ConnectionRefusedError) as e:
             self._health_monitor.record_failure()
+            if created_session and self._session and not self._session.closed:
+                await self._session.close()
+                self._session = None
             raise NodeConnectionFailure(
                 f"The connection to node '{self._identifier}' failed: {e}",
             ) from None
         except exceptions.InvalidHandshake as e:
             self._health_monitor.record_failure()
+            if created_session and self._session and not self._session.closed:
+                await self._session.close()
+                self._session = None
             raise NodeConnectionFailure(
                 f"The password for node '{self._identifier}' is invalid: {e}",
             ) from None
         except exceptions.InvalidURI as e:
             self._health_monitor.record_failure()
+            if created_session and self._session and not self._session.closed:
+                await self._session.close()
+                self._session = None
             raise NodeConnectionFailure(
                 f"The URI for node '{self._identifier}' is invalid: {e}",
             ) from None
+        except Exception:
+            self._health_monitor.record_failure()
+            if created_session and self._session and not self._session.closed:
+                await self._session.close()
+                self._session = None
+            raise
 
     async def disconnect(self) -> None:
         """Disconnects a connected Lavalink node and removes it from the node pool.
@@ -775,7 +850,10 @@ class Node:
         if self._task:
             self._task.cancel()
 
-        if self._websocket and not getattr(self._websocket, "closed", True):
+        if self._latency_task:
+            self._latency_task.cancel()
+
+        if self._websocket and self._websocket.state is not State.CLOSED:
             try:
                 await self._websocket.close()
             except Exception as e:
@@ -812,7 +890,7 @@ class Node:
         Context object on the track it builds.
         """
 
-        data: dict = await self.send(
+        data: dict[str, Any] = await self.send(
             method="GET",
             path="decodetrack",
             query=f"encodedTrack={quote(identifier)}",
@@ -883,7 +961,7 @@ class Node:
                 query = f"{search_type}:{query}"
 
         # Capture YouTube timestamp if present
-        if match := URLRegex.YOUTUBE_TIMESTAMP.match(query):
+        if (match := URLRegex.YOUTUBE_TIMESTAMP.match(query)) and match.group("time"):
             timestamp = float(match.group("time"))
 
         # Make request to Lavalink
@@ -906,13 +984,10 @@ class Node:
             )
 
         elif load_type in ("LOAD_FAILED", "error"):
-            exception = (
-                data["data"]
-                if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3)
-                else data["exception"]
-            )
+            exception = data.get("data") or data.get("exception") or {}
             raise TrackLoadError(
-                f"{exception['message']} [{exception['severity']}]",
+                f"{exception.get('message', 'Unknown error')} "
+                f"[{exception.get('severity', 'unknown')}]",
             )
 
         elif load_type in ("NO_MATCHES", "empty"):
@@ -1055,6 +1130,9 @@ class Node:
         Returns:
             List of recommended tracks or None if not supported
         """
+        if track is None:
+            raise TypeError("get_recommendations() requires a track, got None.")
+
         if track.track_type == TrackType.SPOTIFY:
             # Use Spotify recommendations via LavaSrc plugin
             return await self.get_tracks(
@@ -1084,7 +1162,7 @@ class Node:
         types: list[LavaSearchType],
         search_type: SearchType | None = None,
         ctx: ContextType | None = None,
-    ):
+    ) -> SearchResult | None:
         """
         Searches for tracks, albums, artists, playlists, and text using the LavaSearch plugin.
 
@@ -1108,25 +1186,26 @@ class Node:
         )
 
 
-class NodePool:
+class _NodePoolMeta(type):
+    @property
+    def nodes(cls) -> dict[str, Node]:
+        return cast("type[NodePool]", cls)._nodes
+
+    @property
+    def node_count(cls) -> int:
+        return len(cast("type[NodePool]", cls)._nodes)
+
+    def __repr__(cls) -> str:
+        return f"<Lyra.NodePool node_count={cls.node_count}>"
+
+
+class NodePool(metaclass=_NodePoolMeta):
     """The base class for the node pool.
     This holds all the nodes that are to be used by the bot.
     """
 
     __slots__ = ()
     _nodes: ClassVar[dict[str, Node]] = {}
-
-    def __repr__(self) -> str:
-        return f"<Lyra.NodePool node_count={self.node_count}>"
-
-    @property
-    def nodes(self) -> dict[str, Node]:
-        """Property which returns a dict with the node identifier and the Node object."""
-        return self._nodes
-
-    @property
-    def node_count(self) -> int:
-        return len(self._nodes.values())
 
     @classmethod
     def get_best_node(cls, *, algorithm: NodeAlgorithm) -> Node:
@@ -1166,23 +1245,29 @@ class NodePool:
         nodes_to_consider = healthy_nodes if healthy_nodes else available_nodes
 
         if algorithm == NodeAlgorithm.by_ping:
-            tested_nodes = {node: node.latency for node in nodes_to_consider}
-            return min(tested_nodes, key=tested_nodes.get)  # type: ignore
+            tested_nodes: dict[Node, float] = {node: node.latency for node in nodes_to_consider}
+            return min(tested_nodes, key=tested_nodes.__getitem__)
 
         elif algorithm == NodeAlgorithm.by_total_players:
             # Use the total players count from node stats
-            tested_nodes = {node: node.stats.players_total for node in nodes_to_consider}
-            return min(tested_nodes, key=tested_nodes.get)  # type: ignore
+            tested_nodes: dict[Node, float] = {
+                node: node.stats.players_total for node in nodes_to_consider
+            }
+            return min(tested_nodes, key=tested_nodes.__getitem__)
 
         elif algorithm == NodeAlgorithm.by_playing_players:
             # Use the playing players count from node stats
-            tested_nodes = {node: node.stats.players_active for node in nodes_to_consider}
-            return min(tested_nodes, key=tested_nodes.get)  # type: ignore
+            tested_nodes: dict[Node, float] = {
+                node: node.stats.players_active for node in nodes_to_consider
+            }
+            return min(tested_nodes, key=tested_nodes.__getitem__)
 
         elif algorithm == NodeAlgorithm.by_health:
             # Higher health score is better
-            tested_nodes = {node: node.health_score for node in nodes_to_consider}
-            return max(tested_nodes, key=tested_nodes.get)  # type: ignore
+            tested_nodes: dict[Node, float] = {
+                node: node.health_score for node in nodes_to_consider
+            }
+            return max(tested_nodes, key=tested_nodes.__getitem__)
 
         else:
             raise ValueError(

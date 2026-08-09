@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 from .compat import ContextType
@@ -22,9 +22,9 @@ class Text:
 
     __slots__ = ("plugin_info", "text")
 
-    def __init__(self, *, text: str, plugin_info: dict | None = None):
+    def __init__(self, *, text: str, plugin_info: dict[str, Any] | None = None):
         self.text: str = text
-        self.plugin_info: dict = plugin_info or {}
+        self.plugin_info: dict[str, Any] = plugin_info or {}
 
     def __str__(self) -> str:
         return self.text
@@ -55,14 +55,14 @@ class SearchResult:
         artists: list[Playlist] | None = None,
         playlists: list[Playlist] | None = None,
         texts: list[Text] | None = None,
-        plugin_info: dict | None = None,
+        plugin_info: dict[str, Any] | None = None,
     ):
         self.tracks: list[Track] = tracks or []
         self.albums: list[Playlist] = albums or []
         self.artists: list[Playlist] = artists or []
         self.playlists: list[Playlist] = playlists or []
         self.texts: list[Text] = texts or []
-        self.plugin_info: dict = plugin_info or {}
+        self.plugin_info: dict[str, Any] = plugin_info or {}
 
     def __repr__(self) -> str:
         return (
@@ -185,7 +185,7 @@ class SearchManager:
             return None
 
         # Parse tracks
-        tracks = []
+        tracks: list[Track] = []
         if "tracks" in data:
             tracks = [
                 Track(
@@ -198,7 +198,7 @@ class SearchManager:
             ]
 
         # Parse albums
-        albums = []
+        albums: list[Playlist] = []
         if "albums" in data:
             albums = [
                 Playlist(
@@ -210,7 +210,7 @@ class SearchManager:
             ]
 
         # Parse artists
-        artists = []
+        artists: list[Playlist] = []
         if "artists" in data:
             artists = [
                 Playlist(
@@ -222,7 +222,7 @@ class SearchManager:
             ]
 
         # Parse playlists
-        playlists = []
+        playlists: list[Playlist] = []
         if "playlists" in data:
             playlists = [
                 Playlist(
@@ -234,7 +234,7 @@ class SearchManager:
             ]
 
         # Parse text results
-        texts = []
+        texts: list[Text] = []
         if "texts" in data:
             texts = [
                 Text(

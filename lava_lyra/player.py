@@ -2,10 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import TYPE_CHECKING, Any
+from typing import Any, override
 
 from . import events
-from .compat import BotType, ContextType, GuildType, VoiceChannelType, VoiceProtocolType
+from .compat import (
+    BotType,
+    ContextType,
+    GuildType,
+    GuildVoiceStateType,
+    VoiceChannelType,
+    VoiceChannelTypes,
+    VoiceProtocolType,
+    VoiceServerUpdateType,
+)
 from .enums import SearchType
 from .events import LyraEvent, TrackEndEvent, TrackStartEvent
 from .exceptions import (
@@ -22,9 +31,6 @@ from .lyrics import LyricsManager
 from .objects import Playlist, Track
 from .pool import Node, NodePool
 from .utils import LavalinkVersion
-
-if TYPE_CHECKING:
-    from discord.types.voice import GuildVoiceState, VoiceServerUpdate
 
 __all__ = ("Filters", "Player")
 
@@ -136,12 +142,14 @@ class Player(VoiceProtocolType):
         "_is_connected",
         "_last_position",
         "_last_update",
+        "_last_update_local",
         "_log",
         "_lyrics_manager",
         "_next_track",
         "_node",
         "_paused",
         "_player_endpoint_uri",
+        "_should_reconnect",
         "_voice_state",
         "_volume",
         "channel",
@@ -162,8 +170,8 @@ class Player(VoiceProtocolType):
         *,
         node: Node | None = None,
     ) -> None:
-        self.client: BotType = client
-        self.channel: VoiceChannelType = channel
+        self.client = client
+        self.channel = channel
         self._guild = channel.guild
 
         self._bot: BotType = client
@@ -174,14 +182,16 @@ class Player(VoiceProtocolType):
         self._volume: int = 100
         self._paused: bool = False
         self._is_connected: bool = False
+        self._should_reconnect: bool = False
 
         self._last_position: int = 0
         self._last_update: float = 0
+        self._last_update_local: float = 0
         self._ending_track: Track | None = None
         self._next_track: Track | None = None
         self._log = self._node._log
 
-        self._voice_state: dict = {}
+        self._voice_state: dict[str, Any] = {}
 
         self._player_endpoint_uri: str = f"sessions/{self._node._session_id}/players"
 
@@ -194,17 +204,20 @@ class Player(VoiceProtocolType):
     @property
     def position(self) -> float:
         """Property which returns the player's position in a track in milliseconds"""
-        if not self.is_playing:
+        current = self._current
+        if not self.is_playing or current is None:
             return 0
 
-        current: Track = self._current  # type: ignore
         if current.original:
             current = current.original
 
         if self.is_paused:
             return min(self._last_position, current.length)
 
-        difference = (time.time() * 1000) - self._last_update
+        if self._last_update_local == 0:
+            return 0
+
+        difference = (time.time() * 1000) - self._last_update_local
         position = self._last_position + difference
 
         return round(min(position, current.length))
@@ -213,7 +226,7 @@ class Player(VoiceProtocolType):
     def rate(self) -> float:
         """Property which returns the player's current rate"""
         if _filter := next((f for f in self._filters._filters if isinstance(f, Timescale)), None):
-            return _filter.speed or _filter.rate
+            return _filter.speed * _filter.rate
         return 1.0
 
     @property
@@ -224,10 +237,11 @@ class Player(VoiceProtocolType):
     @property
     def adjusted_length(self) -> float:
         """Property which returns the player's track length in milliseconds adjusted for rate"""
-        if not self.is_playing:
+        current = self.current
+        if not self.is_playing or current is None:
             return 0
 
-        return self.current.length / self.rate  # type: ignore
+        return current.length / self.rate
 
     @property
     def is_playing(self) -> bool:
@@ -297,7 +311,7 @@ class Player(VoiceProtocolType):
         return self._lyrics_manager.lyrics_loaded
 
     # Lyrics-related methods (acting as proxies to LyricsManager)
-    async def fetch_lyrics(self, track=None, skip_track_source: bool = False):
+    async def fetch_lyrics(self, track: Track | None = None, skip_track_source: bool = False):
         """Fetch lyrics"""
         return await self._lyrics_manager.fetch_lyrics(track, skip_track_source)
 
@@ -317,7 +331,7 @@ class Player(VoiceProtocolType):
         """Reset lyrics state"""
         self._lyrics_manager.reset()
 
-    def _adjust_end_time(self) -> str | None:
+    def _adjust_end_time(self) -> str | int | None:
         if self._node._version >= LavalinkVersion(4, 0, 0) or (
             self._node._is_nodelink and self._node._version >= LavalinkVersion(3, 0, 0)
         ):
@@ -325,9 +339,10 @@ class Player(VoiceProtocolType):
 
         return "0" if not self._node._is_nodelink else 0
 
-    async def _update_state(self, data: dict) -> None:
-        state: dict = data.get("state", {})
+    async def _update_state(self, data: dict[str, Any]) -> None:
+        state: dict[str, Any] = data.get("state", {})
         self._last_update = int(state.get("time", 0))
+        self._last_update_local = time.time() * 1000
         self._is_connected = bool(state.get("connected"))
         self._last_position = int(state.get("position", 0))
         if self._log:
@@ -343,7 +358,7 @@ class Player(VoiceProtocolType):
             "token": state["event"]["token"],
             "endpoint": state["event"]["endpoint"],
             "sessionId": state["sessionId"],
-            "channelId": str(self.channel.id) if self.channel else None,
+            "channelId": str(self.channel.id) if self.channel else None,  # pyrefly: ignore
         }
 
         await self._node.send(
@@ -358,11 +373,13 @@ class Player(VoiceProtocolType):
                 f"Dispatched voice update to {state['event']['endpoint']} with data {data}",
             )
 
-    async def on_voice_server_update(self, data: VoiceServerUpdate) -> None:
+    @override
+    async def on_voice_server_update(self, data: VoiceServerUpdateType) -> None:
         self._voice_state.update({"event": data})
         await self._dispatch_voice_update(self._voice_state)
 
-    async def on_voice_state_update(self, data: GuildVoiceState) -> None:
+    @override
+    async def on_voice_state_update(self, data: GuildVoiceStateType) -> None:
         self._voice_state.update({"sessionId": data.get("session_id")})
 
         channel_id = data.get("channel_id")
@@ -373,7 +390,7 @@ class Player(VoiceProtocolType):
 
         channel = self.guild.get_channel(int(channel_id))
 
-        if self.channel != channel:
+        if self.channel != channel and isinstance(channel, VoiceChannelTypes):
             self.channel = channel
 
         if not channel:
@@ -386,7 +403,7 @@ class Player(VoiceProtocolType):
 
         await self._dispatch_voice_update({**self._voice_state, "event": data})
 
-    async def _dispatch_event(self, data: dict) -> None:
+    async def _dispatch_event(self, data: dict[str, Any]) -> None:
         event_type: str = data.get("type", "")
         event_cls = getattr(events, event_type, None)
         if event_cls is None:
@@ -436,7 +453,7 @@ class Player(VoiceProtocolType):
                 "filters": self.filters.get_all_payloads() if not self.filters.empty else None,
             }
 
-        del self._node._players[self._guild.id]
+        self._node._players.pop(self._guild.id, None)
 
         old_node = self._node
         self._node = new_node
@@ -512,6 +529,7 @@ class Player(VoiceProtocolType):
         """
         return await self._node.get_recommendations(track=track, ctx=ctx)
 
+    @override
     async def connect(
         self,
         *,
@@ -521,7 +539,7 @@ class Player(VoiceProtocolType):
         self_mute: bool = False,
     ) -> None:
         await self.guild.change_voice_state(
-            channel=self.channel,
+            channel=self.channel,  # pyrefly: ignore [bad-argument-type]
             self_deaf=self_deaf,
             self_mute=self_mute,
         )
@@ -541,6 +559,7 @@ class Player(VoiceProtocolType):
         if self._log:
             self._log.debug("Player has been stopped.")
 
+    @override
     async def disconnect(self, *, force: bool = False) -> None:
         """Disconnects the player from voice."""
         try:
@@ -548,7 +567,7 @@ class Player(VoiceProtocolType):
         finally:
             self.cleanup()
             self._is_connected = False
-            self.channel = None  # type: ignore
+            self.channel = None  # pyrefly: ignore [bad-assignment]
 
     async def destroy(self) -> None:
         """Disconnects and destroys the player, and runs internal cleanup."""
@@ -559,7 +578,7 @@ class Player(VoiceProtocolType):
             # assume we're already disconnected and cleaned up
             assert self.channel is None and not self.is_connected
 
-        self._node._players.pop(self.guild.id)
+        self._node._players.pop(self.guild.id, None)
         if self.node.is_connected:
             await self._node.send(
                 method="DELETE",
@@ -578,7 +597,7 @@ class Player(VoiceProtocolType):
         end: int = 0,
         ignore_if_playing: bool = False,
         gapless: bool = False,
-    ) -> Track:
+    ) -> Track | None:
         """Plays a track. If a Spotify track is passed in, it will be handled accordingly."""
 
         if gapless and not self._node._is_nodelink:
@@ -593,24 +612,32 @@ class Player(VoiceProtocolType):
             await asyncio.sleep(1)
             return track
 
+        if start == 0 and track.timestamp:
+            start = int(track.timestamp * 1000)
+            track.timestamp = None
+
         # Make sure we've never searched the track before
         if track._search_type and track.original is None:
             # First lets try using the tracks ISRC, every track has one (hopefully)
             try:
                 if not track.isrc:
                     raise ValueError("Track has no ISRC")
-                search = (
-                    await self._node.get_tracks(f"{track._search_type}:{track.isrc}", ctx=track.ctx)
-                )[0]  # type: ignore
+                isrc_results = await self._node.get_tracks(
+                    f"{track._search_type}:{track.isrc}", ctx=track.ctx
+                )
+                if not isinstance(isrc_results, list) or not isrc_results:
+                    raise TrackLoadError("No results for ISRC search")
+                search = isrc_results[0]
             except Exception:
                 # First method didn't work, lets try just searching it up
                 try:
-                    search = (
-                        await self._node.get_tracks(
-                            f"{track._search_type}:{track.title} - {track.author}",
-                            ctx=track.ctx,
-                        )
-                    )[0]  # type: ignore
+                    title_results = await self._node.get_tracks(
+                        f"{track._search_type}:{track.title} - {track.author}",
+                        ctx=track.ctx,
+                    )
+                    if not isinstance(title_results, list) or not title_results:
+                        raise TrackLoadError("No results for title search")
+                    search = title_results[0]
                 except Exception:
                     # The song wasn't able to be found, raise error
                     raise TrackLoadError(
@@ -659,6 +686,10 @@ class Player(VoiceProtocolType):
             self._next_track = track
         else:
             self._current = track
+
+            self._last_position = start
+            self._last_update = time.time() * 1000
+            self._last_update_local = time.time() * 1000
 
         # Remove preloaded filters if last track had any
         if self.filters.has_preload:
@@ -718,7 +749,7 @@ class Player(VoiceProtocolType):
         return self._current if not gapless else self._next_track
 
     async def _send_player_request(
-        self, data: dict, method: str = "PATCH", query: str | None = None
+        self, data: dict[str, Any], method: str = "PATCH", query: str | None = None
     ) -> Any:
         """Auxiliary method for sending player requests, including error handling"""
         try:

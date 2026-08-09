@@ -26,21 +26,6 @@ Licensed under GPL-3.0
 
 from typing import NamedTuple
 
-# import discord
-
-# ==Pass for both discord.py and pycord==
-
-# if not discord.version_info.major >= 2:
-
-# class DiscordPyOutdated(Exception):
-# pass
-
-# raise DiscordPyOutdated(
-#     "You must have py-cord (v2.0 or greater) to use this library. "
-#     "Uninstall your current version and install py-cord 2.0 "
-#     "using 'pip install py-cord'",
-# )
-
 
 class _VersionInfo(NamedTuple):
     major: int
@@ -60,6 +45,7 @@ __author__ = "ParrotXray"
 __license__ = "GPL-3.0"
 __copyright__ = "Copyright (c) 2026, ParrotXray. Based on Pomice by cloudwithax"
 
+from .compat import *
 from .enums import *
 from .events import *
 from .exceptions import *
@@ -71,3 +57,4 @@ from .pool import *
 from .routeplanner import *
 from .search import *
 from .trackqueue import *
+from .utils import *

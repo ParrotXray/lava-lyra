@@ -2,10 +2,10 @@ import random
 import socket
 import time
 from collections.abc import Callable, Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from itertools import zip_longest
 from timeit import default_timer as timer
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, override
 
 from .enums import RouteIPType, RouteStrategy
 
@@ -64,7 +64,7 @@ class ExponentialBackoff:
             self._exp = 0
 
         self._exp = min(self._exp + 1, self._max)
-        return self._randfunc(0, self._base * 2**self._exp)  # type: ignore
+        return self._randfunc(0, self._base * 2**self._exp)
 
 
 class NodeStats:
@@ -86,19 +86,19 @@ class NodeStats:
     )
 
     def __init__(self, data: dict[str, Any]) -> None:
-        memory: dict = data.get("memory", {})
+        memory: dict[str, Any] = data.get("memory") or {}
         self.used = memory.get("used")
         self.free = memory.get("free")
         self.reservable = memory.get("reservable")
         self.allocated = memory.get("allocated")
 
-        cpu: dict = data.get("cpu", {})
+        cpu: dict[str, Any] = data.get("cpu") or {}
         self.cpu_cores = cpu.get("cores")
         self.cpu_system_load = cpu.get("systemLoad")
         self.cpu_process_load = cpu.get("lavalinkLoad")
 
-        self.players_active = data.get("playingPlayers")
-        self.players_total = data.get("players")
+        self.players_active = data.get("playingPlayers") or 0
+        self.players_total = data.get("players") or 0
         self.uptime = data.get("uptime")
 
     def __repr__(self) -> str:
@@ -114,11 +114,11 @@ class FailingIPBlock:
 
     __slots__ = ("address", "failing_time")
 
-    def __init__(self, data: dict) -> None:
+    def __init__(self, data: dict[str, Any]) -> None:
         self.address = data.get("address")
         self.failing_time = datetime.fromtimestamp(
-            float(data.get("failingTimestamp", 0)),
-            tz=timezone.utc,
+            float(data.get("failingTimestamp") or 0) / 1000,
+            tz=UTC,
         )
 
     def __repr__(self) -> str:
@@ -141,12 +141,24 @@ class RouteStats:
     )
 
     def __init__(self, data: dict[str, Any]) -> None:
-        self.strategy = RouteStrategy(data.get("class"))
+        strategy_value = data.get("class")
+        try:
+            self.strategy: RouteStrategy | None = (
+                RouteStrategy(strategy_value) if strategy_value is not None else None
+            )
+        except ValueError:
+            self.strategy = None
 
-        details: dict = data.get("details", {})
+        details: dict[str, Any] = data.get("details") or {}
 
-        ip_block: dict = details.get("ipBlock", {})
-        self.ip_block_type = RouteIPType(ip_block.get("type"))
+        ip_block: dict[str, Any] = details.get("ipBlock") or {}
+        ip_block_type_value = ip_block.get("type")
+        try:
+            self.ip_block_type: RouteIPType | None = (
+                RouteIPType(ip_block_type_value) if ip_block_type_value is not None else None
+            )
+        except ValueError:
+            self.ip_block_type = None
         self.ip_block_size = ip_block.get("size")
         self.failing_addresses = [
             FailingIPBlock(
@@ -169,7 +181,7 @@ class Ping:
 
         self._successed = 0
         self._failed = 0
-        self._conn_time = None
+        self._conn_time: float | None = None
         self._host = host
         self._port = port
         self._timeout = timeout
@@ -200,7 +212,7 @@ class Ping:
         def stop(self) -> None:
             self._stop = timer()
 
-        def cost(self, funcs: Iterable[Callable], args: Any) -> float:
+        def cost(self, funcs: Iterable[Callable[..., Any]], args: Any) -> float:
             self.start()
             for func, arg in zip_longest(funcs, args):
                 if arg:
@@ -237,12 +249,16 @@ class Ping:
                 pass
             return -1.0
 
+    def ping(self) -> float:
+        return self.get_ping()
+
 
 class LavalinkVersion(NamedTuple):
     major: int
     minor: int
     fix: int
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
             return NotImplemented
@@ -257,24 +273,28 @@ class LavalinkVersion(NamedTuple):
 
         return not (self == other)
 
+    @override
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
             return NotImplemented
 
         return (self.major, self.minor, self.fix) < (other.major, other.minor, other.fix)
 
+    @override
     def __gt__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
             return NotImplemented
 
         return (self.major, self.minor, self.fix) > (other.major, other.minor, other.fix)
 
+    @override
     def __le__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
             return NotImplemented
 
         return (self < other) or (self == other)
 
+    @override
     def __ge__(self, other: object) -> bool:
         if not isinstance(other, LavalinkVersion):
             return NotImplemented

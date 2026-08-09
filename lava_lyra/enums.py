@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import re
 from enum import Enum, IntEnum
-from typing import ClassVar
+from typing import ClassVar, override
 
 __all__ = (
     "LavaSearchType",
@@ -43,11 +45,12 @@ class SearchType(Enum):
     other = "other"
 
     @classmethod
-    def _missing_(cls, value: object) -> "SearchType":
+    @override
+    def _missing_(cls, value: object) -> SearchType:
         return cls.other
 
     def __str__(self) -> str:
-        return self.value
+        return str(self.value)
 
 
 class TrackType(Enum):
@@ -112,11 +115,12 @@ class TrackType(Enum):
     OTHER = "other"
 
     @classmethod
-    def _missing_(cls, value: object) -> "TrackType":
+    @override
+    def _missing_(cls, value: object) -> TrackType:
         return cls.OTHER
 
     def __str__(self) -> str:
-        return self.value
+        return str(self.value)
 
 
 class PlaylistType(Enum):
@@ -146,7 +150,8 @@ class PlaylistType(Enum):
     OTHER = "other"
 
     @classmethod
-    def _missing_(cls, value: object) -> "PlaylistType":
+    @override
+    def _missing_(cls, value: object) -> PlaylistType:
         return cls.OTHER
 
     @property
@@ -154,7 +159,7 @@ class PlaylistType(Enum):
         return None
 
     def __str__(self) -> str:
-        return self.value
+        return str(self.value)
 
 
 class NodeAlgorithm(Enum):
@@ -187,7 +192,7 @@ class NodeAlgorithm(Enum):
     by_health = "BY_HEALTH"
 
     def __str__(self) -> str:
-        return self.value
+        return str(self.value)
 
 
 class LoopMode(Enum):
@@ -207,7 +212,7 @@ class LoopMode(Enum):
     QUEUE = "queue"
 
     def __str__(self) -> str:
-        return self.value
+        return str(self.value)
 
 
 class RouteStrategy(Enum):
@@ -274,7 +279,7 @@ class URLRegex:
 
     """
 
-    YTDLP_SUPPORTED_URLS: ClassVar[list] = [
+    YTDLP_SUPPORTED_URLS: ClassVar[list[re.Pattern[str]]] = [
         # Bilibili
         # re.compile(r"https?://(?:www\.)?bilibili\.com/video/[a-zA-Z0-9]+"),
         # re.compile(r"https?://b23\.tv/[a-zA-Z0-9]+"),
@@ -313,7 +318,7 @@ class URLRegex:
     )
 
     YOUTUBE_TIMESTAMP = re.compile(
-        r"(?P<video>^.*?)(\?t|&start)=(?P<time>\d+)?.*",
+        r"(?P<video>^.*?)(\?t|&t|&start)=(?P<time>\d+)?.*",
     )
 
     AM_URL = re.compile(
@@ -370,7 +375,7 @@ class LogLevel(IntEnum):
     CRITICAL = 50
 
     @classmethod
-    def from_str(cls, level_str):
+    def from_str(cls, level_str: str) -> LogLevel:
         try:
             return cls[level_str.upper()]
         except KeyError:
@@ -399,7 +404,7 @@ class LavaSearchType(Enum):
     TEXT = "text"
 
     def __str__(self) -> str:
-        return self.value
+        return str(self.value)
 
 
 class MixEndReason(Enum):
@@ -419,8 +424,9 @@ class MixEndReason(Enum):
     MAIN_ENDED = "MAIN_ENDED"
 
     @classmethod
-    def _missing_(cls, value: object) -> "MixEndReason":
+    @override
+    def _missing_(cls, value: object) -> MixEndReason:
         return cls.FINISHED
 
     def __str__(self) -> str:
-        return self.value
+        return str(self.value)

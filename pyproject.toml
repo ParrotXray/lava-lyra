@@ -22,10 +22,9 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Communications",
     "Topic :: Communications :: Chat",
@@ -37,16 +36,19 @@ classifiers = [
     "Topic :: System :: Networking",
     "Typing :: Typed",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.13.0",
     "orjson>=3.8.0",
-    "websockets>=10.0",
-    "typing-extensions;python_version<'3.11'",
+    "websockets>=13.0"
 ]
 
+[tool.pyrefly.errors]
+implicit-any-type-argument = "warn"
+unused-ignore = "warn"
+
 [project.optional-dependencies]
-pycord = [
+py-cord = [
     "py-cord[voice]>=2.6.0",
 ]
 discordpy = [
@@ -58,8 +60,8 @@ docs = [
     "myst-parser>=2.0.0",
 ]
 dev = [
-    "mypy>=0.991",
-    "ruff>=0.16.1",
+    "pyrefly>=1.2.0",
+    "ruff>=0.16.2",
     "pre-commit>=2.20.0",
 ]
 speed = [
@@ -90,7 +92,7 @@ version = {attr = "lava_lyra.__version__"}
 # Ruff configuration
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py312"
 extend-exclude = ["build"]
 
 [tool.ruff.lint]
@@ -100,34 +102,12 @@ ignore = [
     "SIM102", # nested if: several cases are clearer un-merged, no functional benefit either way
 ]
 
-# MyPy configuration
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_unreachable = true
-strict_equality = true
-show_error_codes = true
-
-[[tool.mypy.overrides]]
-module = "aiohttp.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "orjson.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "discord.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "websockets.*"
-ignore_missing_imports = true
+# Pyrefly configuration
+[tool.pyrefly]
+python-version = "3.12.0"
+preset = "strict"
+ignore-missing-imports = [
+    "aiohttp.*",
+    "orjson.*",
+    "websockets.*",
+]

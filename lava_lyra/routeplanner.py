@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .pool import Node
@@ -21,7 +21,7 @@ class RoutePlanner:
 
     async def get_status(self) -> RouteStats:
         """Gets the status of the route planner API."""
-        data: dict = await self.node.send(method="GET", path="routeplanner/status")
+        data: dict[str, Any] = await self.node.send(method="GET", path="routeplanner/status")
         if not data:
             from .exceptions import NodeRestException
 

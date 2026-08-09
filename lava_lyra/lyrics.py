@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from operator import attrgetter
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from .objects import Track
     from .player import Player
 
 __all__ = (
@@ -29,7 +32,7 @@ class LyricLine:
 class Lyrics:
     """Lyrics class"""
 
-    def __init__(self, data: dict | None = None):
+    def __init__(self, data: dict[str, Any] | None = None):
         self.source_name: str | None = None
         self.provider: str | None = None
         self.text: str | None = None
@@ -43,34 +46,31 @@ class Lyrics:
         if data:
             self._parse_data(data)
 
-    def _parse_data(self, data: dict) -> None:
+    def _parse_data(self, data: dict[str, Any]) -> None:
         """Parse lyrics data from different formats"""
         # NodeLink format
-        if "loadType" in data:
-            if data.get("loadType") == "lyrics" and "data" in data:
-                lyrics_data = data["data"]
-                self.name = lyrics_data.get("name")
-                self.synced = lyrics_data.get("synced", False)
-                self.lang = lyrics_data.get("lang")
+        if data.get("loadType") == "lyrics" and "data" in data:
+            lyrics_data = data["data"]
+            self.name = lyrics_data.get("name")
+            self.synced = lyrics_data.get("synced", False)
+            self.lang = lyrics_data.get("lang")
 
-                # Parse lines
-                lines_data = lyrics_data.get("lines", [])
-                for line_data in lines_data:
-                    if isinstance(line_data, dict):
-                        lyric_line = LyricLine(
-                            text=line_data.get("text", ""),
-                            time=line_data.get("time", 0) / 1000.0,  # Convert to seconds
-                            duration=(
-                                line_data.get("duration", 0) / 1000.0
-                                if line_data.get("duration")
-                                else None
-                            ),
-                        )
-                        self.lines.append(lyric_line)
+            lines_data = lyrics_data.get("lines", [])
+            for line_data in lines_data:
+                if isinstance(line_data, dict):
+                    lyric_line = LyricLine(
+                        text=line_data.get("text", ""),
+                        time=(line_data.get("time", 0) or 0) / 1000.0,
+                        duration=(
+                            line_data.get("duration", 0) / 1000.0
+                            if line_data.get("duration")
+                            else None
+                        ),
+                    )
+                    self.lines.append(lyric_line)
             return
 
-        # Lavalink format (fallback)
-        lyrics_data = data.get("lyrics", data)
+        lyrics_data = data.get("data") or data.get("lyrics", data)
         self.source_name = lyrics_data.get("sourceName")
         self.provider = lyrics_data.get("provider")
         self.text = lyrics_data.get("text")
@@ -79,10 +79,14 @@ class Lyrics:
         lines_data = lyrics_data.get("lines", [])
         for line_data in lines_data:
             if isinstance(line_data, dict):
+                text = line_data.get("line")
+                if text is None:
+                    text = line_data.get("text") or ""
+                raw_duration = line_data.get("duration")
                 lyric_line = LyricLine(
-                    text=line_data.get("line", line_data.get("text", "")),
+                    text=text,
                     time=(line_data.get("timestamp", line_data.get("time", 0)) or 0) / 1000.0,
-                    duration=line_data.get("duration"),
+                    duration=(raw_duration / 1000.0) if raw_duration else None,
                 )
                 self.lines.append(lyric_line)
 
@@ -94,7 +98,7 @@ class Lyrics:
         """Return number of lyric lines"""
         return len(self.lines)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[LyricLine]:
         """Iterate over lyric lines"""
         return iter(self.lines)
 
@@ -110,7 +114,7 @@ class Lyrics:
         for line in self.lines:
             if abs(line.time - time_seconds) <= range_seconds:
                 result.append(line)
-        return sorted(result, key=lambda x: x.time)
+        return sorted(result, key=attrgetter("time"))
 
 
 class LyricsManager:
@@ -161,7 +165,7 @@ class LyricsManager:
         if self._log:
             self._log.debug("Lyrics state has been reset")
 
-    def update_lyrics(self, data: dict) -> None:
+    def update_lyrics(self, data: dict[str, Any]) -> None:
         """Update lyrics data"""
         self._lyrics = Lyrics(data)
         self._lyrics_loaded = True
@@ -176,7 +180,7 @@ class LyricsManager:
             self._log.debug("Marked lyrics as not found")
 
     async def fetch_lyrics(
-        self, track=None, skip_track_source: bool = False, lang: str | None = None
+        self, track: Track | None = None, skip_track_source: bool = False, lang: str | None = None
     ) -> Lyrics | None:
         """Fetch lyrics
 
@@ -209,14 +213,12 @@ class LyricsManager:
                 self._log.error(f"Failed to fetch lyrics: {e}")
             return None
 
-    async def _fetch_lyrics_nodelink(self, track, lang: str | None = None) -> Lyrics | None:
+    async def _fetch_lyrics_nodelink(self, track: Track, lang: str | None = None) -> Lyrics | None:
         """Fetch lyrics from NodeLink"""
         query_params = []
 
         if hasattr(track, "track_id") and track.track_id:
             query_params.append(f"encodedTrack={track.track_id}")
-        elif hasattr(track, "encoded") and track.encoded:
-            query_params.append(f"encodedTrack={track.encoded}")
         else:
             if self._log:
                 self._log.warning("Track does not have encodedTrack/track_id")
@@ -247,7 +249,9 @@ class LyricsManager:
                 self.mark_not_found()
             return None
 
-    async def _fetch_lyrics_lavalink(self, track, skip_track_source: bool = False) -> Lyrics | None:
+    async def _fetch_lyrics_lavalink(
+        self, track: Track, skip_track_source: bool = False
+    ) -> Lyrics | None:
         """Fetch lyrics from Lavalink v4"""
         # Lavalink v4 endpoint structure
         if track == self.player._current:

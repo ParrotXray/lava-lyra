@@ -29,6 +29,7 @@ __all__ = (
     "SeekEvent",
     "TrackEndEvent",
     "TrackExceptionEvent",
+    "TrackExceptionPayload",
     "TrackStartEvent",
     "TrackStuckEvent",
     "VolumeChangedEvent",
@@ -58,7 +59,7 @@ class LyraEvent(ABC):
     """
 
     name = "event"
-    handler_args: tuple
+    handler_args: tuple[Any, ...] = ()
 
     def dispatch(self, bot: BotType) -> None:
         bot.dispatch(f"lyra_{self.name}", *self.handler_args)
@@ -76,7 +77,7 @@ class TrackStartEvent(LyraEvent):
         "track",
     )
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.track: Track | None = self.player._current
 
@@ -96,10 +97,10 @@ class TrackEndEvent(LyraEvent):
 
     __slots__ = ("player", "reason", "track")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.track: Track | None = self.player._ending_track
-        self.reason: str = data["reason"]
+        self.reason: str = data.get("reason", "")
 
         # on_lyra_track_end(player, track, reason)
         self.handler_args = self.player, self.track, self.reason
@@ -121,10 +122,10 @@ class TrackStuckEvent(LyraEvent):
 
     __slots__ = ("player", "threshold", "track")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.track: Track | None = self.player._ending_track
-        self.threshold: float = data["thresholdMs"]
+        self.threshold: float = data.get("thresholdMs", 0)
 
         # on_lyra_track_stuck(player, track, threshold)
         self.handler_args = self.player, self.track, self.threshold
@@ -136,6 +137,26 @@ class TrackStuckEvent(LyraEvent):
         )
 
 
+class TrackExceptionPayload:
+    __slots__ = ("cause", "message", "severity")
+
+    def __init__(
+        self,
+        message: str,
+        severity: str | None = None,
+        cause: str | None = None,
+    ) -> None:
+        self.message: str = message
+        self.severity: str | None = severity
+        self.cause: str | None = cause
+
+    def __str__(self) -> str:
+        return self.message
+
+    def __repr__(self) -> str:
+        return f"<Lyra.TrackExceptionPayload message={self.message!r} severity={self.severity!r}>"
+
+
 class TrackExceptionEvent(LyraEvent):
     """Fired when a track error has occured.
     Returns the player associated with the event along with the error code and exception.
@@ -145,14 +166,18 @@ class TrackExceptionEvent(LyraEvent):
 
     __slots__ = ("exception", "player", "track")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.track: Track | None = self.player._ending_track
-        # Error is for Lavalink <= 3.3
-        self.exception: str = data.get(
-            "error",
-            "",
-        ) or data.get("exception", "")
+        raw_exception = data.get("error") or data.get("exception") or ""
+        if isinstance(raw_exception, dict):
+            self.exception: TrackExceptionPayload = TrackExceptionPayload(
+                message=raw_exception.get("message", "Unknown error"),
+                severity=raw_exception.get("severity"),
+                cause=raw_exception.get("cause"),
+            )
+        else:
+            self.exception = TrackExceptionPayload(message=str(raw_exception))
 
         # on_lyra_track_exception(player, track, error)
         self.handler_args = self.player, self.track, self.exception
@@ -164,12 +189,12 @@ class TrackExceptionEvent(LyraEvent):
 class WebSocketClosedPayload:
     __slots__ = ("_bot", "_guild_id", "by_remote", "code", "reason")
 
-    def __init__(self, data: dict, bot: BotType | None = None):
+    def __init__(self, data: dict[str, Any], bot: BotType | None = None):
         self._bot: BotType | None = bot
-        self._guild_id: int = int(data["guildId"])
-        self.code: int = data["code"]
-        self.reason: str = data["reason"]
-        self.by_remote: bool = data["byRemote"]
+        self._guild_id: int = int(data.get("guildId") or 0)
+        self.code: int = data.get("code") or 0
+        self.reason: str = data.get("reason") or ""
+        self.by_remote: bool = bool(data.get("byRemote"))
 
     @property
     def guild(self) -> GuildType | None:
@@ -196,7 +221,7 @@ class WebSocketClosedEvent(LyraEvent):
 
     __slots__ = ("payload",)
 
-    def __init__(self, data: dict, player: Any) -> None:
+    def __init__(self, data: dict[str, Any], player: Any) -> None:
         # Extract bot from player to avoid circular import with NodePool
         bot = getattr(player, "_bot", None)
         self.payload: WebSocketClosedPayload = WebSocketClosedPayload(data, bot)
@@ -217,9 +242,9 @@ class WebSocketOpenEvent(LyraEvent):
 
     __slots__ = ("ssrc", "target")
 
-    def __init__(self, data: dict, _: Any) -> None:
-        self.target: str = data["target"]
-        self.ssrc: int = data["ssrc"]
+    def __init__(self, data: dict[str, Any], _: Any) -> None:
+        self.target: str = data.get("target", "")
+        self.ssrc: int = data.get("ssrc", 0)
 
         # on_lyra_websocket_open(target, ssrc)
         self.handler_args = self.target, self.ssrc
@@ -235,7 +260,7 @@ class LyricsFoundEvent(LyraEvent):
 
     __slots__ = ("lyrics", "player", "track")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.track: Track | None = player._current
         self.lyrics: Lyrics = Lyrics(data)
@@ -254,7 +279,7 @@ class LyricsNotFoundEvent(LyraEvent):
 
     __slots__ = ("player", "track")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.track: Track | None = player._current
 
@@ -272,18 +297,22 @@ class LyricsLineEvent(LyraEvent):
 
     __slots__ = ("line", "player", "track")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.track: Track | None = player._current
 
         # Create a lyric line object
-        line_data = data.get("line", {})
+        line_data: dict[str, Any] = data.get("line", {})
         if not isinstance(line_data, dict):
             line_data = {}
+        text = line_data.get("line")
+        if text is None:
+            text = line_data.get("text") or ""
+        raw_duration = line_data.get("duration")
         self.line: LyricLine = LyricLine(
-            text=line_data.get("line", line_data.get("text", "")),
+            text=text,
             time=(line_data.get("timestamp", line_data.get("time", 0)) or 0) / 1000.0,
-            duration=line_data.get("duration"),
+            duration=(raw_duration / 1000.0) if raw_duration else None,
         )
 
         # on_lyra_lyrics_update(player, track, line)
@@ -363,7 +392,7 @@ class PlayerCreatedEvent(LyraEvent):
 
     __slots__ = ("guild_id", "player")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.guild_id: int = int(data.get("guildId", 0))
 
@@ -381,7 +410,7 @@ class VolumeChangedEvent(LyraEvent):
 
     __slots__ = ("player", "volume")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.volume: int = data.get("volume", 100)
 
@@ -399,9 +428,9 @@ class PlayerConnectedEvent(LyraEvent):
 
     __slots__ = ("player", "voice")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
-        self.voice: dict = data.get("voice", {})
+        self.voice: dict[str, Any] = data.get("voice", {})
 
         # on_lyra_player_connected(player, voice)
         self.handler_args = self.player, self.voice
@@ -417,9 +446,9 @@ class FiltersChangedEvent(LyraEvent):
 
     __slots__ = ("filters", "player")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
-        self.filters: dict = data.get("filters", {})
+        self.filters: dict[str, Any] = data.get("filters", {})
 
         # on_lyra_filters_changed(player, filters)
         self.handler_args = self.player, self.filters
@@ -434,7 +463,7 @@ class PauseEvent(LyraEvent):
     name = "pause"
     __slots__ = ("paused", "player")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.paused: bool = data.get("paused", True)
         self.handler_args = self.player, self.paused
@@ -449,7 +478,7 @@ class SeekEvent(LyraEvent):
     name = "seek"
     __slots__ = ("player", "position")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.position: int = data.get("position", 0)
         self.handler_args = self.player, self.position
@@ -478,7 +507,7 @@ class MixStartedEvent(LyraEvent):
     name = "mix_started"
     __slots__ = ("mix_id", "player", "track", "volume")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.mix_id: str = data.get("mixId", "")
         self.volume: float = data.get("volume", 1.0)
@@ -486,13 +515,14 @@ class MixStartedEvent(LyraEvent):
         # Parse track data if present
         track_data = data.get("track")
         if track_data and isinstance(track_data, dict):
+            track_info: dict[str, Any] = track_data.get("info") or {}
             self.track: Track | None = Track(
                 track_id=track_data.get("encoded", ""),
-                info=track_data.get("info", {}),
-                track_type=TrackType(track_data.get("info", {}).get("sourceName", "other")),
+                info=track_info,
+                track_type=TrackType(track_info.get("sourceName", "other")),
             )
         else:
-            self.track: Track | None = None
+            self.track = None
 
         # on_lyra_mix_started(player, mix_id, track, volume)
         self.handler_args = (self.player, self.mix_id, self.track, self.volume)
@@ -525,7 +555,7 @@ class MixEndedEvent(LyraEvent):
     name = "mix_ended"
     __slots__ = ("mix_id", "player", "reason")
 
-    def __init__(self, data: dict, player: Player):
+    def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.mix_id: str = data.get("mixId", "")
         self.reason: MixEndReason = MixEndReason(data.get("reason", "FINISHED"))
