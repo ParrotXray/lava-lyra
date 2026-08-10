@@ -21,6 +21,7 @@ from .exceptions import (
     FilterInvalidArgument,
     FilterTagAlreadyInUse,
     FilterTagInvalid,
+    NodelinkExclusive,
     NodeNotAvailable,
     NodeRestException,
     TrackInvalidPosition,
@@ -548,6 +549,8 @@ class Player(VoiceProtocolType):
 
     async def stop(self, *, gapless: bool = False) -> None:
         """Stops the currently playing track."""
+        if gapless and not self._node._is_nodelink:
+            raise NodelinkExclusive("This is a Nodelink-exclusive feature and is not supported on a Lavalink instance")
         self._current = None
         await self._node.send(
             method="PATCH",
@@ -601,7 +604,7 @@ class Player(VoiceProtocolType):
         """Plays a track. If a Spotify track is passed in, it will be handled accordingly."""
 
         if gapless and not self._node._is_nodelink:
-            raise TrackLoadError("This is only a Nodelink exclusive feature!")
+            raise NodelinkExclusive("This is a Nodelink-exclusive feature and is not supported on a Lavalink instance")
 
         if not track._search_type:
             track.original = track
