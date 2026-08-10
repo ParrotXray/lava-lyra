@@ -546,14 +546,14 @@ class Player(VoiceProtocolType):
         self._node._players[self.guild.id] = self
         self._is_connected = True
 
-    async def stop(self) -> None:
+    async def stop(self, gapless: bool = False) -> None:
         """Stops the currently playing track."""
         self._current = None
         await self._node.send(
             method="PATCH",
             path=self._player_endpoint_uri,
             guild_id=self._guild.id,
-            data={"encodedTrack": None},
+            data={"nextTrack" if gapless else "encodedTrack": None},
         )
 
         if self._log:
