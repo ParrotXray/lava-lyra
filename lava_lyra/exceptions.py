@@ -109,8 +109,10 @@ class RequirementNotFound(LyraException):
     Please install one of them before using.
     """
 
+
 class NodelinkExclusive(LyraException):
     """Exception raised when using a Nodelink exclusive feature on a Lavalink instance."""
+
 
 # Platform-specific exceptions have been removed in v4
 # These are no longer needed as all platform support is handled
