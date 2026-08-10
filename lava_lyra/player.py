@@ -546,7 +546,7 @@ class Player(VoiceProtocolType):
         self._node._players[self.guild.id] = self
         self._is_connected = True
 
-    async def stop(self, gapless: bool = False) -> None:
+    async def stop(self, *, gapless: bool = False) -> None:
         """Stops the currently playing track."""
         self._current = None
         await self._node.send(
