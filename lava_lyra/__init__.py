@@ -36,7 +36,7 @@ class _VersionInfo(NamedTuple):
 
 
 __version__ = "2.2.2"
-__version_info__ = _VersionInfo(2, 2, 0, "final", 0)
+__version_info__ = _VersionInfo(2, 2, 2, "final", 0)
 
 version = __version__
 version_info = __version_info__
