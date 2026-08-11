@@ -840,6 +840,12 @@ class Player(VoiceProtocolType):
         (You must have a song playing in order for `fast_apply` to work.)
         """
 
+        if _filter.nodelink_exclusive and not self._node._is_nodelink:
+            raise NodelinkExclusive(
+                f"The '{type(_filter).__name__}' filter is a Nodelink-exclusive feature "
+                "and is not supported on a Lavalink instance"
+            )
+
         self._filters.add_filter(filter=_filter)
         payload = self._filters.get_all_payloads()
         await self._node.send(
@@ -898,6 +904,12 @@ class Player(VoiceProtocolType):
 
         (You must have a song playing in order for `fast_apply` to work.)
         """
+
+        if edited_filter.nodelink_exclusive and not self._node._is_nodelink:
+            raise NodelinkExclusive(
+                f"The '{type(edited_filter).__name__}' filter is a Nodelink-exclusive feature "
+                "and is not supported on a Lavalink instance"
+            )
 
         self._filters.edit_filter(filter_tag=filter_tag, to_apply=edited_filter)
         payload = self._filters.get_all_payloads()

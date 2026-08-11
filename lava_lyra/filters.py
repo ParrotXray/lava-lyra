@@ -8,12 +8,18 @@ from .exceptions import FilterInvalidArgument
 
 __all__ = (
     "ChannelMix",
+    "Chorus",
+    "Compressor",
     "Distortion",
+    "Echo",
     "Equalizer",
     "Filter",
+    "Highpass",
     "Karaoke",
     "LowPass",
+    "Phaser",
     "Rotation",
+    "Spatial",
     "Timescale",
     "Tremolo",
     "Vibrato",
@@ -32,6 +38,11 @@ class Filter:
     """
 
     __slots__ = ("payload", "preload", "tag")
+
+    #: Whether this filter is only supported on Nodelink instances (i.e. it is
+    #: not part of the standard Lavalink filter set). Subclasses that wrap a
+    #: Nodelink-exclusive filter should override this with ``True``.
+    nodelink_exclusive: bool = False
 
     def __init__(self, *, tag: str):
         self.payload: dict[str, Any] | None = None
@@ -623,3 +634,379 @@ class LowPass(Filter):
             return False
 
         return self.smoothing == other.smoothing
+
+
+class Echo(Filter):
+    """Nodelink-exclusive filter which creates delay-based repetitions of the
+    audio with feedback control, producing an echo effect.
+
+    This filter is not part of the standard Lavalink filter set and requires
+    a Nodelink instance to work.
+    """
+
+    __slots__ = ("delay", "feedback", "mix")
+
+    nodelink_exclusive = True
+
+    def __init__(self, *, tag: str, delay: float = 500, feedback: float = 0.3, mix: float = 0.5):
+        super().__init__(tag=tag)
+
+        if delay < 0 or delay > 5000:
+            raise FilterInvalidArgument(
+                "Echo delay must be between 0 and 5000 (milliseconds).",
+            )
+        if feedback < 0 or feedback > 1:
+            raise FilterInvalidArgument(
+                "Echo feedback must be between 0 and 1.",
+            )
+        if mix < 0 or mix > 1:
+            raise FilterInvalidArgument(
+                "Echo mix must be between 0 and 1.",
+            )
+
+        self.delay: float = delay
+        self.feedback: float = feedback
+        self.mix: float = mix
+
+        self.payload = {
+            "echo": {
+                "delay": self.delay,
+                "feedback": self.feedback,
+                "mix": self.mix,
+            },
+        }
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.Echo tag={self.tag} delay={self.delay} feedback={self.feedback} mix={self.mix}>"
+        )
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Echo):
+            return False
+
+        return (
+            self.delay == other.delay and self.feedback == other.feedback and self.mix == other.mix
+        )
+
+
+class Chorus(Filter):
+    """Nodelink-exclusive filter which simulates multiple voices playing at once
+    by mixing the signal with modulated, delayed copies of itself.
+
+    This filter is not part of the standard Lavalink filter set and requires
+    a Nodelink instance to work.
+    """
+
+    __slots__ = ("delay", "depth", "feedback", "mix", "rate")
+
+    nodelink_exclusive = True
+
+    def __init__(
+        self,
+        *,
+        tag: str,
+        rate: float = 1.5,
+        depth: float = 0.5,
+        delay: float = 25,
+        mix: float = 0.6,
+        feedback: float = 0.2,
+    ):
+        super().__init__(tag=tag)
+
+        if depth < 0 or depth > 1:
+            raise FilterInvalidArgument(
+                "Chorus depth must be between 0 and 1.",
+            )
+        if delay < 1 or delay > 45:
+            raise FilterInvalidArgument(
+                "Chorus delay must be between 1 and 45 (milliseconds).",
+            )
+        if mix < 0 or mix > 1:
+            raise FilterInvalidArgument(
+                "Chorus mix must be between 0 and 1.",
+            )
+        if feedback < 0 or feedback > 0.95:
+            raise FilterInvalidArgument(
+                "Chorus feedback must be between 0 and 0.95.",
+            )
+
+        self.rate: float = rate
+        self.depth: float = depth
+        self.delay: float = delay
+        self.mix: float = mix
+        self.feedback: float = feedback
+
+        self.payload = {
+            "chorus": {
+                "rate": self.rate,
+                "depth": self.depth,
+                "delay": self.delay,
+                "mix": self.mix,
+                "feedback": self.feedback,
+            },
+        }
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.Chorus tag={self.tag} rate={self.rate} depth={self.depth} "
+            f"delay={self.delay} mix={self.mix} feedback={self.feedback}>"
+        )
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Chorus):
+            return False
+
+        return (
+            self.rate == other.rate
+            and self.depth == other.depth
+            and self.delay == other.delay
+            and self.mix == other.mix
+            and self.feedback == other.feedback
+        )
+
+
+class Compressor(Filter):
+    """Nodelink-exclusive filter which applies dynamic range compression,
+    balancing out the loud and quiet parts of the audio.
+
+    This filter is not part of the standard Lavalink filter set and requires
+    a Nodelink instance to work.
+    """
+
+    __slots__ = ("attack", "gain", "ratio", "release", "threshold")
+
+    nodelink_exclusive = True
+
+    def __init__(
+        self,
+        *,
+        tag: str,
+        threshold: float = -20,
+        ratio: float = 4,
+        attack: float = 10,
+        release: float = 100,
+        gain: float = 5,
+    ):
+        super().__init__(tag=tag)
+
+        if ratio < 1:
+            raise FilterInvalidArgument(
+                "Compressor ratio must be 1.0 or greater (1.0 means no compression).",
+            )
+        if attack < 0:
+            raise FilterInvalidArgument(
+                "Compressor attack must be 0 or greater (milliseconds).",
+            )
+        if release < 0:
+            raise FilterInvalidArgument(
+                "Compressor release must be 0 or greater (milliseconds).",
+            )
+
+        self.threshold: float = threshold
+        self.ratio: float = ratio
+        self.attack: float = attack
+        self.release: float = release
+        self.gain: float = gain
+
+        self.payload = {
+            "compressor": {
+                "threshold": self.threshold,
+                "ratio": self.ratio,
+                "attack": self.attack,
+                "release": self.release,
+                "gain": self.gain,
+            },
+        }
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.Compressor tag={self.tag} threshold={self.threshold} ratio={self.ratio} "
+            f"attack={self.attack} release={self.release} gain={self.gain}>"
+        )
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Compressor):
+            return False
+
+        return (
+            self.threshold == other.threshold
+            and self.ratio == other.ratio
+            and self.attack == other.attack
+            and self.release == other.release
+            and self.gain == other.gain
+        )
+
+
+class Highpass(Filter):
+    """Nodelink-exclusive filter which attenuates low frequencies, letting
+    higher frequencies pass through.
+
+    Unlike :class:`LowPass`, which is part of the standard Lavalink filter set,
+    this filter is Nodelink-exclusive and uses a different payload key
+    (``highpass`` instead of the ``lowPass``/``highPass`` names used elsewhere),
+    so it requires a Nodelink instance to work.
+    """
+
+    __slots__ = ("smoothing",)
+
+    nodelink_exclusive = True
+
+    def __init__(self, *, tag: str, smoothing: float = 20):
+        super().__init__(tag=tag)
+
+        if smoothing <= 1.0:
+            raise FilterInvalidArgument(
+                "Highpass smoothing must be greater than 1.0 to enable the effect.",
+            )
+
+        self.smoothing: float = smoothing
+        self.payload = {"highpass": {"smoothing": self.smoothing}}
+
+    def __repr__(self) -> str:
+        return f"<Lyra.Highpass tag={self.tag} smoothing={self.smoothing}>"
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Highpass):
+            return False
+
+        return self.smoothing == other.smoothing
+
+
+class Phaser(Filter):
+    """Nodelink-exclusive filter which sweeps a series of all-pass filters
+    across the frequency spectrum, producing a swirling, sweeping effect.
+
+    This filter is not part of the standard Lavalink filter set and requires
+    a Nodelink instance to work.
+    """
+
+    __slots__ = ("depth", "feedback", "max_frequency", "min_frequency", "mix", "rate", "stages")
+
+    nodelink_exclusive = True
+
+    def __init__(
+        self,
+        *,
+        tag: str,
+        stages: int = 6,
+        rate: float = 0.5,
+        depth: float = 0.7,
+        feedback: float = 0.5,
+        mix: float = 0.5,
+        min_frequency: float = 200,
+        max_frequency: float = 2000,
+    ):
+        super().__init__(tag=tag)
+
+        if stages < 2 or stages > 12:
+            raise FilterInvalidArgument(
+                "Phaser stages must be between 2 and 12.",
+            )
+        if depth < 0 or depth > 1:
+            raise FilterInvalidArgument(
+                "Phaser depth must be between 0 and 1.",
+            )
+        if feedback < 0 or feedback > 0.9:
+            raise FilterInvalidArgument(
+                "Phaser feedback must be between 0 and 0.9.",
+            )
+        if mix < 0 or mix > 1:
+            raise FilterInvalidArgument(
+                "Phaser mix must be between 0 and 1.",
+            )
+        if min_frequency <= 0 or max_frequency <= 0:
+            raise FilterInvalidArgument(
+                "Phaser min_frequency and max_frequency must be greater than 0.",
+            )
+        if min_frequency >= max_frequency:
+            raise FilterInvalidArgument(
+                "Phaser min_frequency must be less than max_frequency.",
+            )
+
+        self.stages: int = stages
+        self.rate: float = rate
+        self.depth: float = depth
+        self.feedback: float = feedback
+        self.mix: float = mix
+        self.min_frequency: float = min_frequency
+        self.max_frequency: float = max_frequency
+
+        self.payload = {
+            "phaser": {
+                "stages": self.stages,
+                "rate": self.rate,
+                "depth": self.depth,
+                "feedback": self.feedback,
+                "mix": self.mix,
+                "minFrequency": self.min_frequency,
+                "maxFrequency": self.max_frequency,
+            },
+        }
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.Phaser tag={self.tag} stages={self.stages} rate={self.rate} depth={self.depth} "
+            f"feedback={self.feedback} mix={self.mix} min_frequency={self.min_frequency} "
+            f"max_frequency={self.max_frequency}>"
+        )
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Phaser):
+            return False
+
+        return (
+            self.stages == other.stages
+            and self.rate == other.rate
+            and self.depth == other.depth
+            and self.feedback == other.feedback
+            and self.mix == other.mix
+            and self.min_frequency == other.min_frequency
+            and self.max_frequency == other.max_frequency
+        )
+
+
+class Spatial(Filter):
+    """Nodelink-exclusive filter which creates a spatial audio effect using
+    modulated cross-channel delays.
+
+    This filter is not part of the standard Lavalink filter set and requires
+    a Nodelink instance to work.
+    """
+
+    __slots__ = ("depth", "rate")
+
+    nodelink_exclusive = True
+
+    def __init__(self, *, tag: str, depth: float = 0.8, rate: float = 0.3):
+        super().__init__(tag=tag)
+
+        if depth < 0 or depth > 1:
+            raise FilterInvalidArgument(
+                "Spatial depth must be between 0 and 1.",
+            )
+
+        self.depth: float = depth
+        self.rate: float = rate
+
+        self.payload = {
+            "spatial": {
+                "depth": self.depth,
+                "rate": self.rate,
+            },
+        }
+
+    def __repr__(self) -> str:
+        return f"<Lyra.Spatial tag={self.tag} depth={self.depth} rate={self.rate}>"
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Spatial):
+            return False
+
+        return self.depth == other.depth and self.rate == other.rate
