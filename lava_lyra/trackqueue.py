@@ -41,11 +41,11 @@ class Queue(Iterable[Track]):
 
     def __repr__(self) -> str:
         """Official representation with max_size and member count."""
-        return f"<{self.__class__.__name__} max_size={self.max_size} members={self.count}>"
+        return f"<{self.__class__.__name__} max_size={self.max_size} members={self.size}>"
 
     def __bool__(self) -> bool:
         """Treats the queue as a bool, with it evaluating True when it contains members."""
-        return bool(self.count)
+        return bool(self.size)
 
     def __call__(self, item: Track) -> None:
         """Allows the queue instance to be called directly in order to add a member."""
@@ -53,7 +53,7 @@ class Queue(Iterable[Track]):
 
     def __len__(self) -> int:
         """Return the number of members in the queue."""
-        return self.count
+        return self.size
 
     @overload
     def __getitem__(self, index: SupportsIndex, /) -> Track: ...
@@ -151,12 +151,12 @@ class Queue(Iterable[Track]):
     @property
     def is_empty(self) -> bool:
         """Returns True if queue has no members."""
-        return not bool(self.count)
+        return not bool(self.size)
 
     @property
     def is_full(self) -> bool:
         """Returns True if queue item count has reached max_size."""
-        return False if self.max_size is None else self.count >= self.max_size
+        return False if self.max_size is None else self.size >= self.max_size
 
     @property
     def is_looping(self) -> bool:
@@ -247,7 +247,7 @@ class Queue(Iterable[Track]):
         if isinstance(item, Iterable):
             passing_items = self._check_track_container(item)
             if self.max_size is not None and self._overflow:
-                while self._queue and self.count + len(passing_items) > self.max_size:
+                while self._queue and self.size + len(passing_items) > self.max_size:
                     self._drop()
                 if len(passing_items) > self.max_size:
                     passing_items = passing_items[: self.max_size]
@@ -289,9 +289,9 @@ class Queue(Iterable[Track]):
             if not self._overflow and self.max_size is not None:
                 new_len = len(iterable)
 
-                if (new_len + self.count) > self.max_size:
+                if (new_len + self.size) > self.max_size:
                     raise QueueFull(
-                        f"Queue has {self.count}/{self.max_size} items, cannot add {new_len} more.",
+                        f"Queue has {self.size}/{self.max_size} items, cannot add {new_len} more.",
                     )
 
             for item in iterable:
@@ -300,7 +300,7 @@ class Queue(Iterable[Track]):
             for item in iterable:
                 if not isinstance(item, Track):
                     continue
-                if not self._overflow and self.max_size is not None and self.count >= self.max_size:
+                if not self._overflow and self.max_size is not None and self.size >= self.max_size:
                     break
                 self.put(item)
 
