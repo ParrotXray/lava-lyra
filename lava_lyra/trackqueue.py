@@ -149,11 +149,6 @@ class Queue(Iterable[Track]):
         return iterable
 
     @property
-    def count(self) -> int:
-        """Returns queue member count."""
-        return len(self._queue)
-
-    @property
     def is_empty(self) -> bool:
         """Returns True if queue has no members."""
         return not bool(self.count)
