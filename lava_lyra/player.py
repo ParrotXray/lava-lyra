@@ -723,6 +723,13 @@ class Player(VoiceProtocolType):
         if end > 0:
             data["endTime"] = end
 
+        # nodelink: omit position and endTime on gapless
+        if self._node._is_nodelink:
+            data = {"nextTrack" if gapless else "track": {"encoded": track.track_id}}
+            if not gapless:
+                data["position"] = start
+                data["endTime"] = self._adjust_end_time()
+
         try:
             await self._node.send(
                 method="PATCH",
