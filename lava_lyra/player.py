@@ -653,11 +653,14 @@ class Player(VoiceProtocolType):
 
             # Build data based on node type
             if self._node._is_nodelink:
-                data = {
-                    "nextTrack" if gapless else "track": {"encoded": search.track_id},
-                    "position": start,
-                    "endTime": self._adjust_end_time(),
-                }
+                if gapless:
+                    data = {"nextTrack": {"encoded": search.track_id}}
+                else:
+                    data = {
+                        "track": {"encoded": search.track_id},
+                        "position": start,
+                        "endTime": self._adjust_end_time(),
+                    }
             else:
                 data = {
                     "encodedTrack": search.track_id,
@@ -671,11 +674,14 @@ class Player(VoiceProtocolType):
         else:
             # Build data based on node type
             if self._node._is_nodelink:
-                data = {
-                    "nextTrack" if gapless else "track": {"encoded": track.track_id},
-                    "position": start,
-                    "endTime": self._adjust_end_time(),
-                }
+                if gapless:
+                    data = {"nextTrack": {"encoded": track.track_id}}
+                else:
+                    data = {
+                        "track": {"encoded": track.track_id},
+                        "position": start,
+                        "endTime": self._adjust_end_time(),
+                    }
             else:
                 data = {
                     "encodedTrack": track.track_id,
@@ -722,13 +728,6 @@ class Player(VoiceProtocolType):
 
         if end > 0:
             data["endTime"] = end
-
-        # nodelink: omit position and endTime on gapless
-        if self._node._is_nodelink:
-            data = {"nextTrack" if gapless else "track": {"encoded": track.track_id}}
-            if not gapless:
-                data["position"] = start
-                data["endTime"] = self._adjust_end_time()
 
         try:
             await self._node.send(
