@@ -59,8 +59,18 @@ class Filters:
         """Property which checks if the filter list is empty"""
         return len(self._filters) == 0
 
-    def add_filter(self, *, filter: Filter) -> None:
-        """Adds a filter to the list of filters applied"""
+    def add_filter(self, *, filter: Filter, node: Node) -> None:
+        """Adds a filter to the list of filters applied.
+
+        `node` is the Lavalink/Nodelink node the filter would be sent to, and is used
+        to reject Nodelink-exclusive filters (see `Filter.nodelink_exclusive`) before
+        they can be queued up against a plain Lavalink instance.
+        """
+        if filter.nodelink_exclusive and not node._is_nodelink:
+            raise NodelinkExclusive(
+                f"The '{type(filter).__name__}' filter is a Nodelink-exclusive feature "
+                "and is not supported on a Lavalink instance",
+            )
         if any(f for f in self._filters if f.tag == filter.tag):
             raise FilterTagAlreadyInUse(
                 "A filter with that tag is already in use.",
@@ -76,8 +86,18 @@ class Filters:
             if filter.tag == filter_tag:
                 del self._filters[index]
 
-    def edit_filter(self, *, filter_tag: str, to_apply: Filter) -> None:
-        """Edits a filter in the list of filters applied using its filter tag and replaces it with the new filter."""
+    def edit_filter(self, *, filter_tag: str, to_apply: Filter, node: Node) -> None:
+        """Edits a filter in the list of filters applied using its filter tag and replaces it with the new filter.
+
+        `node` is the Lavalink/Nodelink node the filter would be sent to, and is used
+        to reject Nodelink-exclusive filters (see `Filter.nodelink_exclusive`) before
+        they can be queued up against a plain Lavalink instance.
+        """
+        if to_apply.nodelink_exclusive and not node._is_nodelink:
+            raise NodelinkExclusive(
+                f"The '{type(to_apply).__name__}' filter is a Nodelink-exclusive feature "
+                "and is not supported on a Lavalink instance",
+            )
         if not any(f for f in self._filters if f.tag == filter_tag):
             raise FilterTagInvalid("A filter with that tag was not found.")
 
@@ -840,13 +860,7 @@ class Player(VoiceProtocolType):
         (You must have a song playing in order for `fast_apply` to work.)
         """
 
-        if _filter.nodelink_exclusive and not self._node._is_nodelink:
-            raise NodelinkExclusive(
-                f"The '{type(_filter).__name__}' filter is a Nodelink-exclusive feature "
-                "and is not supported on a Lavalink instance"
-            )
-
-        self._filters.add_filter(filter=_filter)
+        self._filters.add_filter(filter=_filter, node=self._node)
         payload = self._filters.get_all_payloads()
         await self._node.send(
             method="PATCH",
@@ -905,13 +919,7 @@ class Player(VoiceProtocolType):
         (You must have a song playing in order for `fast_apply` to work.)
         """
 
-        if edited_filter.nodelink_exclusive and not self._node._is_nodelink:
-            raise NodelinkExclusive(
-                f"The '{type(edited_filter).__name__}' filter is a Nodelink-exclusive feature "
-                "and is not supported on a Lavalink instance"
-            )
-
-        self._filters.edit_filter(filter_tag=filter_tag, to_apply=edited_filter)
+        self._filters.edit_filter(filter_tag=filter_tag, to_apply=edited_filter, node=self._node)
         payload = self._filters.get_all_payloads()
         await self._node.send(
             method="PATCH",
