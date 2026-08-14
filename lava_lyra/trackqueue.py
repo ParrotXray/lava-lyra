@@ -209,6 +209,41 @@ class Queue(Iterable[Track]):
         self._current_item = item
         return item
 
+    def peek_next(self) -> Track:
+        """Return whatever `get()` would return next, WITHOUT mutating
+        queue/loop state (does not pop, does not advance `_current_item`).
+
+        This exists so callers can preload a gapless "next track" without
+        also consuming/advancing the queue's position - which is what `get()`
+        does. Calling `get()` for a preload and then calling it again once
+        the track actually starts (to "sync" state) double-advances the
+        queue under LoopMode.QUEUE, silently skipping tracks.
+
+        Raises QueueEmpty if there is nothing to play next.
+        """
+        if self._loop_mode == LoopMode.TRACK:
+            if self._current_item is not None:
+                return self._current_item
+
+        if self.is_empty:
+            raise QueueEmpty("No items in the queue.")
+
+        if self._loop_mode == LoopMode.QUEUE:
+            if not self._current_item or self._current_item not in self._queue:
+                if not self._queue:
+                    raise QueueEmpty("No items in the queue.")
+                return self._queue[0]
+
+            # we reached the end of the queue, next up is the first track
+            if self._index(self._current_item) == len(self._queue) - 1:
+                return self._queue[0]
+
+            # we are in the middle of the queue, next up is the next item
+            index = self._index(self._current_item) + 1
+            return self._queue[index]
+
+        return self._queue[0]
+
     def pop(self, index: int = -1) -> Track:
         """Remove and return item at index (default last item).
         Raises QueueEmpty if no items in queue.
