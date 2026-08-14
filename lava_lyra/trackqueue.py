@@ -209,6 +209,19 @@ class Queue(Iterable[Track]):
         self._current_item = item
         return item
 
+    def set_current(self, item: Track | None) -> None:
+        """
+        Manually set the queue's notion of the currently playing item.
+
+        Needed when a track is played outside the normal `get()` flow
+        (e.g. replaying a track pulled from an external history stack),
+        so that loop-mode aware lookups like `peek_next()` stay in sync
+        with what's actually playing instead of pointing at a stale item.
+        """
+        if item is not None:
+            self._check_track(item)
+        self._current_item = item
+
     def peek_next(self) -> Track:
         """Return whatever `get()` would return next, WITHOUT mutating
         queue/loop state (does not pop, does not advance `_current_item`).
