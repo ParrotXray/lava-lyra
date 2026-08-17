@@ -31,7 +31,7 @@ from .filters import Filter, Timescale
 from .lyrics import LyricsManager
 from .objects import Playlist, Track
 from .pool import Node, NodePool
-from .utils import LavalinkVersion
+from .utils import LavalinkVersion, voice_field
 
 __all__ = ("Filters", "Player")
 
@@ -374,10 +374,11 @@ class Player(VoiceProtocolType):
             return
 
         state = voice_data or self._voice_state
+        event = state["event"]
 
         data = {
-            "token": state["event"]["token"],
-            "endpoint": state["event"]["endpoint"],
+            "token": voice_field(event, "token"),
+            "endpoint": voice_field(event, "endpoint"),
             "sessionId": state["sessionId"],
             "channelId": str(self.channel.id) if self.channel else None,  # pyrefly: ignore
         }
@@ -391,7 +392,7 @@ class Player(VoiceProtocolType):
 
         if self._log:
             self._log.debug(
-                f"Dispatched voice update to {state['event']['endpoint']} with data {data}",
+                f"Dispatched voice update to {data['endpoint']} with data {data}",
             )
 
     @override
@@ -401,9 +402,9 @@ class Player(VoiceProtocolType):
 
     @override
     async def on_voice_state_update(self, data: GuildVoiceStateType) -> None:
-        self._voice_state.update({"sessionId": data.get("session_id")})
+        self._voice_state.update({"sessionId": voice_field(data, "session_id")})
 
-        channel_id = data.get("channel_id")
+        channel_id = voice_field(data, "channel_id")
         if not channel_id:
             await self.disconnect()
             self._voice_state.clear()
@@ -419,10 +420,7 @@ class Player(VoiceProtocolType):
             self._voice_state.clear()
             return
 
-        if not data.get("token"):
-            return
-
-        await self._dispatch_voice_update({**self._voice_state, "event": data})
+        await self._dispatch_voice_update(self._voice_state)
 
     async def _dispatch_event(self, data: dict[str, Any]) -> None:
         event_type: str = data.get("type", "")

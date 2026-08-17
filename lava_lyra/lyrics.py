@@ -5,6 +5,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any
+from urllib.parse import quote
 
 if TYPE_CHECKING:
     from .objects import Track
@@ -54,6 +55,7 @@ class Lyrics:
             self.name = lyrics_data.get("name")
             self.synced = lyrics_data.get("synced", False)
             self.lang = lyrics_data.get("lang")
+            self.provider = lyrics_data.get("provider")
 
             lines_data = lyrics_data.get("lines", [])
             for line_data in lines_data:
@@ -218,7 +220,7 @@ class LyricsManager:
         query_params = []
 
         if hasattr(track, "track_id") and track.track_id:
-            query_params.append(f"encodedTrack={track.track_id}")
+            query_params.append(f"encodedTrack={quote(track.track_id, safe='')}")
         else:
             if self._log:
                 self._log.warning("Track does not have encodedTrack/track_id")
@@ -266,7 +268,7 @@ class LyricsManager:
         if track != self.player._current:
             track_id = getattr(track, "track_id", None) or getattr(track, "encoded", None)
             if track_id:
-                query_params.append(f"track={track_id}")
+                query_params.append(f"track={quote(track_id, safe='')}")
 
         query = "&".join(query_params) if query_params else None
 

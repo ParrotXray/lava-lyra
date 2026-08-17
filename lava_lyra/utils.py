@@ -311,6 +311,7 @@ class ConnectionQualityTracker:
     __slots__ = (
         "_connection_start_time",
         "_consecutive_failures",
+        "_failure_start_time",
         "_last_reconnection_time",
         "_latency_samples",
         "_max_latency_samples",
@@ -326,13 +327,14 @@ class ConnectionQualityTracker:
         self._latency_samples: list[float] = []
         self._max_latency_samples: int = max_latency_samples
         self._consecutive_failures: int = 0
+        self._failure_start_time: float = 0.0
 
     def record_reconnection(self) -> None:
         """Record a reconnection event."""
         current_time = time.time()
-        if self._last_reconnection_time > 0 and self._consecutive_failures > 0:
-            downtime = current_time - self._last_reconnection_time
-            self._total_downtime += downtime
+        if self._failure_start_time > 0:
+            self._total_downtime += current_time - self._failure_start_time
+            self._failure_start_time = 0.0
 
         self._reconnection_count += 1
         self._last_reconnection_time = current_time
@@ -340,10 +342,13 @@ class ConnectionQualityTracker:
     def record_connection_success(self) -> None:
         """Record a successful connection."""
         self._consecutive_failures = 0
+        self._failure_start_time = 0.0
         self._connection_start_time = time.time()
 
     def record_connection_failure(self) -> None:
         """Record a connection failure."""
+        if self._consecutive_failures == 0:
+            self._failure_start_time = time.time()
         self._consecutive_failures += 1
 
     def record_latency(self, latency: float) -> None:
@@ -519,3 +524,9 @@ class NodeHealthMonitor:
             self._last_health_check = current_time
             return True
         return False
+
+
+def voice_field(data: Any, key: str) -> Any:
+    if isinstance(data, dict):
+        return data.get(key)
+    return getattr(data, key, None)

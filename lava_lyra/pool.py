@@ -70,6 +70,7 @@ class Node:
         "_bot",
         "_bot_user",
         "_connect_timeout",
+        "_dispatched_disconnect",
         "_enabled",
         "_fallback",
         "_headers",
@@ -169,6 +170,7 @@ class Node:
 
         self._session_id: str | None = None
         self._available: bool = False
+        self._dispatched_disconnect: bool = False
         self._is_nodelink: bool = False
         self._version: LavalinkVersion = LavalinkVersion(0, 0, 0)
 
@@ -210,8 +212,6 @@ class Node:
         }
 
         self._players: dict[int, Player] = {}
-
-        self._bot.add_listener(self._update_handler, "on_socket_response")
 
     def __repr__(self) -> str:
         return (
@@ -360,31 +360,6 @@ class Node:
                 "Lavalink version 4.2.0 or above is required to use this library.",
             )
 
-    async def _update_handler(self, data: dict[str, Any]) -> None:
-        await self._bot.wait_until_ready()
-
-        if not data:
-            return
-
-        if data["t"] == "VOICE_SERVER_UPDATE":
-            guild_id = int(data["d"]["guild_id"])
-            try:
-                player = self._players[guild_id]
-                await player.on_voice_server_update(data["d"])
-            except KeyError:
-                return
-
-        elif data["t"] == "VOICE_STATE_UPDATE":
-            if int(data["d"]["user_id"]) != self._bot_user.id:
-                return
-
-            guild_id = int(data["d"]["guild_id"])
-            try:
-                player = self._players[guild_id]
-                await player.on_voice_state_update(data["d"])
-            except KeyError:
-                return
-
     async def _handle_node_switch(self) -> None:
         nodes = [
             node
@@ -447,6 +422,13 @@ class Node:
             if self._log:
                 self._log.warning(f"Failed to configure resuming: {e}")
 
+    def _log_task_exception(self, task: asyncio.Task[Any]) -> None:
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc and self._log:
+            self._log.error(f"Unhandled exception in websocket message task: {exc!r}", exc_info=exc)
+
     async def _listen(self) -> None:
         while True:
             try:
@@ -463,7 +445,8 @@ class Node:
                     continue
                 if self._log:
                     self._log.debug(f"Recieved raw websocket message {msg!r}")
-                self._loop.create_task(self._handle_ws_msg(data=data))
+                task = self._loop.create_task(self._handle_ws_msg(data=data))
+                task.add_done_callback(self._log_task_exception)
             except exceptions.ConnectionClosed:
                 if self._log:
                     self._log.warning(f"WebSocket connection to node {self._identifier} closed")
@@ -474,20 +457,24 @@ class Node:
                 # Record connection failure in health monitor
                 self._health_monitor.record_failure()
 
-                # Dispatch node disconnected event
-                player_count = self.player_count
-                disconnected_event = NodeDisconnectedEvent(
-                    self._identifier, self._is_nodelink, player_count
-                )
-                disconnected_event.dispatch(self._bot)
+                first_disconnect = not self._dispatched_disconnect
+                self._dispatched_disconnect = True
 
-                # If fallback is enabled, switch players to another node
-                # Otherwise, destroy them
-                if self._fallback and self.player_count > 0:
-                    await self._handle_node_switch()
-                elif self.player_count > 0:
-                    for _player in self.players.copy().values():
-                        self._loop.create_task(_player.destroy())
+                if first_disconnect:
+                    # Dispatch node disconnected event
+                    player_count = self.player_count
+                    disconnected_event = NodeDisconnectedEvent(
+                        self._identifier, self._is_nodelink, player_count
+                    )
+                    disconnected_event.dispatch(self._bot)
+
+                    # If fallback is enabled, switch players to another node
+                    # Otherwise, destroy them
+                    if self._fallback and self.player_count > 0:
+                        await self._handle_node_switch()
+                    elif self.player_count > 0:
+                        for _player in self.players.copy().values():
+                            self._loop.create_task(_player.destroy())
 
                 # Close the websocket if it's not already closed
                 if self._websocket and self._websocket.state is not State.CLOSED:
@@ -798,6 +785,8 @@ class Node:
                     f"Node {self._identifier} successfully connected to websocket using {self._websocket_uri}/v4/websocket",
                 )
 
+            self._dispatched_disconnect = False
+
             if not self._task or self._task.done():
                 self._task = self._loop.create_task(self._listen())
 
@@ -879,12 +868,6 @@ class Node:
                     self._log.debug(f"Error closing http session during disconnect: {e}")
         if self._log:
             self._log.debug("Websocket and http session closed.")
-
-        try:
-            self._bot.remove_listener(self._update_handler, "on_socket_response")
-        except Exception as e:
-            if self._log:
-                self._log.debug(f"Error removing socket listener during disconnect: {e}")
 
         self._pool._nodes.pop(self._identifier, None)
 
@@ -1019,6 +1002,8 @@ class Node:
                     info=track["info"],
                     ctx=ctx,
                     track_type=TrackType(track["info"]["sourceName"]),
+                    filters=filters,
+                    timestamp=timestamp,
                 )
                 for track in track_list
             ]
@@ -1034,7 +1019,7 @@ class Node:
                 uri=query,
             )
 
-        elif load_type in ("SEARCH_RESULT", "TRACK_LOADED", "track", "search"):
+        elif load_type in ("SEARCH_RESULT", "TRACK_LOADED", "track", "search", "episode"):
             if isinstance(data[data_type], dict) and (
                 self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3)
             ):
@@ -1094,7 +1079,7 @@ class Node:
                 for track in data[data_type]
             ]
 
-        elif load_type == "album":
+        elif load_type in ("album", "artist", "station", "podcast", "show"):
             track_list = data[data_type]["tracks"]
             playlist_info = data[data_type]["info"]
             tracks = [
@@ -1104,6 +1089,7 @@ class Node:
                     ctx=ctx,
                     track_type=TrackType(t["info"]["sourceName"]),
                     filters=filters,
+                    timestamp=timestamp,
                 )
                 for t in track_list
             ]
@@ -1257,6 +1243,11 @@ class NodePool(metaclass=_NodePoolMeta):
 
         if algorithm == NodeAlgorithm.by_ping:
             tested_nodes: dict[Node, float] = {node: node.latency for node in nodes_to_consider}
+            reachable_nodes: dict[Node, float] = {
+                node: latency for node, latency in tested_nodes.items() if latency >= 0
+            }
+            if reachable_nodes:
+                tested_nodes = reachable_nodes
             return min(tested_nodes, key=tested_nodes.__getitem__)
 
         elif algorithm == NodeAlgorithm.by_total_players:
@@ -1390,7 +1381,5 @@ class NodePool(metaclass=_NodePoolMeta):
     async def disconnect(cls) -> None:
         """Disconnects all available nodes from the node pool."""
 
-        available_nodes: list[Node] = [node for node in cls._nodes.values() if node._available]
-
-        for node in available_nodes:
+        for node in list(cls._nodes.values()):
             await node.disconnect()

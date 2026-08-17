@@ -282,14 +282,6 @@ class Queue(Iterable[Track]):
 
     def put(self, item: list[Track] | Track | Playlist, /) -> int:
         """Put the given item into the back of the queue."""
-        if self.is_full:
-            if not self._overflow:
-                raise QueueFull(
-                    f"Queue max_size of {self.max_size} has been reached.",
-                )
-
-            self._drop()
-
         added = 0
 
         if isinstance(item, Iterable):
@@ -299,9 +291,21 @@ class Queue(Iterable[Track]):
                     self._drop()
                 if len(passing_items) > self.max_size:
                     passing_items = passing_items[: self.max_size]
+            elif self.max_size is not None and not self._overflow:
+                if self.size + len(passing_items) > self.max_size:
+                    raise QueueFull(
+                        f"Queue has {self.size}/{self.max_size} items, "
+                        f"cannot add {len(passing_items)} more.",
+                    )
             self._queue.extend(passing_items)
             added = len(passing_items)
         else:
+            if self.is_full:
+                if not self._overflow:
+                    raise QueueFull(
+                        f"Queue max_size of {self.max_size} has been reached.",
+                    )
+                self._drop()
             self._check_track(item)
             self._queue.append(item)
             added = 1

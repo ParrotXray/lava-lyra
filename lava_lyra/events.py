@@ -169,7 +169,7 @@ class TrackExceptionEvent(LyraEvent):
     def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.track: Track | None = self.player._ending_track
-        raw_exception = data.get("error") or data.get("exception") or ""
+        raw_exception = data.get("exception") or data.get("error") or ""
         if isinstance(raw_exception, dict):
             self.exception: TrackExceptionPayload = TrackExceptionPayload(
                 message=raw_exception.get("message", "Unknown error"),

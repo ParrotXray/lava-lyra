@@ -88,7 +88,9 @@ class Filter:
         }
         current = self._get_init_kwargs()
         current.update(defaults)
+        preload = self.preload
         type(self).__init__(self, tag=self.tag, **current)
+        self.preload = preload
         return self
 
     def __eq__(self, other: object) -> bool:
@@ -125,7 +127,12 @@ class Equalizer(Filter):
     def _factory(self, levels: list[tuple[int, float]]) -> list[dict[str, int | float]]:
         _dict: dict[int, float] = collections.defaultdict(float)
 
-        _dict.update(levels)
+        for band, gain in levels:
+            if not 0 <= band < 15:
+                raise FilterInvalidArgument(
+                    f"Equalizer band index {band} is out of range (0-14).",
+                )
+            _dict[band] = gain
         data = [{"band": i, "gain": _dict[i]} for i in range(15)]
 
         return data

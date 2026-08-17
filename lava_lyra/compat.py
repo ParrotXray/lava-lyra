@@ -52,10 +52,10 @@ if IS_PYCORD:
         RawVoiceStateUpdateEvent as GuildVoiceStateType,  # pyrefly: ignore
     )
 elif IS_DPY:
-    from discord.ext.commands import Bot as BotType  # pyrefly: ignore
-    from discord.ext.commands import Context as _Context  # pyrefly: ignore
-    from discord.types.voice import GuildVoiceState as GuildVoiceStateType  # pyrefly: ignore
-    from discord.types.voice import VoiceServerUpdate as VoiceServerUpdateType  # pyrefly: ignore
+    from discord.ext.commands import Bot as BotType
+    from discord.ext.commands import Context as _Context
+    from discord.types.voice import GuildVoiceState as GuildVoiceStateType
+    from discord.types.voice import VoiceServerUpdate as VoiceServerUpdateType
 
     type ContextType = _Context[Any]
 
