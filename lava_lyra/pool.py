@@ -260,6 +260,11 @@ class Node:
         return self._pool
 
     @property
+    def route_planner(self) -> RoutePlanner:
+        """Property which returns this node's route planner"""
+        return self._route_planner
+
+    @property
     def latency(self) -> float:
         if self._latency_cache is None:
             if not self._latency_task or self._latency_task.done():

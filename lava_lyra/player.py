@@ -332,9 +332,14 @@ class Player(VoiceProtocolType):
         return self._lyrics_manager.lyrics_loaded
 
     # Lyrics-related methods (acting as proxies to LyricsManager)
-    async def fetch_lyrics(self, track: Track | None = None, skip_track_source: bool = False):
+    async def fetch_lyrics(
+        self,
+        track: Track | None = None,
+        skip_track_source: bool = False,
+        lang: str | None = None,
+    ):
         """Fetch lyrics"""
-        return await self._lyrics_manager.fetch_lyrics(track, skip_track_source)
+        return await self._lyrics_manager.fetch_lyrics(track, skip_track_source, lang=lang)
 
     async def subscribe_lyrics(self, skip_track_source: bool = False) -> bool:
         """Subscribe to live lyrics"""
