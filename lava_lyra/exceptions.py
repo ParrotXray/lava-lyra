@@ -16,9 +16,6 @@ __all__ = (
     "QueueFull",
     "TrackInvalidPosition",
     "TrackLoadError",
-    # Removed in v4: Platform-specific client exceptions
-    # "InvalidSpotifyClientAuthorization",
-    # "AppleMusicNotEnabled",
 )
 
 
@@ -97,16 +94,3 @@ class LavalinkVersionIncompatible(LyraException):
 
 class NodelinkExclusive(LyraException):
     """Exception raised when using a Nodelink exclusive feature on a Lavalink instance."""
-
-
-# Platform-specific exceptions have been removed in v4
-# These are no longer needed as all platform support is handled
-# by server-side plugins with their own configuration
-
-# class InvalidSpotifyClientAuthorization(LyraException):
-#     """No Spotify client authorization was provided for track searching."""
-#     pass
-
-# class AppleMusicNotEnabled(LyraException):
-#     """An Apple Music Link was passed in when Apple Music functionality was not enabled."""
-#     pass

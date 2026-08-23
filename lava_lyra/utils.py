@@ -18,6 +18,7 @@ __all__ = (
     "NodeStats",
     "Ping",
     "RouteStats",
+    "voice_field",
 )
 
 
@@ -69,7 +70,7 @@ class ExponentialBackoff:
 
 class NodeStats:
     """The base class for the node stats object.
-    Gives critical information on the node, which is updated every minute.
+    Gives critical information on the node, which is updated every 60 seconds on Lavalink or every 30 seconds on NodeLink.
     """
 
     __slots__ = (
@@ -95,7 +96,7 @@ class NodeStats:
         cpu: dict[str, Any] = data.get("cpu") or {}
         self.cpu_cores = cpu.get("cores")
         self.cpu_system_load = cpu.get("systemLoad")
-        self.cpu_process_load = cpu.get("lavalinkLoad")
+        self.cpu_process_load = cpu.get("lavalinkLoad", cpu.get("nodelinkLoad"))
 
         self.players_active = data.get("playingPlayers") or 0
         self.players_total = data.get("players") or 0
@@ -115,7 +116,7 @@ class FailingIPBlock:
     __slots__ = ("address", "failing_time")
 
     def __init__(self, data: dict[str, Any]) -> None:
-        self.address = data.get("address")
+        self.address = data.get("failingAddress")
         self.failing_time = datetime.fromtimestamp(
             float(data.get("failingTimestamp") or 0) / 1000,
             tz=UTC,

@@ -2,7 +2,7 @@
 
 The `Player` class is the class you will be interacting with the most within Lyra.
 
-It has a couple functions you will be using frequently:
+It has a number of functions you will be using frequently:
 
 - `Player.add_filter()`
 - `Player.build_track()`
@@ -192,7 +192,8 @@ No credentials are needed on the client side — configure them in your `applica
 
 
 
-You should get a list of `Track` in return after running this function for you to then do whatever you want with it.
+This returns `list[Track] | Playlist | None` depending on what was loaded — check the type before using the result.
+Raises `TrackLoadError` if the query can't be resolved.
 Ideally, you should be putting all tracks into some sort of a queue. If you would like to learn about how to use
 our queue implementation, you can refer to [](queue.md)
 
@@ -237,7 +238,9 @@ await Player.get_recommendations(
 
 ```
 
-You should get a list of `Track` in return after running this function for you to then do whatever you want with it.
+This returns `list[Track] | Playlist | None` depending on what was loaded — check the type before using the result.
+Raises `TrackLoadError` if the track's source isn't supported for recommendations, and `NodeRestException`
+if the required plugin isn't installed on the node or the request otherwise fails.
 Ideally, you should be putting all tracks into some sort of a queue. If you would like to learn about how to use
 our queue implementation, you can refer to [](queue.md)
 
@@ -407,6 +410,10 @@ The track isn't necessarily playing immediately after this returns: with `gaples
 
 :::
 
+Raises `TrackLoadError` if the track can't be resolved (e.g. it has no ISRC and no title/author match is
+found), `NodelinkExclusive` if `gapless=True` on a plain Lavalink node, and re-raises
+`NodeNotAvailable`/`NodeRestException` for any node error that isn't a recoverable session issue.
+
 
 ### Seeking to a position
 
@@ -497,7 +504,7 @@ To move the player to another channel, we need to use `Player.move_to()`
 await Player.move_to(...)
 ```
 
-After you have initialized your function, we need to include the `channel` parameter, which is a `VoiceChannel`:
+After you have initialized your function, we need to include the `channel` parameter, which is a `VoiceChannel` or `StageChannel`:
 
 ```py
 await Player.move_to(channel)
@@ -560,7 +567,8 @@ await Player.add_filter(
 
 After running this function, you should see your currently playing track sound different depending on the filter you chose.
 
-Raises `FilterTagAlreadyInUse` if a filter with the same `tag` is already applied.
+Raises `FilterTagAlreadyInUse` if a filter with the same `tag` is already applied, or
+`NodelinkExclusive` if the filter is Nodelink-exclusive and the node isn't a Nodelink instance.
 
 ### Removing a filter
 
@@ -665,6 +673,8 @@ To reset all filters, we need to use `Player.reset_filters()`. Note that this re
 ```py
 await Player.reset_filters()
 ```
+
+Raises `FilterInvalidArgument` if no filters are currently applied.
 
 After you have initialized your function, you can optionally include the `fast_apply` parameter, which is a boolean. If this is set to `True`, it'll remove all filters (almost) instantly if theres a track playing.
 

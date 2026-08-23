@@ -32,6 +32,11 @@ class SearchType(Enum):
 
     SearchType.scsearch searches using SoundCloud,
     which is an alternative to YouTube or YouTube Music.
+
+    SearchType.amsearch/spsearch/bilisearch search Apple Music, Spotify, and Bilibili
+    respectively. SearchType.sprec/dzrec/tdrec/jsrec request recommendations from Spotify,
+    Deezer, Tidal, and JioSaavn respectively — used internally by `get_recommendations()`.
+    SearchType.other is a passthrough for plugin-defined prefixes not listed here.
     """
 
     ytsearch = "ytsearch"
@@ -136,6 +141,9 @@ class PlaylistType(Enum):
     PlaylistType.SPOTIFY defines that the playlist is from Spotify
 
     PlaylistType.APPLE_MUSIC defines that the playlist is from Apple Music.
+
+    PlaylistType.BILIBILI/FACEBOOK/INSTAGRAM/YTDLP define the playlist is from Bilibili,
+    Facebook, Instagram, or yt-dlp respectively.
 
     PlaylistType.OTHER defines that the playlist is from an unknown source (possible from 3rd-party plugins).
     """

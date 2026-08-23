@@ -13,7 +13,7 @@ __all__ = ("Queue",)
 
 
 class Queue(Iterable[Track]):
-    """Queue for Lyra. This queue takes lyra.Track as an input and includes looping and shuffling."""
+    """Queue for Lyra. This queue takes lava_lyra.Track as an input and includes looping and shuffling."""
 
     __slots__ = (
         "_current_item",
@@ -68,7 +68,7 @@ class Queue(Iterable[Track]):
         return self._queue[index]
 
     def __setitem__(self, index: SupportsIndex, item: Track, /) -> None:
-        """Inserts an item at given position."""
+        """Replaces the item at the given position."""
         self._check_track(item)
         self._queue[index] = item
 
@@ -136,7 +136,7 @@ class Queue(Iterable[Track]):
     @staticmethod
     def _check_track(item: Track) -> Track:
         if not isinstance(item, Track):
-            raise TypeError("Only lyra.Track objects are supported.")
+            raise TypeError("Only lava_lyra.Track objects are supported.")
 
         return item
 
@@ -300,13 +300,16 @@ class Queue(Iterable[Track]):
             self._queue.extend(passing_items)
             added = len(passing_items)
         else:
+            self._check_track(item)
             if self.is_full:
                 if not self._overflow:
                     raise QueueFull(
                         f"Queue max_size of {self.max_size} has been reached.",
                     )
-                self._drop()
-            self._check_track(item)
+                if self._queue:
+                    self._drop()
+                elif self.max_size == 0:
+                    return added
             self._queue.append(item)
             added = 1
 
@@ -314,15 +317,19 @@ class Queue(Iterable[Track]):
 
     def put_at_index(self, index: int, item: Track) -> None:
         """Put the given item into the queue at the specified index."""
+        self._check_track(item)
         if self.is_full:
             if not self._overflow:
                 raise QueueFull(
                     f"Queue max_size of {self.max_size} has been reached.",
                 )
 
-            self._drop()
+            if self._queue:
+                self._drop()
+            elif self.max_size == 0:
+                return
 
-        return self._insert(index, self._check_track(item))
+        return self._insert(index, item)
 
     def put_at_front(self, item: Track) -> None:
         """Put the given item into the front of the queue."""
@@ -346,8 +353,11 @@ class Queue(Iterable[Track]):
                         f"Queue has {self.size}/{self.max_size} items, cannot add {new_len} more.",
                     )
 
-            for item in iterable:
-                self.put(item)
+            if self._overflow and self.max_size is not None:
+                self.put(list(iterable))
+            else:
+                for item in iterable:
+                    self.put(item)
         else:
             for item in iterable:
                 if not isinstance(item, Track):
@@ -374,6 +384,9 @@ class Queue(Iterable[Track]):
         """
         Sets the loop mode of the queue.
         Takes the LoopMode enum as an argument.
+
+        Setting `LoopMode.QUEUE` re-inserts the current track into the queue if it
+        isn't already a member, so it's included in the loop.
         """
         self._loop_mode = mode
         if self._loop_mode == LoopMode.QUEUE:
@@ -424,12 +437,11 @@ class Queue(Iterable[Track]):
         """
         Jumps to the item specified in the queue.
 
-        If the queue is not looping, the queue will be mutated.
-        Otherwise, the current item will be adjusted to the item
-        before the specified track.
-
-        The queue is adjusted so that the next item that is retrieved
-        is the track that is specified, effectively 'jumping' the queue.
+        Raises QueueException if the loop mode is LoopMode.TRACK. If the loop
+        mode is LoopMode.QUEUE, the current item is adjusted to the item
+        before the specified track. Otherwise, the queue itself is mutated
+        so that the next item retrieved is the track that is specified,
+        effectively 'jumping' the queue.
         """
 
         if self._loop_mode == LoopMode.TRACK:

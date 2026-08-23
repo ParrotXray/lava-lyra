@@ -10,11 +10,12 @@ directly on the class, **not** on `NodePool()`.
 
 :::
 
-The `NodePool` Class has three main functions you can use:
+The `NodePool` Class has four main functions you can use:
 
 - `NodePool.create_node()`
 - `NodePool.get_node()`
 - `NodePool.get_best_node()`
+- `NodePool.disconnect()`
 
 
 ## Adding a node
@@ -57,7 +58,7 @@ After you have initialized your function, we need to fill in the proper paramete
 
 * - `enabled`
   - `bool`
-  - Set this value to `True` to enable this node. If you set this to `False`, the node will be added to the pool but will not be used until you set it to `True`.
+  - Set this value to `True` to enable this node. If you set this to `False`, the node will be added to the pool but will not be used. `Node.enabled` is read-only after creation — use `await Node.enable()` / `await Node.disable()` to change it.
 
 * - `search`
   - `bool`
@@ -94,7 +95,7 @@ After you have initialized your function, we need to fill in the proper paramete
 
 * - `session`
   - `Optional[aiohttp.ClientSession]`
-  - An existing `aiohttp.ClientSession` to reuse for this node's HTTP/websocket traffic. Default value is `None`, which creates a new session.
+  - An existing `aiohttp.ClientSession` to reuse for this node's REST traffic (the websocket connection uses a separate `websockets` connection). Default value is `None`, which creates a new session.
 
 * - `lyrics`
   - `bool`
@@ -114,7 +115,7 @@ After you have initialized your function, we need to fill in the proper paramete
 
 * - `total_timeout`
   - `float`
-  - Overall timeout in seconds for the initial connection sequence. Default value is `30.0`.
+  - Timeout in seconds applied to every REST request made over this node's persistent session (not just the initial connection). Default value is `30.0`.
 
 :::
 

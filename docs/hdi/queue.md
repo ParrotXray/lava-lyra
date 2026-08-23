@@ -172,7 +172,8 @@ Queue.get_queue()
 :::{important}
 
 This returns the queue's internal list directly, not a copy — mutating it (e.g. `.append()`,
-`.sort()`) mutates the queue itself. Use `Queue.copy()` first if you need an independent list.
+`.sort()`) mutates the queue itself. Use `Queue.copy().get_queue()` first if you need an
+independent list.
 
 :::
 
@@ -257,7 +258,9 @@ Slicing works too (`queue[start:end]`), returning a `list[Track]`.
   - Shorthand for `Queue.put(track)` or `Queue.extend(iterable)`.
 
 * - `queue + iterable`
-  - New `Queue` with the original members plus `iterable`. Doesn't mutate the original.
+  - New `Queue` with the original members plus `iterable`. If `max_size` would be exceeded,
+    original members are dropped to make room the same way `Queue.extend()` does. Doesn't
+    mutate the original.
 
 * - `repr(queue)`
   - Debug string with `max_size` and member count.
@@ -405,7 +408,9 @@ Raises `QueueException` if you do not have a loop mode set.
 
 :::
 
-After running the function, your queue should return to its normal functionality.
+After running the function, your queue should return to its normal functionality. Under
+`LoopMode.QUEUE`, this also drops every item before and including the current track — the
+loop's earlier laps aren't kept.
 
 ## Jumping to a track in the queue
 

@@ -49,7 +49,7 @@ __all__ = (
     "NodePool",
 )
 
-VERSION_REGEX = re.compile(r"(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:[a-zA-Z0-9_-]+)?")
+_VERSION_REGEX = re.compile(r"(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:[a-zA-Z0-9_-]+)?")
 
 
 class Node:
@@ -61,7 +61,7 @@ class Node:
     is handled by server-side plugins. You no longer need to provide API credentials
     to the client - configure them in your Lavalink server's application.yml instead.
 
-    For lyrics support, ensure the LavaLyrics plugin is installed on your Lavalink server.
+    For lyrics support, ensure the LavaLyrics plugin is installed on your Lavalink or NodeLink server.
     """
 
     __slots__ = (
@@ -79,6 +79,7 @@ class Node:
         "_host",
         "_identifier",
         "_is_nodelink",
+        "_last_session_id",
         "_latency_cache",
         "_latency_task",
         "_log",
@@ -166,6 +167,7 @@ class Node:
         self._task: asyncio.Task[Any] | None = None
 
         self._session_id: str | None = None
+        self._last_session_id: str | None = None
         self._available: bool = False
         self._dispatched_disconnect: bool = False
         self._is_nodelink: bool = False
@@ -323,6 +325,7 @@ class Node:
         """Disable this node and disconnect if connected."""
         self._enabled = False
         self._available = False
+        self._latency_cache = None
         if self._latency_task:
             self._latency_task.cancel()
         if self.is_connected and self._websocket:
@@ -333,7 +336,7 @@ class Node:
             self._version = LavalinkVersion(major=4, minor=2, fix=0)
             return
 
-        _version_rx = VERSION_REGEX.match(version)
+        _version_rx = _VERSION_REGEX.match(version)
         if not _version_rx:
             self._available = False
             raise LavalinkVersionIncompatible(
@@ -408,9 +411,11 @@ class Node:
 
         data: dict[str, int | str | bool] = {"timeout": self._resume_timeout}
 
-        if self._version.major == 3:
+        if self._is_nodelink:
+            data["resuming"] = True
+        elif self._version.major == 3:
             data["resumingKey"] = self._resume_key
-        elif self._version.major == 4 or (self._is_nodelink and self._version.major >= 3):
+        elif self._version.major == 4:
             if self._log:
                 self._log.warning("Using a resume key with Lavalink v4 is deprecated.")
             data["resuming"] = True
@@ -538,6 +543,7 @@ class Node:
         if op == "ready":
             old_session_id = self._session_id
             self._session_id = data["sessionId"]
+            self._last_session_id = self._session_id
 
             if self._log:
                 self._log.info(f"Node {self._identifier} ready with session {self._session_id}")
@@ -548,10 +554,10 @@ class Node:
                         f"Session ID changed from {old_session_id} to {self._session_id}, updating players"
                     )
                 for _player in self._players.copy().values():
-                    await _player._refresh_endpoint_uri(self._session_id)
+                    _player._refresh_endpoint_uri(self._session_id)
 
-            await self._configure_resuming()
             self._available = True
+            await self._configure_resuming()
 
             if self._is_nodelink:
                 try:
@@ -710,7 +716,8 @@ class Node:
         return self._players.get(guild_id, None)
 
     async def connect(self, *, reconnect: bool = False) -> Node:
-        """Initiates a connection with a Lavalink node and adds it to the node pool."""
+        """Opens a websocket connection to this node. Use `NodePool.create_node()` to
+        create and register a node — this only handles the connection itself."""
         await self._bot.wait_until_ready()
 
         start = time.perf_counter()
@@ -771,9 +778,13 @@ class Node:
             # Note: _session_id and _available are already reset in _listen()
             # before calling connect(reconnect=True), so no redundant reset needed here
 
+            headers = dict(self._headers)
+            if self._resume_key and self._last_session_id:
+                headers["Session-Id"] = self._last_session_id
+
             self._websocket = await ws_connect(
                 f"{self._websocket_uri}/v4/websocket",
-                additional_headers=self._headers,
+                additional_headers=headers,
                 ping_interval=self._heartbeat,
             )
 
@@ -842,11 +853,13 @@ class Node:
             raise
 
     async def disconnect(self) -> None:
-        """Disconnects a connected Lavalink node and removes it from the node pool.
+        """Disconnects a connected Lavalink or NodeLink node and removes it from the node pool.
         This also destroys any players connected to the node.
         """
 
         start = time.perf_counter()
+
+        player_count = self.player_count
 
         for player in self.players.copy().values():
             await player.destroy()
@@ -854,6 +867,14 @@ class Node:
                 self._log.debug("All players disconnected from node.")
 
         self._available = False
+        self._latency_cache = None
+
+        if not self._dispatched_disconnect:
+            self._dispatched_disconnect = True
+            NodeDisconnectedEvent(self._identifier, self._is_nodelink, player_count).dispatch(
+                self._bot
+            )
+
         if self._task:
             self._task.cancel()
 
@@ -897,11 +918,7 @@ class Node:
             query=f"encodedTrack={quote(identifier)}",
         )
 
-        track_info = (
-            data["info"]
-            if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3)
-            else data
-        )
+        track_info = data["info"]
 
         return Track(
             track_id=identifier,
@@ -957,7 +974,7 @@ class Node:
                 and not URLRegex.BASE_URL.match(query)
                 and not re.match(r"(?:[a-z]+?)search:.", query)
                 and not URLRegex.DISCORD_MP3_URL.match(query)
-                and not path.exists(path.dirname(query))
+                and not path.exists(query)
             ):
                 query = f"{search_type}:{query}"
 
@@ -973,11 +990,7 @@ class Node:
         )
 
         load_type = data.get("loadType")
-        data_type = (
-            "data"
-            if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3)
-            else "tracks"
-        )
+        data_type = "data"
 
         if not load_type:
             raise TrackLoadError(
@@ -995,12 +1008,8 @@ class Node:
             return None
 
         elif load_type in ("PLAYLIST_LOADED", "playlist"):
-            if self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3):
-                track_list = data[data_type]["tracks"]
-                playlist_info = data[data_type]["info"]
-            else:
-                track_list = data[data_type]
-                playlist_info = data["playlistInfo"]
+            track_list = data[data_type]["tracks"]
+            playlist_info = data[data_type]["info"]
 
             tracks = [
                 Track(
@@ -1026,13 +1035,11 @@ class Node:
             )
 
         elif load_type in ("SEARCH_RESULT", "TRACK_LOADED", "track", "search", "episode"):
-            if isinstance(data[data_type], dict) and (
-                self._version.major >= 4 or (self._is_nodelink and self._version.major >= 3)
-            ):
+            if isinstance(data[data_type], dict):
                 data[data_type] = [data[data_type]]
 
             # Handle local files
-            if path.exists(path.dirname(query)):
+            if path.exists(query):
                 local_file = Path(query)
                 return [
                     Track(
@@ -1132,7 +1139,10 @@ class Node:
             ctx: Discord context for recommended tracks
 
         Returns:
-            List of recommended tracks or None if not supported
+            The recommended tracks, as list[Track] or Playlist depending on the source.
+
+        Raises:
+            TrackLoadError: If the track's source doesn't support recommendations.
         """
         if track is None:
             raise TypeError("get_recommendations() requires a track, got None.")
@@ -1149,7 +1159,7 @@ class Node:
             raise TrackLoadError(
                 "Recommendations are only supported for Spotify, Deezer, Tidal, "
                 "JioSaavn, and YouTube tracks. Make sure the appropriate plugins "
-                "are installed on your Lavalink server.",
+                "are installed on your Lavalink or NodeLink server.",
             )
 
         return await self.get_tracks(
@@ -1254,7 +1264,9 @@ class NodePool(metaclass=_NodePoolMeta):
             }
             if reachable_nodes:
                 tested_nodes = reachable_nodes
-            return min(tested_nodes, key=tested_nodes.__getitem__)
+            best_latency = min(tested_nodes.values())
+            best_nodes = [node for node, lat in tested_nodes.items() if lat == best_latency]
+            return random.choice(best_nodes)
 
         elif algorithm == NodeAlgorithm.by_total_players:
             # Use the total players count from node stats
@@ -1334,6 +1346,8 @@ class NodePool(metaclass=_NodePoolMeta):
         In Lavalink v4, platform support (Spotify, Apple Music, etc.) is handled
         by server-side plugins. Configure these in your Lavalink server's
         application.yml file instead of passing credentials to the client.
+
+        See docs/hdi/pool.md for the full parameter reference.
 
         Health Monitor Parameters:
             circuit_breaker_threshold (int): Number of consecutive failures before circuit opens. Default: 5

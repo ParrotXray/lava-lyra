@@ -161,7 +161,8 @@ The `Lyrics` object has the following properties:
 
 * - `text`
   - `Optional[str]`
-  - The full lyrics as a plain string. Only set on the Lavalink v4 path — always `None` on NodeLink.
+  - The full lyrics as a plain string. Set on the Lavalink v4 path and on NodeLink's live-lyrics
+    websocket events; the NodeLink REST fetch doesn't include it, so it's `None` there.
 
 * - `lines`
   - `List[LyricLine]`
@@ -177,7 +178,8 @@ The `Lyrics` object has the following properties:
 
 * - `lang`
   - `Optional[str]`
-  - The language code of the lyrics (NodeLink format).
+  - The language code of the lyrics. NodeLink doesn't return this field in its lyrics data —
+    always `None` there; only usable as a request parameter, not a response field.
 
 :::
 

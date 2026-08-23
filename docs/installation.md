@@ -115,7 +115,7 @@ For better performance under load, you can also install the `speed` extra, which
 `aiohttp[speedups]`, `aiodns`, and `orjson`:
 
 ```
-pip install lava-lyra[py-cord,speed]
+pip install lava-lyra[speed]
 ```
 
 ## Next Steps

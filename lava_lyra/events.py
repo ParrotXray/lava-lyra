@@ -59,8 +59,10 @@ class LyraEvent(ABC):
             pass
     """
 
+    __slots__ = ("handler_args",)
+
     name = "event"
-    handler_args: tuple[Any, ...] = ()
+    handler_args: tuple[Any, ...]
 
     def dispatch(self, bot: BotType) -> None:
         bot.dispatch(f"lyra_{self.name}", *self.handler_args)
@@ -106,8 +108,8 @@ class TrackEndEvent(LyraEvent):
 
     def __repr__(self) -> str:
         return (
-            f"<Lyra.TrackEndEvent player={self.player!r} track_id={self.track!r} "
-            f"reason={self.reason!r}>"
+            f"<Lyra.TrackEndEvent player={self.player!r} "
+            f"track_id={self.track.track_id if self.track else None!r} reason={self.reason!r}>"
         )
 
 
@@ -239,7 +241,7 @@ class WebSocketClosedEvent(LyraEvent):
         self.handler_args = (self.payload,)
 
     def __repr__(self) -> str:
-        return f"<Lyra.WebsocketClosedEvent payload={self.payload!r}>"
+        return f"<Lyra.WebSocketClosedEvent payload={self.payload!r}>"
 
 
 class LyricsFoundEvent(LyraEvent):
@@ -282,13 +284,12 @@ class LyricsLineEvent(LyraEvent):
 
     name = "lyrics_line"
 
-    __slots__ = ("line", "player", "track")
+    __slots__ = ("line", "line_index", "player", "skipped", "track")
 
     def __init__(self, data: dict[str, Any], player: Player):
         self.player: Player = player
         self.track: Track | None = player._current
 
-        # Create a lyric line object
         line_data: dict[str, Any] = data.get("line", {})
         if not isinstance(line_data, dict):
             line_data = {}
@@ -301,6 +302,8 @@ class LyricsLineEvent(LyraEvent):
             time=(line_data.get("timestamp", line_data.get("time", 0)) or 0) / 1000.0,
             duration=(raw_duration / 1000.0) if raw_duration else None,
         )
+        self.line_index: int | None = data.get("lineIndex")
+        self.skipped: bool = bool(data.get("skipped", False))
 
         self.handler_args = self.player, self.track, self.line
 
@@ -309,7 +312,7 @@ class LyricsLineEvent(LyraEvent):
 
 
 class NodeConnectedEvent(LyraEvent):
-    """Fired when a node successfully connects to Lavalink.
+    """Fired when a node successfully connects to Lavalink or NodeLink.
     Returns the node identifier, whether the node is a NodeLink instance,
     and whether this is a reconnection.
     """
@@ -330,7 +333,7 @@ class NodeConnectedEvent(LyraEvent):
 
 
 class NodeDisconnectedEvent(LyraEvent):
-    """Fired when a node disconnects from Lavalink.
+    """Fired when a node disconnects from Lavalink or NodeLink.
     Returns the node identifier, whether the node is a NodeLink instance,
     and the number of players that were affected.
     """
@@ -351,7 +354,7 @@ class NodeDisconnectedEvent(LyraEvent):
 
 
 class NodeReconnectingEvent(LyraEvent):
-    """Fired when a node is attempting to reconnect to Lavalink.
+    """Fired when a node is attempting to reconnect to Lavalink or NodeLink.
     Returns the node identifier, whether the node is a NodeLink instance,
     and the retry delay in seconds.
     """

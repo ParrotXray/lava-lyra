@@ -189,12 +189,13 @@ class Playlist:
 
     @property
     def uri(self) -> str | None:
-        """Returns either an Apple Music/Spotify URL/URI, or None if its neither of those."""
+        """Returns the URI/URL the playlist was loaded from, or None if it wasn't set."""
         return self._uri
 
     @property
     def thumbnail(self) -> str | None:
-        """Returns either an Apple Music/Spotify album/playlist thumbnail, or None if its neither of those."""
+        """Returns the playlist's thumbnail, taken from its first track. This works for any
+        source that provides one, not just Apple Music/Spotify."""
         return self._thumbnail
 
     @property

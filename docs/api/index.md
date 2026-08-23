@@ -4,6 +4,7 @@ Here you will find the different classes and methods used within Lyra.
 
 ```{toctree}
 :maxdepth: 1
+compat.md
 enums.md
 events.md
 exceptions.md

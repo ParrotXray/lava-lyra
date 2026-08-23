@@ -84,7 +84,7 @@ The `Track` object has the following attributes:
 
 * - `timestamp`
   - `Optional[float]`
-  - The Unix timestamp the track was built/searched at, if one was supplied.
+  - The `?t=`/`&t=`/`&start=` offset in seconds parsed from a YouTube URL, if present. Used as the initial playback position when the track starts.
 
 * - `ctx`
   - `ContextType | None`
@@ -125,7 +125,7 @@ Returned when a query resolves to a playlist or album (e.g. a Spotify/YouTube pl
 
 * - `playlist_type`
   - `PlaylistType`
-  - Which source the playlist came from (`PlaylistType.YOUTUBE`, `PlaylistType.SPOTIFY`, etc.), for playlists loaded via `Node.get_tracks()`/`Node.build_track()`. Albums, artists, and playlists returned by `Node.load_search()` (LavaSearch) are always `PlaylistType.OTHER` regardless of their actual source — see [](search.md).
+  - Which source the playlist came from (`PlaylistType.YOUTUBE`, `PlaylistType.SPOTIFY`, etc.), for playlists loaded via `Node.get_tracks()`. Albums, artists, and playlists returned by `Node.load_search()` (LavaSearch) are always `PlaylistType.OTHER` regardless of their actual source — see [](search.md).
 
 * - `selected_track`
   - `Optional[Track]`
@@ -133,11 +133,11 @@ Returned when a query resolves to a playlist or album (e.g. a Spotify/YouTube pl
 
 * - `uri`
   - `Optional[str]`
-  - The playlist's Spotify/Apple Music URL or URI. `None` for other sources.
+  - The URI/URL the playlist was loaded from, if one was supplied.
 
 * - `thumbnail`
   - `Optional[str]`
-  - The playlist's Spotify/Apple Music artwork URL. `None` for other sources.
+  - The playlist's thumbnail, taken from its first track.
 
 * - `length`
   - `int`

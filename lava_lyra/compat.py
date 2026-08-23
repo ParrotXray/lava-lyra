@@ -30,7 +30,6 @@ except PackageNotFoundError:
 
 from discord import ClientUser as ClientUserType
 from discord import Guild as GuildType
-from discord import Interaction as InteractionType
 from discord import Member as MemberType
 from discord import StageChannel as StageChannelType
 from discord import User as UserType
@@ -67,7 +66,6 @@ __all__ = (
     "ContextType",
     "GuildType",
     "GuildVoiceStateType",
-    "InteractionType",
     "MemberType",
     "StageChannelType",
     "UserType",

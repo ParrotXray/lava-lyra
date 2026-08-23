@@ -56,8 +56,6 @@ myst_enable_extensions = [
 myst_heading_anchors = 3
 
 
-templates_path = ["_templates"]
-
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # We need to include this because discord.py has special tags
@@ -129,7 +127,11 @@ def linkcode_resolve(domain: str, info: dict[str, Any]) -> str | None:
             return None
         if file is None:
             return None
+
         file = os.path.relpath(file, ROOT_DIR)
+        if file.startswith("..") or not file.startswith("lava_lyra" + os.sep):
+            return None
+
         start, end = lines[1], lines[1] + len(lines[0]) - 1
 
         return f"https://github.com/ParrotXray/lava-lyra/blob/main/{file}#L{start}-L{end}"

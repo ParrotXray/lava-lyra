@@ -1,6 +1,6 @@
 # Use the Filter class
 
-Lyra takes full advantage of the Lavalink filter system by using a unique system to apply filters on top of one another. We call this system "filter stacking". With this system, we can stack any filter on top of one another to produce one-of-a-kind audio effects on playback while still being able to easily manage each filters.
+Lyra takes full advantage of the Lavalink filter system by using a unique system to apply filters on top of one another. We call this system "filter stacking". With this system, we can stack filters of different types on top of one another to produce one-of-a-kind audio effects on playback while still being able to easily manage each filter. Only one filter of a given type may be active at once — adding a second filter of the same type raises `FilterTagAlreadyInUse`.
 
 
 ## Types of filters
@@ -180,7 +180,7 @@ The following NodeLink-exclusive filters have their own parameters and validatio
 
 * - `Echo`
   - `delay=500`, `feedback=0.3`, `mix=0.5`
-  - `delay` between `0`-`5000` (ms); `feedback` and `mix` between `0`-`1`.
+  - `delay` between `0`-`5000` (ms) on Lavalink; NodeLink clamps `delay` to `2000` ms. `feedback` and `mix` between `0`-`1`.
 
 * - `Highpass`
   - `smoothing=20`
@@ -398,7 +398,7 @@ on `Player` directly. It has a few things you'll use:
   - `bool` method. Whether any applied filter matches the type of the `Filter` instance you pass in.
 
 * - `Player.filters.get_preload_filters()`
-  - Returns every applied filter that was added with `preload=True`, as `List[Filter]`.
+  - Returns every applied filter that was preloaded via `get_tracks(filters=...)`, as `List[Filter]`.
 
 * - `Player.filters.get_all_payloads()`
   - Returns a merged `Dict[str, Any]` of every applied filter's Lavalink/NodeLink payload, ready to send as-is.
@@ -411,6 +411,15 @@ on `Player` directly. It has a few things you'll use:
 
 * - `Player.filters.empty`
   - `bool` property. Whether there are no filters applied at all.
+
+:::
+
+:::{important}
+
+When you call `Player.play()`, global (non-preloaded) filters take precedence over the
+track's own per-track filters (`track.filters`, set via `get_tracks(filters=...)`). If any
+global filter is applied, per-track filters are skipped entirely for that `play()` call —
+they only get applied when no global filters are currently active.
 
 :::
 

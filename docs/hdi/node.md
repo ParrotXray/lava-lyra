@@ -2,7 +2,7 @@
 
 The `Node` class is one of the main classes you will be interacting with when using Lyra.
 
-It has a couple functions you will be using frequently:
+It has a number of functions you will be using frequently:
 
 - `Node.get_player()`
 - `Node.get_tracks()`
@@ -63,7 +63,9 @@ There are also properties the `Node` class has to access certain values:
 
 * - `Node.latency` `Node.ping`
   - `float`
-  - Returns the latency of the node, or `-1.0` if the last probe failed or none has run yet (this includes a node dropping after being reachable — the cache isn't sticky).
+  - Returns the latency of the node, or `-1.0` if no probe has completed yet or the last probe
+    failed (e.g. the node dropped and hasn't reconnected). Whatever the last probe wrote — good
+    or `-1.0` — stays cached until the next probe runs.
 
 * - `Node.player_count`
   - `int`
@@ -515,8 +517,8 @@ This returns a `RouteStats` object with the following attributes:
   - The type of IP block configured (`RouteIPType.IPV4` or `RouteIPType.IPV6`), or `None` if it couldn't be parsed.
 
 * - `ip_block_size`
-  - `Optional[str]`
-  - The size of the configured IP block.
+  - `Optional[str | int]`
+  - The size of the configured IP block. Lavalink returns a string, NodeLink returns an int.
 
 * - `failing_addresses`
   - `List[FailingIPBlock]`

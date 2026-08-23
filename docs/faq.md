@@ -15,7 +15,7 @@ For everything else, double-check the values above against your node's config an
 
 :::{note}
 
-A `password` mismatch raises the same `NodeConnectionFailure`, but with the message "The password for node '...' is invalid" instead.
+A `password` mismatch is reported as a generic `NodeConnectionFailure` (`"Failed to establish initial connection to node '...'"`), since the node rejects the initial REST version check before the websocket handshake is ever attempted.
 
 :::
 

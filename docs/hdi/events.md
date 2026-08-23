@@ -69,8 +69,8 @@ The following events are only dispatched by NodeLink instances:
 
 - `on_lyra_player_created(player, guild_id)` — Fired when a player is created for a guild.
 - `on_lyra_volume_changed(player, volume)` — Fired when the player volume changes.
-- `on_lyra_player_connected(player, voice)` — Fired when the player connects to a voice channel.
-- `on_lyra_filters_changed(player, filters)` — Fired when the player's audio filters change.
+- `on_lyra_player_connected(player, voice)` — Fired when the player connects to a voice channel. `voice` is the raw `dict[str, Any]` payload, not a `VoiceChannel`/`VoiceState`.
+- `on_lyra_filters_changed(player, filters)` — Fired when the player's audio filters change. `filters` is the raw `dict[str, Any]` payload, not a `Filters` instance.
 - `on_lyra_pause(player, paused)` — Fired when the player is paused or resumed. `paused` is a `bool`.
 - `on_lyra_seek(player, position)` — Fired when the player seeks. `position` is the new position in milliseconds.
 - `on_lyra_mix_started(player, mix_id, track, volume)` — Fired when a mix layer starts. `mix_id` identifies the mix layer, `track` is the `Track` being mixed in (or `None`), and `volume` is the mix layer's volume (`0.0`–`1.0`).

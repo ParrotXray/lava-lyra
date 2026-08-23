@@ -95,7 +95,9 @@ class Filter:
 
     def __eq__(self, other: object) -> bool:
         """
-        Checks if two filters are identical based on their type, tag, and payload.
+        Checks if two filters are identical based on their type, tag, and payload. Subclasses
+        may compare fewer fields than the base implementation — only `Equalizer` keeps the tag
+        check, the other subclasses drop it and compare type and payload only.
         """
         if not isinstance(other, Filter):
             return NotImplemented
@@ -620,7 +622,7 @@ class Distortion(Filter):
 
 
 class LowPass(Filter):
-    """Filter which supresses higher frequencies and allows lower frequencies to pass.
+    """Filter which suppresses higher frequencies and allows lower frequencies to pass.
     You can also do this with the Equalizer filter, but this is an easier way to do it.
     """
 
@@ -630,7 +632,10 @@ class LowPass(Filter):
         super().__init__(tag=tag)
 
         self.smoothing: float = smoothing
-        self.payload = {"lowPass": {"smoothing": self.smoothing}}
+        self.payload = {
+            "lowPass": {"smoothing": self.smoothing},
+            "lowpass": {"smoothing": self.smoothing},
+        }
 
     def __repr__(self) -> str:
         return f"<Lyra.LowPass tag={self.tag} smoothing={self.smoothing}>"
@@ -854,7 +859,7 @@ class Highpass(Filter):
 
     Unlike :class:`LowPass`, which is part of the standard Lavalink filter set,
     this filter is Nodelink-exclusive and uses a different payload key
-    (``highpass`` instead of the ``lowPass``/``highPass`` names used elsewhere),
+    (``highpass`` instead of the standard ``lowPass``-style naming),
     so it requires a Nodelink instance to work.
     """
 

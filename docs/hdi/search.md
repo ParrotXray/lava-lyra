@@ -114,7 +114,7 @@ fails, and `ValueError` if `types` is empty.
 
 ## The SearchResult object
 
-`load_search()` returns a `SearchResult` object with the following attributes:
+`load_search()` returns a `SearchResult` object, or `None` if the search yielded no results, with the following attributes:
 
 :::{list-table}
 :header-rows: 1
@@ -230,7 +230,7 @@ if result:
 :::{note}
 
 Albums, artists, and playlists returned by `load_search()` do not include their full track
-lists — only the metadata. Use `Node.get_tracks()` with the playlist URL to load the full
-contents of an album or playlist.
+lists — only the metadata, and `.uri` is `None` on these entries. There is currently no way
+to load the full contents of an album or playlist from a `load_search()` result.
 
 :::

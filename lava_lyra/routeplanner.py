@@ -13,7 +13,7 @@ __all__ = ("RoutePlanner",)
 class RoutePlanner:
     """
     The base route planner class for Lyra.
-    Handles all requests made to the route planner API for Lavalink.
+    Handles all requests made to the route planner API for Lavalink and NodeLink.
     """
 
     def __init__(self, node: Node) -> None:
@@ -33,5 +33,5 @@ class RoutePlanner:
         await self.node.send(method="POST", path="routeplanner/free/address", data={"address": ip})
 
     async def free_all_addresses(self) -> None:
-        """Frees all available addresses using the route planner api"""
+        """Frees all failing addresses using the route planner api"""
         await self.node.send(method="POST", path="routeplanner/free/all")
