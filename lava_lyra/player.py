@@ -27,7 +27,7 @@ from .exceptions import (
     TrackInvalidPosition,
     TrackLoadError,
 )
-from .filters import Filter, Timescale
+from .filters import Equalizer, Filter, Timescale
 from .lyrics import LyricLine, Lyrics, LyricsManager
 from .objects import Playlist, Track
 from .pool import Node, NodePool
@@ -157,6 +157,19 @@ class Filters:
             if "release" in compressor:
                 compressor["release"] = compressor["release"] / 1000
             payload["compressor"] = compressor
+
+        supports_transition = (
+            node is not None and node._is_nodelink and node._version >= LavalinkVersion(3, 7, 0)
+        )
+
+        if "equalizer" in payload:
+            eq_filter = next((f for f in self._filters if isinstance(f, Equalizer)), None)
+
+            if supports_transition and eq_filter is not None:
+                eq_body: dict[str, Any] = {"bands": payload["equalizer"]}
+                if eq_filter.transition is not None:
+                    eq_body["transition"] = eq_filter.transition
+                payload["equalizer"] = eq_body
 
         return payload
 

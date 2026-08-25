@@ -37,7 +37,7 @@ class Filter:
     This is necessary for the removal of filters.
     """
 
-    __slots__ = ("payload", "preload", "tag")
+    __slots__ = ("payload", "preload", "tag", "transition")
 
     #: Whether this filter is only supported on Nodelink instances (i.e. it is
     #: not part of the standard Lavalink filter set). Subclasses that wrap a
@@ -48,6 +48,21 @@ class Filter:
         self.payload: dict[str, Any] | None = None
         self.tag: str = tag
         self.preload: bool = False
+        self.transition: dict[str, Any] | None = None
+
+    def _build(
+        self,
+        key: str,
+        settings: dict[str, Any] | list[dict[str, Any]],
+    ) -> None:
+        """
+        Internal method to build `self.payload`. If `self.transition` is set, it is
+        merged into the settings so the node can animate the filter smoothly instead
+        of applying it instantly. Only honored by NodeLink v3.7.0+; ignored elsewhere.
+        """
+        if isinstance(settings, dict) and self.transition is not None:
+            settings["transition"] = self.transition
+        self.payload = {key: settings}
 
     def set_preload(self, status: bool = True) -> Self:
         """
@@ -118,13 +133,20 @@ class Equalizer(Filter):
         "raw",
     )
 
-    def __init__(self, *, tag: str, levels: list[tuple[int, float]]):
+    def __init__(
+        self,
+        *,
+        tag: str,
+        levels: list[tuple[int, float]],
+        transition: dict[str, Any] | None = None,
+    ):
         super().__init__(tag=tag)
 
         self.eq = self._factory(levels)
         self.raw = levels
+        self.transition = transition
 
-        self.payload = {"equalizer": self.eq}
+        self._build("equalizer", self.eq)
 
     def _factory(self, levels: list[tuple[int, float]]) -> list[dict[str, int | float]]:
         _dict: dict[int, float] = collections.defaultdict(float)
@@ -141,7 +163,7 @@ class Equalizer(Filter):
 
     @override
     def _get_init_kwargs(self) -> dict[str, Any]:
-        return {"levels": self.raw}
+        return {"levels": self.raw, "transition": self.transition}
 
     def __repr__(self) -> str:
         return f"<Lyra.EqualizerFilter tag={self.tag} eq={self.eq} raw={self.raw}>"
@@ -151,7 +173,9 @@ class Equalizer(Filter):
         if not isinstance(other, Equalizer):
             return NotImplemented
 
-        return self.raw == other.raw and self.tag == other.tag
+        return (
+            self.raw == other.raw and self.tag == other.tag and self.transition == other.transition
+        )
 
     @classmethod
     def flat(cls) -> Equalizer:
@@ -267,7 +291,15 @@ class Timescale(Filter):
 
     __slots__ = ("pitch", "rate", "speed")
 
-    def __init__(self, *, tag: str, speed: float = 1.0, pitch: float = 1.0, rate: float = 1.0):
+    def __init__(
+        self,
+        *,
+        tag: str,
+        speed: float = 1.0,
+        pitch: float = 1.0,
+        rate: float = 1.0,
+        transition: dict[str, Any] | None = None,
+    ):
         super().__init__(tag=tag)
 
         if speed <= 0:
@@ -280,10 +312,12 @@ class Timescale(Filter):
         self.speed: float = speed
         self.pitch: float = pitch
         self.rate: float = rate
+        self.transition = transition
 
-        self.payload = {
-            "timescale": {"speed": self.speed, "pitch": self.pitch, "rate": self.rate},
-        }
+        self._build(
+            "timescale",
+            {"speed": self.speed, "pitch": self.pitch, "rate": self.rate},
+        )
 
     @classmethod
     def vaporwave(cls) -> Timescale:
@@ -313,7 +347,12 @@ class Timescale(Filter):
         if not isinstance(other, Timescale):
             return False
 
-        return self.speed == other.speed and self.pitch == other.pitch and self.rate == other.rate
+        return (
+            self.speed == other.speed
+            and self.pitch == other.pitch
+            and self.rate == other.rate
+            and self.transition == other.transition
+        )
 
 
 class Karaoke(Filter):
@@ -331,6 +370,7 @@ class Karaoke(Filter):
         mono_level: float = 1.0,
         filter_band: float = 220.0,
         filter_width: float = 100.0,
+        transition: dict[str, Any] | None = None,
     ):
         super().__init__(tag=tag)
 
@@ -338,15 +378,17 @@ class Karaoke(Filter):
         self.mono_level: float = mono_level
         self.filter_band: float = filter_band
         self.filter_width: float = filter_width
+        self.transition = transition
 
-        self.payload = {
-            "karaoke": {
+        self._build(
+            "karaoke",
+            {
                 "level": self.level,
                 "monoLevel": self.mono_level,
                 "filterBand": self.filter_band,
                 "filterWidth": self.filter_width,
             },
-        }
+        )
 
     def __repr__(self) -> str:
         return (
@@ -364,6 +406,7 @@ class Karaoke(Filter):
             and self.mono_level == other.mono_level
             and self.filter_band == other.filter_band
             and self.filter_width == other.filter_width
+            and self.transition == other.transition
         )
 
 
@@ -374,7 +417,14 @@ class Tremolo(Filter):
 
     __slots__ = ("depth", "frequency")
 
-    def __init__(self, *, tag: str, frequency: float = 2.0, depth: float = 0.5):
+    def __init__(
+        self,
+        *,
+        tag: str,
+        frequency: float = 2.0,
+        depth: float = 0.5,
+        transition: dict[str, Any] | None = None,
+    ):
         super().__init__(tag=tag)
 
         if frequency <= 0:
@@ -388,13 +438,12 @@ class Tremolo(Filter):
 
         self.frequency: float = frequency
         self.depth: float = depth
+        self.transition = transition
 
-        self.payload = {
-            "tremolo": {
-                "frequency": self.frequency,
-                "depth": self.depth,
-            },
-        }
+        self._build(
+            "tremolo",
+            {"frequency": self.frequency, "depth": self.depth},
+        )
 
     def __repr__(self) -> str:
         return f"<Lyra.TremoloFilter tag={self.tag} frequency={self.frequency} depth={self.depth}>"
@@ -404,7 +453,11 @@ class Tremolo(Filter):
         if not isinstance(other, Tremolo):
             return False
 
-        return self.frequency == other.frequency and self.depth == other.depth
+        return (
+            self.frequency == other.frequency
+            and self.depth == other.depth
+            and self.transition == other.transition
+        )
 
 
 class Vibrato(Filter):
@@ -414,7 +467,14 @@ class Vibrato(Filter):
 
     __slots__ = ("depth", "frequency")
 
-    def __init__(self, *, tag: str, frequency: float = 2.0, depth: float = 0.5):
+    def __init__(
+        self,
+        *,
+        tag: str,
+        frequency: float = 2.0,
+        depth: float = 0.5,
+        transition: dict[str, Any] | None = None,
+    ):
         super().__init__(tag=tag)
 
         if frequency <= 0 or frequency > 14:
@@ -428,13 +488,12 @@ class Vibrato(Filter):
 
         self.frequency: float = frequency
         self.depth: float = depth
+        self.transition = transition
 
-        self.payload = {
-            "vibrato": {
-                "frequency": self.frequency,
-                "depth": self.depth,
-            },
-        }
+        self._build(
+            "vibrato",
+            {"frequency": self.frequency, "depth": self.depth},
+        )
 
     def __repr__(self) -> str:
         return f"<Lyra.VibratoFilter tag={self.tag} frequency={self.frequency} depth={self.depth}>"
@@ -444,7 +503,11 @@ class Vibrato(Filter):
         if not isinstance(other, Vibrato):
             return False
 
-        return self.frequency == other.frequency and self.depth == other.depth
+        return (
+            self.frequency == other.frequency
+            and self.depth == other.depth
+            and self.transition == other.transition
+        )
 
 
 class Rotation(Filter):
@@ -454,11 +517,21 @@ class Rotation(Filter):
 
     __slots__ = ("rotation_hertz",)
 
-    def __init__(self, *, tag: str, rotation_hertz: float = 5):
+    def __init__(
+        self,
+        *,
+        tag: str,
+        rotation_hertz: float = 5,
+        transition: dict[str, Any] | None = None,
+    ):
         super().__init__(tag=tag)
 
         self.rotation_hertz: float = rotation_hertz
-        self.payload = {"rotation": {"rotationHz": self.rotation_hertz}}
+        self.transition = transition
+        self._build(
+            "rotation",
+            {"rotationHz": self.rotation_hertz},
+        )
 
     def __repr__(self) -> str:
         return f"<Lyra.RotationFilter tag={self.tag} rotation_hertz={self.rotation_hertz}>"
@@ -468,7 +541,7 @@ class Rotation(Filter):
         if not isinstance(other, Rotation):
             return False
 
-        return self.rotation_hertz == other.rotation_hertz
+        return self.rotation_hertz == other.rotation_hertz and self.transition == other.transition
 
 
 class ChannelMix(Filter):
@@ -491,6 +564,7 @@ class ChannelMix(Filter):
         right_to_right: float = 1,
         left_to_right: float = 0,
         right_to_left: float = 0,
+        transition: dict[str, Any] | None = None,
     ):
         super().__init__(tag=tag)
 
@@ -515,15 +589,17 @@ class ChannelMix(Filter):
         self.left_to_right: float = left_to_right
         self.right_to_left: float = right_to_left
         self.right_to_right: float = right_to_right
+        self.transition = transition
 
-        self.payload = {
-            "channelMix": {
+        self._build(
+            "channelMix",
+            {
                 "leftToLeft": self.left_to_left,
                 "leftToRight": self.left_to_right,
                 "rightToLeft": self.right_to_left,
                 "rightToRight": self.right_to_right,
             },
-        }
+        )
 
     def __repr__(self) -> str:
         return (
@@ -541,6 +617,7 @@ class ChannelMix(Filter):
             and self.left_to_right == other.left_to_right
             and self.right_to_left == other.right_to_left
             and self.right_to_right == other.right_to_right
+            and self.transition == other.transition
         )
 
 
@@ -572,6 +649,7 @@ class Distortion(Filter):
         tan_scale: float = 1,
         offset: float = 0,
         scale: float = 1,
+        transition: dict[str, Any] | None = None,
     ):
         super().__init__(tag=tag)
 
@@ -583,9 +661,11 @@ class Distortion(Filter):
         self.tan_scale: float = tan_scale
         self.offset: float = offset
         self.scale: float = scale
+        self.transition = transition
 
-        self.payload = {
-            "distortion": {
+        self._build(
+            "distortion",
+            {
                 "sinOffset": self.sin_offset,
                 "sinScale": self.sin_scale,
                 "cosOffset": self.cos_offset,
@@ -595,7 +675,7 @@ class Distortion(Filter):
                 "offset": self.offset,
                 "scale": self.scale,
             },
-        }
+        )
 
     def __repr__(self) -> str:
         return (
@@ -618,6 +698,7 @@ class Distortion(Filter):
             and self.tan_scale == other.tan_scale
             and self.offset == other.offset
             and self.scale == other.scale
+            and self.transition == other.transition
         )
 
 
@@ -628,14 +709,23 @@ class LowPass(Filter):
 
     __slots__ = ("smoothing",)
 
-    def __init__(self, *, tag: str, smoothing: float = 20):
+    def __init__(
+        self,
+        *,
+        tag: str,
+        smoothing: float = 20,
+        transition: dict[str, Any] | None = None,
+    ):
         super().__init__(tag=tag)
 
         self.smoothing: float = smoothing
-        self.payload = {
-            "lowPass": {"smoothing": self.smoothing},
-            "lowpass": {"smoothing": self.smoothing},
-        }
+        self.transition = transition
+
+        settings: dict[str, Any] = {"smoothing": self.smoothing}
+        if self.transition is not None:
+            settings["transition"] = self.transition
+
+        self.payload = {"lowPass": settings, "lowpass": dict(settings)}
 
     def __repr__(self) -> str:
         return f"<Lyra.LowPass tag={self.tag} smoothing={self.smoothing}>"
@@ -645,7 +735,7 @@ class LowPass(Filter):
         if not isinstance(other, LowPass):
             return False
 
-        return self.smoothing == other.smoothing
+        return self.smoothing == other.smoothing and self.transition == other.transition
 
 
 class Echo(Filter):
@@ -660,7 +750,15 @@ class Echo(Filter):
 
     nodelink_exclusive = True
 
-    def __init__(self, *, tag: str, delay: float = 500, feedback: float = 0.3, mix: float = 0.5):
+    def __init__(
+        self,
+        *,
+        tag: str,
+        delay: float = 500,
+        feedback: float = 0.3,
+        mix: float = 0.5,
+        transition: dict[str, Any] | None = None,
+    ):
         super().__init__(tag=tag)
 
         if delay < 0 or delay > 5000:
@@ -679,14 +777,12 @@ class Echo(Filter):
         self.delay: float = delay
         self.feedback: float = feedback
         self.mix: float = mix
+        self.transition = transition
 
-        self.payload = {
-            "echo": {
-                "delay": self.delay,
-                "feedback": self.feedback,
-                "mix": self.mix,
-            },
-        }
+        self._build(
+            "echo",
+            {"delay": self.delay, "feedback": self.feedback, "mix": self.mix},
+        )
 
     def __repr__(self) -> str:
         return (
@@ -699,7 +795,10 @@ class Echo(Filter):
             return False
 
         return (
-            self.delay == other.delay and self.feedback == other.feedback and self.mix == other.mix
+            self.delay == other.delay
+            and self.feedback == other.feedback
+            and self.mix == other.mix
+            and self.transition == other.transition
         )
 
 
@@ -724,6 +823,7 @@ class Chorus(Filter):
         delay: float = 25,
         mix: float = 0.6,
         feedback: float = 0.2,
+        transition: dict[str, Any] | None = None,
     ):
         super().__init__(tag=tag)
 
@@ -749,16 +849,18 @@ class Chorus(Filter):
         self.delay: float = delay
         self.mix: float = mix
         self.feedback: float = feedback
+        self.transition = transition
 
-        self.payload = {
-            "chorus": {
+        self._build(
+            "chorus",
+            {
                 "rate": self.rate,
                 "depth": self.depth,
                 "delay": self.delay,
                 "mix": self.mix,
                 "feedback": self.feedback,
             },
-        }
+        )
 
     def __repr__(self) -> str:
         return (
@@ -777,6 +879,7 @@ class Chorus(Filter):
             and self.delay == other.delay
             and self.mix == other.mix
             and self.feedback == other.feedback
+            and self.transition == other.transition
         )
 
 
@@ -801,6 +904,7 @@ class Compressor(Filter):
         attack: float = 10,
         release: float = 100,
         gain: float = 5,
+        transition: dict[str, Any] | None = None,
     ):
         super().__init__(tag=tag)
 
@@ -822,16 +926,18 @@ class Compressor(Filter):
         self.attack: float = attack
         self.release: float = release
         self.gain: float = gain
+        self.transition = transition
 
-        self.payload = {
-            "compressor": {
+        self._build(
+            "compressor",
+            {
                 "threshold": self.threshold,
                 "ratio": self.ratio,
                 "attack": self.attack,
                 "release": self.release,
                 "gain": self.gain,
             },
-        }
+        )
 
     def __repr__(self) -> str:
         return (
@@ -850,6 +956,7 @@ class Compressor(Filter):
             and self.attack == other.attack
             and self.release == other.release
             and self.gain == other.gain
+            and self.transition == other.transition
         )
 
 
@@ -867,7 +974,13 @@ class Highpass(Filter):
 
     nodelink_exclusive = True
 
-    def __init__(self, *, tag: str, smoothing: float = 20):
+    def __init__(
+        self,
+        *,
+        tag: str,
+        smoothing: float = 20,
+        transition: dict[str, Any] | None = None,
+    ):
         super().__init__(tag=tag)
 
         if smoothing <= 1.0:
@@ -876,7 +989,8 @@ class Highpass(Filter):
             )
 
         self.smoothing: float = smoothing
-        self.payload = {"highpass": {"smoothing": self.smoothing}}
+        self.transition = transition
+        self._build("highpass", {"smoothing": self.smoothing})
 
     def __repr__(self) -> str:
         return f"<Lyra.Highpass tag={self.tag} smoothing={self.smoothing}>"
@@ -886,7 +1000,7 @@ class Highpass(Filter):
         if not isinstance(other, Highpass):
             return False
 
-        return self.smoothing == other.smoothing
+        return self.smoothing == other.smoothing and self.transition == other.transition
 
 
 class Phaser(Filter):
@@ -912,6 +1026,7 @@ class Phaser(Filter):
         mix: float = 0.5,
         min_frequency: float = 200,
         max_frequency: float = 2000,
+        transition: dict[str, Any] | None = None,
     ):
         super().__init__(tag=tag)
 
@@ -947,9 +1062,11 @@ class Phaser(Filter):
         self.mix: float = mix
         self.min_frequency: float = min_frequency
         self.max_frequency: float = max_frequency
+        self.transition = transition
 
-        self.payload = {
-            "phaser": {
+        self._build(
+            "phaser",
+            {
                 "stages": self.stages,
                 "rate": self.rate,
                 "depth": self.depth,
@@ -958,7 +1075,7 @@ class Phaser(Filter):
                 "minFrequency": self.min_frequency,
                 "maxFrequency": self.max_frequency,
             },
-        }
+        )
 
     def __repr__(self) -> str:
         return (
@@ -980,6 +1097,7 @@ class Phaser(Filter):
             and self.mix == other.mix
             and self.min_frequency == other.min_frequency
             and self.max_frequency == other.max_frequency
+            and self.transition == other.transition
         )
 
 
@@ -995,7 +1113,14 @@ class Spatial(Filter):
 
     nodelink_exclusive = True
 
-    def __init__(self, *, tag: str, depth: float = 0.8, rate: float = 0.3):
+    def __init__(
+        self,
+        *,
+        tag: str,
+        depth: float = 0.8,
+        rate: float = 0.3,
+        transition: dict[str, Any] | None = None,
+    ):
         super().__init__(tag=tag)
 
         if depth < 0 or depth > 1:
@@ -1005,13 +1130,12 @@ class Spatial(Filter):
 
         self.depth: float = depth
         self.rate: float = rate
+        self.transition = transition
 
-        self.payload = {
-            "spatial": {
-                "depth": self.depth,
-                "rate": self.rate,
-            },
-        }
+        self._build(
+            "spatial",
+            {"depth": self.depth, "rate": self.rate},
+        )
 
     def __repr__(self) -> str:
         return f"<Lyra.Spatial tag={self.tag} depth={self.depth} rate={self.rate}>"
@@ -1021,4 +1145,8 @@ class Spatial(Filter):
         if not isinstance(other, Spatial):
             return False
 
-        return self.depth == other.depth and self.rate == other.rate
+        return (
+            self.depth == other.depth
+            and self.rate == other.rate
+            and self.transition == other.transition
+        )

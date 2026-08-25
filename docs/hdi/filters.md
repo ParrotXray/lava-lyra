@@ -116,6 +116,18 @@ by all filters.
 
 :::
 
+:::{note}
+
+Every filter also takes an optional keyword-only `transition: dict`, not listed below since it's
+shared by all filters. Use it to smoothly animate the filter's parameters instead of applying
+them instantly. Only honored by NodeLink v3.7.0+, ignored on plain Lavalink or older NodeLink.
+Accepted keys: `durationMs` (int, must be greater than `0`) and `curve` (str, one of `linear`,
+`exponential`, `sinusoidal`). NodeLink falls back to `sinusoidal` server-side if `curve` is
+omitted or not one of these. `transition` is ignored entirely if `durationMs` is missing or
+`<= 0` — the filter is applied instantly in that case, same as when `transition` isn't passed
+at all.
+:::
+
 :::{list-table}
 :header-rows: 1
 
@@ -141,7 +153,7 @@ by all filters.
 
 * - `LowPass`
   - `smoothing=20`
-  - No validation. Payload key is `lowPass`.
+  - No validation. Sent under both `lowPass` (Lavalink) and `lowpass` (NodeLink < 3.7.0) keys.
 
 * - `Rotation`
   - `rotation_hertz=5`
