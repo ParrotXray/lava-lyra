@@ -640,13 +640,16 @@ class Node:
             if data.get("endTime") is None:
                 data.pop("endTime", None)
 
+        request_kwargs: dict[str, Any] = {
+            "method": method,
+            "url": uri,
+            "headers": self._headers,
+        }
+        if data is not None:
+            request_kwargs["json"] = data
+
         try:
-            resp = await self._session.request(
-                method=method,
-                url=uri,
-                headers=self._headers,
-                json=data or {},
-            )
+            resp = await self._session.request(**request_kwargs)
 
             if self._log:
                 self._log.debug(

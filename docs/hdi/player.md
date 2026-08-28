@@ -21,7 +21,7 @@ It has a number of functions you will be using frequently:
 - `Player.fetch_lyrics()`
 - `Player.subscribe_lyrics()`
 - `Player.unsubscribe_lyrics()`
-- `Player.get_current_lyrics_lines()`
+- `Player.get_current_lyrics_lines()`, `Player.get_sponsorblock()`, `Player.set_sponsorblock()`, `Player.set_sponsorblock_segments()`, `Player.clear_sponsorblock()`
 
 
 There are also properties the `Player` class has to access certain values:
@@ -682,4 +682,86 @@ After you have initialized your function, you can optionally include the `fast_a
 
 await Player.reset_filters(fast_apply=<True/False>)
 
+```
+
+## SponsorBlock
+
+:::{important}
+
+Everything in this section is a NodeLink-exclusive feature. All four methods raise `NodelinkExclusive` when
+called on a plain Lavalink node, and require NodeLink v3.8.0+.
+
+:::
+
+### Reading SponsorBlock settings
+
+To read the current SponsorBlock configuration for a player, use `Player.get_sponsorblock()`
+
+```py
+await Player.get_sponsorblock()
+```
+
+This returns the raw `dict[str, Any]` payload NodeLink sends back, including `enabled`, `categories`,
+`actionTypes`, `skipMarginMs`, and the currently tracked `segments`.
+
+### Configuring SponsorBlock
+
+To change SponsorBlock settings for a player, use `Player.set_sponsorblock()`
+
+```py
+await Player.set_sponsorblock(...)
+```
+
+After you have initialized your function, we need to fill in the proper parameters:
+
+:::{list-table}
+:header-rows: 1
+
+* - Name
+  - Type
+  - Description
+
+* - `enabled`
+  - `bool | None`
+  - Whether SponsorBlock should be active for this player.
+
+* - `categories`
+  - `list[str] | None`
+  - The [segment categories](https://wiki.sponsor.ajay.app/w/Segment_Categories) to skip (e.g. `["sponsor", "selfpromo"]`).
+* - `action_types`
+  - `list[str] | None`
+  - The action types to apply to matched segments.
+
+* - `skip_margin_ms`
+  - `int | None`
+  - Margin in milliseconds applied around a segment boundary before skipping.
+
+:::
+
+Only the parameters you pass are sent to NodeLink, anything left as `None` keeps its current value.
+
+```py
+await Player.set_sponsorblock(
+    enabled=True,
+    categories=["sponsor", "selfpromo"],
+)
+```
+
+### Overriding segments manually
+
+To set SponsorBlock segments for the current track directly, instead of relying on NodeLink to fetch them,
+use `Player.set_sponsorblock_segments()`
+
+```py
+await Player.set_sponsorblock_segments(segments=[<your segments here>])
+```
+
+`segments` is a `list[dict[str, Any]]` of raw segment payloads.
+
+### Clearing SponsorBlock state
+
+To clear SponsorBlock state (settings and segments) for a player, use `Player.clear_sponsorblock()`
+
+```py
+await Player.clear_sponsorblock()
 ```

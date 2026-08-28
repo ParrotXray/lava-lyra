@@ -27,6 +27,8 @@ __all__ = (
     "PlayerConnectedEvent",
     "PlayerCreatedEvent",
     "SeekEvent",
+    "SponsorBlockSegmentSkippedEvent",
+    "SponsorBlockSegmentsLoadedEvent",
     "TrackEndEvent",
     "TrackExceptionEvent",
     "TrackExceptionPayload",
@@ -470,6 +472,35 @@ class SeekEvent(LyraEvent):
 
     def __repr__(self) -> str:
         return f"<Lyra.SeekEvent player={self.player!r} position={self.position!r}>"
+
+
+class SponsorBlockSegmentsLoadedEvent(LyraEvent):
+    name = "sponsorblock_segments_loaded"
+    __slots__ = ("player", "segments")
+
+    def __init__(self, data: dict[str, Any], player: Player):
+        self.player: Player = player
+        self.segments: list[dict[str, Any]] = data.get("segments", [])
+
+        self.handler_args = self.player, self.segments
+
+    def __repr__(self) -> str:
+        return f"<Lyra.SponsorBlockSegmentsLoadedEvent player={self.player!r} segments={self.segments!r}>"
+
+
+class SponsorBlockSegmentSkippedEvent(LyraEvent):
+    name = "sponsorblock_segment_skipped"
+    __slots__ = ("player", "segment", "track")
+
+    def __init__(self, data: dict[str, Any], player: Player):
+        self.player: Player = player
+        self.track: Track | None = player._current
+        self.segment: dict[str, Any] = data.get("segment", {})
+
+        self.handler_args = self.player, self.track, self.segment
+
+    def __repr__(self) -> str:
+        return f"<Lyra.SponsorBlockSegmentSkippedEvent player={self.player!r} segment={self.segment!r}>"
 
 
 class MixStartedEvent(LyraEvent):

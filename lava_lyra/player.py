@@ -614,10 +614,8 @@ class Player(VoiceProtocolType):
 
     async def stop(self, *, gapless: bool = False) -> None:
         """Stops the currently playing track."""
-        if gapless and not self._node._is_nodelink:
-            raise NodelinkExclusive(
-                "This is a Nodelink-exclusive feature and is not supported on a Lavalink instance"
-            )
+        if gapless:
+            self._require_nodelink()
         if not gapless:
             self._current = None
         self._next_track = None
@@ -671,10 +669,8 @@ class Player(VoiceProtocolType):
     ) -> Track | None:
         """Plays a track. If a Spotify or Apple Music track is passed in, it will be handled accordingly."""
 
-        if gapless and not self._node._is_nodelink:
-            raise NodelinkExclusive(
-                "This is a Nodelink-exclusive feature and is not supported on a Lavalink instance"
-            )
+        if gapless:
+            self._require_nodelink()
 
         if not self._node._available or not self._node._session_id:
             if self._log:
@@ -805,14 +801,20 @@ class Player(VoiceProtocolType):
         return self._current if not gapless else self._next_track
 
     async def _send_player_request(
-        self, data: dict[str, Any], method: str = "PATCH", query: str | None = None
+        self,
+        data: dict[str, Any] | None = None,
+        method: str = "PATCH",
+        query: str | None = None,
+        endpoint_suffix: str | None = None,
     ) -> Any:
         """Auxiliary method for sending player requests, including error handling"""
+        guild_id = f"{self._guild.id}/{endpoint_suffix}" if endpoint_suffix else self._guild.id
+
         try:
             return await self._node.send(
                 method=method,
                 path=self._player_endpoint_uri,
-                guild_id=self._guild.id,
+                guild_id=guild_id,
                 data=data,
                 query=query,
             )
@@ -825,12 +827,26 @@ class Player(VoiceProtocolType):
                 return await self._node.send(
                     method=method,
                     path=self._player_endpoint_uri,
-                    guild_id=self._guild.id,
+                    guild_id=guild_id,
                     data=data,
                     query=query,
                 )
             else:
                 raise
+
+    def _require_nodelink(
+        self, min_version: LavalinkVersion | None = None, feature_name: str | None = None
+    ) -> None:
+        """Guards a NodeLink-exclusive Player method."""
+        if not self._node._is_nodelink:
+            raise NodelinkExclusive(
+                "This is a Nodelink-exclusive feature and is not supported on a Lavalink instance"
+            )
+        if min_version is not None and self._node._version < min_version:
+            version_str = f"{min_version.major}.{min_version.minor}.{min_version.fix}"
+            raise NodelinkExclusive(
+                f"{feature_name} requires NodeLink {version_str}+. Current node does not support it."
+            )
 
     async def seek(self, position: float) -> float:
         """Seeks to a position, in milliseconds, in the currently playing track."""
@@ -970,3 +986,46 @@ class Player(VoiceProtocolType):
             if self._log:
                 self._log.debug("Fast apply passed, now removing all filters instantly.")
             await self.seek(self.position)
+
+    async def get_sponsorblock(self) -> dict[str, Any]:
+        """Requires NodeLink v3.8.0+"""
+        self._require_nodelink(LavalinkVersion(3, 8, 0), "SponsorBlock")
+
+        return await self._send_player_request(method="GET", endpoint_suffix="sponsorblock")
+
+    async def set_sponsorblock(
+        self,
+        *,
+        enabled: bool | None = None,
+        categories: list[str] | None = None,
+        action_types: list[str] | None = None,
+        skip_margin_ms: int | None = None,
+    ) -> dict[str, Any]:
+        """Requires NodeLink v3.8.0+"""
+        self._require_nodelink(LavalinkVersion(3, 8, 0), "SponsorBlock")
+
+        data: dict[str, Any] = {}
+        if enabled is not None:
+            data["enabled"] = enabled
+        if categories is not None:
+            data["categories"] = categories
+        if action_types is not None:
+            data["actionTypes"] = action_types
+        if skip_margin_ms is not None:
+            data["skipMarginMs"] = skip_margin_ms
+
+        return await self._send_player_request(data, endpoint_suffix="sponsorblock")
+
+    async def set_sponsorblock_segments(self, segments: list[dict[str, Any]]) -> dict[str, Any]:
+        """Requires NodeLink v3.8.0+"""
+        self._require_nodelink(LavalinkVersion(3, 8, 0), "SponsorBlock")
+
+        return await self._send_player_request(
+            {"segments": segments}, method="POST", endpoint_suffix="sponsorblock"
+        )
+
+    async def clear_sponsorblock(self) -> None:
+        """Requires NodeLink v3.8.0+"""
+        self._require_nodelink(LavalinkVersion(3, 8, 0), "SponsorBlock")
+
+        await self._send_player_request(method="DELETE", endpoint_suffix="sponsorblock")

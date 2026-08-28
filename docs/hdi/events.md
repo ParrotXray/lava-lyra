@@ -23,6 +23,8 @@ Here is the full list of events:
 - `SeekEvent` → `on_lyra_seek`
 - `MixStartedEvent` → `on_lyra_mix_started`
 - `MixEndedEvent` → `on_lyra_mix_ended`
+- `SponsorBlockSegmentsLoadedEvent` → `on_lyra_sponsorblock_segments_loaded`
+- `SponsorBlockSegmentSkippedEvent` → `on_lyra_sponsorblock_segment_skipped`
 
 Here is an example of how you would listen for the `TrackStartEvent` within a cog:
 
@@ -75,3 +77,5 @@ The following events are only dispatched by NodeLink instances:
 - `on_lyra_seek(player, position)` — Fired when the player seeks. `position` is the new position in milliseconds.
 - `on_lyra_mix_started(player, mix_id, track, volume)` — Fired when a mix layer starts. `mix_id` identifies the mix layer, `track` is the `Track` being mixed in (or `None`), and `volume` is the mix layer's volume (`0.0`–`1.0`).
 - `on_lyra_mix_ended(player, mix_id, reason)` — Fired when a mix layer ends. `reason` is a `MixEndReason` enum (`FINISHED`, `REMOVED`, `ERROR`, or `MAIN_ENDED`). The event also exposes `is_finished`, `is_removed`, `is_error`, and `is_main_ended` boolean properties as shortcuts for checking `reason`.
+- `on_lyra_sponsorblock_segments_loaded(player, segments)` — Fired when SponsorBlock segments are loaded for the current track. `segments` is the raw `list[dict[str, Any]]` payload, not a dedicated object.
+- `on_lyra_sponsorblock_segment_skipped(player, track, segment)` — Fired when a SponsorBlock segment is skipped. `segment` is the raw `dict[str, Any]` payload, not a dedicated object.
