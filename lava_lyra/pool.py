@@ -1035,6 +1035,7 @@ class Node:
                 playlist_type=PlaylistType(tracks[0].track_type.value),
                 thumbnail=tracks[0].thumbnail,
                 uri=query,
+                plugin_info=data[data_type].get("pluginInfo") or {},
             )
 
         elif load_type in ("SEARCH_RESULT", "TRACK_LOADED", "track", "search", "episode"):
@@ -1117,6 +1118,7 @@ class Node:
                 playlist_type=PlaylistType(tracks[0].track_type.value),
                 thumbnail=tracks[0].thumbnail,
                 uri=query,
+                plugin_info=data[data_type].get("pluginInfo") or {},
             )
 
         else:

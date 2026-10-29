@@ -203,6 +203,7 @@ class SearchManager:
             albums = [
                 Playlist(
                     playlist_info=album["info"],
+                    plugin_info=album.get("pluginInfo") or {},
                     tracks=[],  # Albums don't include tracks in search results
                     playlist_type=PlaylistType.OTHER,
                 )
@@ -215,6 +216,7 @@ class SearchManager:
             artists = [
                 Playlist(
                     playlist_info=artist["info"],
+                    plugin_info=artist.get("pluginInfo") or {},
                     tracks=[],  # Artists don't include tracks in search results
                     playlist_type=PlaylistType.OTHER,
                 )
@@ -227,6 +229,7 @@ class SearchManager:
             playlists = [
                 Playlist(
                     playlist_info=playlist["info"],
+                    plugin_info=playlist.get("pluginInfo") or {},
                     tracks=[],  # Playlists don't include tracks in search results
                     playlist_type=PlaylistType.OTHER,
                 )
