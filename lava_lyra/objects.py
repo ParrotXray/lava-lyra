@@ -114,10 +114,13 @@ class Playlist:
     __slots__ = (
         "_thumbnail",
         "_uri",
+        "author",
         "name",
         "playlist_info",
         "playlist_type",
+        "plugin_info",
         "selected_track",
+        "total_tracks",
         "track_count",
         "tracks",
     )
@@ -130,14 +133,29 @@ class Playlist:
         playlist_type: PlaylistType,
         thumbnail: str | None = None,
         uri: str | None = None,
+        plugin_info: dict[str, Any] | None = None,
     ):
         self.playlist_info: dict[str, Any] = playlist_info
+        self.plugin_info: dict[str, Any] = plugin_info or {}
         self.tracks: list[Track] = tracks
         self.name: str = playlist_info.get("name", "Unknown Playlist")
         self.playlist_type: PlaylistType = playlist_type
 
-        self._thumbnail: str | None = thumbnail
-        self._uri: str | None = uri
+        # Collection metadata (Lavalink/LavaSrc/NodeLink ``pluginInfo``). Empty strings are
+        # treated as missing so the fallbacks below kick in.
+        self.author: str | None = (
+            self.plugin_info.get("author") or playlist_info.get("author") or None
+        )
+
+        # Prefer the playlist's own cover art; fall back to whatever the caller supplied
+        # (usually the first track's artwork).
+        self._thumbnail: str | None = (
+            self.plugin_info.get("artworkUrl")
+            or playlist_info.get("artworkUrl")
+            or thumbnail
+            or None
+        )
+        self._uri: str | None = uri or self.plugin_info.get("url") or None
 
         for track in self.tracks:
             track.playlist = self
@@ -148,6 +166,11 @@ class Playlist:
             self.selected_track = self.tracks[index]
 
         self.track_count: int = len(self.tracks)
+
+        # The server may report more tracks than it actually returned (or, for search
+        # results, no tracks at all), so keep the reported total separately.
+        total = self.plugin_info.get("totalTracks")
+        self.total_tracks: int = total if isinstance(total, int) else self.track_count
 
     def __str__(self) -> str:
         return self.name
@@ -189,13 +212,14 @@ class Playlist:
 
     @property
     def uri(self) -> str | None:
-        """Returns the URI/URL the playlist was loaded from, or None if it wasn't set."""
+        """Returns the URI/URL the playlist was loaded from. Falls back to the canonical URL
+        reported by the server, or None if neither is available."""
         return self._uri
 
     @property
     def thumbnail(self) -> str | None:
-        """Returns the playlist's thumbnail, taken from its first track. This works for any
-        source that provides one, not just Apple Music/Spotify."""
+        """Returns the playlist's own cover art (``pluginInfo.artworkUrl``) when the server
+        provides it, otherwise the thumbnail of its first track, or None."""
         return self._thumbnail
 
     @property

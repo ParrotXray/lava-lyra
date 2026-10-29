@@ -133,11 +133,23 @@ Returned when a query resolves to a playlist or album (e.g. a Spotify/YouTube pl
 
 * - `uri`
   - `Optional[str]`
-  - The URI/URL the playlist was loaded from, if one was supplied.
+  - The URI/URL the playlist was loaded from, if one was supplied. Falls back to the canonical URL reported by the server (e.g. for LavaSearch results).
+
+* - `author`
+  - `Optional[str]`
+  - The playlist's owner/curator (or the artist, for albums), as reported by the server in `pluginInfo.author`. `None` if the source doesn't provide one.
 
 * - `thumbnail`
   - `Optional[str]`
-  - The playlist's thumbnail, taken from its first track.
+  - The playlist's own cover art (`pluginInfo.artworkUrl`) when the server provides it, otherwise the thumbnail of its first track.
+
+* - `total_tracks`
+  - `int`
+  - The total number of tracks the server reports for the playlist, which can be larger than `track_count` when the server caps how many tracks it returns. Falls back to `track_count`.
+
+* - `plugin_info`
+  - `dict`
+  - The raw `pluginInfo` payload (`type`, `identifier`, `url`, `artworkUrl`, `author`, `totalTracks`, plus any source-specific keys). Empty if the server sent none.
 
 * - `length`
   - `int`
@@ -165,7 +177,7 @@ actually matches what you need.
 :::{important}
 
 Albums, artists, and playlists returned by `Node.load_search()` do **not** include their tracks
-(`tracks` will be empty and `uri`/`thumbnail` won't be set) — only metadata. Refer to
+(`tracks` will be empty) — only metadata. `author`, `thumbnail`, `uri` and `total_tracks` are filled in from the server's `pluginInfo` when the source provides it. Refer to
 [](search.md) for details.
 
 :::
