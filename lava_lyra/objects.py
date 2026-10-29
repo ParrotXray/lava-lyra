@@ -150,7 +150,10 @@ class Playlist:
         # Prefer the playlist's own cover art; fall back to whatever the caller supplied
         # (usually the first track's artwork).
         self._thumbnail: str | None = (
-            self.plugin_info.get("artworkUrl") or playlist_info.get("artworkUrl") or thumbnail or None
+            self.plugin_info.get("artworkUrl")
+            or playlist_info.get("artworkUrl")
+            or thumbnail
+            or None
         )
         self._uri: str | None = uri or self.plugin_info.get("url") or None
 
