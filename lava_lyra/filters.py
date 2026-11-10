@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import collections
 import inspect
+import warnings
 from typing import Any, Self, override
 
 from .exceptions import FilterInvalidArgument
@@ -14,12 +15,16 @@ __all__ = (
     "Echo",
     "Equalizer",
     "Filter",
+    "Flanger",
     "Highpass",
     "Karaoke",
     "LowPass",
     "Phaser",
+    "Phonograph",
+    "Reverb",
     "Rotation",
     "Spatial",
+    "Tesseract",
     "Timescale",
     "Tremolo",
     "Vibrato",
@@ -889,9 +894,13 @@ class Compressor(Filter):
 
     This filter is not part of the standard Lavalink filter set and requires
     a Nodelink instance to work.
+
+    ``makeup_gain`` (dB) is sent to Nodelink as ``makeupGain``. The old
+    ``gain`` keyword is a deprecated alias for ``makeup_gain``: earlier
+    versions sent it as ``gain``, which Nodelink ignores.
     """
 
-    __slots__ = ("attack", "gain", "ratio", "release", "threshold")
+    __slots__ = ("attack", "makeup_gain", "ratio", "release", "threshold")
 
     nodelink_exclusive = True
 
@@ -903,10 +912,19 @@ class Compressor(Filter):
         ratio: float = 4,
         attack: float = 10,
         release: float = 100,
-        gain: float = 5,
+        makeup_gain: float = 0,
+        gain: float | None = None,
         transition: dict[str, Any] | None = None,
     ):
         super().__init__(tag=tag)
+
+        if gain is not None:
+            warnings.warn(
+                "Compressor 'gain' is deprecated, use 'makeup_gain' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            makeup_gain = gain
 
         if ratio < 1:
             raise FilterInvalidArgument(
@@ -925,7 +943,7 @@ class Compressor(Filter):
         self.ratio: float = ratio
         self.attack: float = attack
         self.release: float = release
-        self.gain: float = gain
+        self.makeup_gain: float = makeup_gain
         self.transition = transition
 
         self._build(
@@ -935,14 +953,31 @@ class Compressor(Filter):
                 "ratio": self.ratio,
                 "attack": self.attack,
                 "release": self.release,
-                "gain": self.gain,
+                "makeupGain": self.makeup_gain,
             },
         )
+
+    @property
+    def gain(self) -> float:
+        """Deprecated alias for :attr:`makeup_gain`."""
+        return self.makeup_gain
+
+    @override
+    def update(self, **kwargs: Any) -> Self:
+        if "gain" in kwargs:
+            gain = kwargs.pop("gain")
+            warnings.warn(
+                "Compressor 'gain' is deprecated, use 'makeup_gain' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            kwargs.setdefault("makeup_gain", gain)
+        return super().update(**kwargs)
 
     def __repr__(self) -> str:
         return (
             f"<Lyra.Compressor tag={self.tag} threshold={self.threshold} ratio={self.ratio} "
-            f"attack={self.attack} release={self.release} gain={self.gain}>"
+            f"attack={self.attack} release={self.release} makeup_gain={self.makeup_gain}>"
         )
 
     @override
@@ -955,7 +990,7 @@ class Compressor(Filter):
             and self.ratio == other.ratio
             and self.attack == other.attack
             and self.release == other.release
-            and self.gain == other.gain
+            and self.makeup_gain == other.makeup_gain
             and self.transition == other.transition
         )
 
@@ -1150,3 +1185,308 @@ class Spatial(Filter):
             and self.rate == other.rate
             and self.transition == other.transition
         )
+
+
+class Reverb(Filter):
+    """Nodelink-exclusive filter which simulates the acoustics of a room by
+    adding dense, decaying reflections to the audio.
+
+    ``delays`` (comb delays, in seconds) and ``gains`` (comb feedback) can be
+    supplied together to replace the built-in room model with a custom one.
+
+    This filter is not part of the standard Lavalink filter set and requires
+    a Nodelink instance to work.
+    """
+
+    __slots__ = ("damping", "delays", "gains", "mix", "room_size", "width")
+
+    nodelink_exclusive = True
+
+    def __init__(
+        self,
+        *,
+        tag: str,
+        room_size: float = 0.5,
+        damping: float = 0.5,
+        width: float = 1.0,
+        mix: float = 0.5,
+        delays: list[float] | None = None,
+        gains: list[float] | None = None,
+        transition: dict[str, Any] | None = None,
+    ):
+        super().__init__(tag=tag)
+
+        if room_size < 0 or room_size > 1:
+            raise FilterInvalidArgument(
+                "Reverb room_size must be between 0 and 1.",
+            )
+        if damping < 0 or damping > 1:
+            raise FilterInvalidArgument(
+                "Reverb damping must be between 0 and 1.",
+            )
+        if width < 0 or width > 1:
+            raise FilterInvalidArgument(
+                "Reverb width must be between 0 and 1.",
+            )
+        if mix < 0 or mix > 1:
+            raise FilterInvalidArgument(
+                "Reverb mix must be between 0 and 1.",
+            )
+        if (delays is None) != (gains is None):
+            raise FilterInvalidArgument(
+                "Reverb delays and gains must be provided together.",
+            )
+        if delays is not None and gains is not None:
+            if len(delays) == 0 or len(delays) != len(gains):
+                raise FilterInvalidArgument(
+                    "Reverb delays and gains must be non-empty lists of the same length.",
+                )
+            if any(d <= 0 for d in delays):
+                raise FilterInvalidArgument(
+                    "Reverb delays must be greater than 0 (seconds).",
+                )
+            if any(g < 0 or g > 0.95 for g in gains):
+                raise FilterInvalidArgument(
+                    "Reverb gains must be between 0 and 0.95.",
+                )
+
+        self.room_size: float = room_size
+        self.damping: float = damping
+        self.width: float = width
+        self.mix: float = mix
+        self.delays: list[float] | None = list(delays) if delays is not None else None
+        self.gains: list[float] | None = list(gains) if gains is not None else None
+        self.transition = transition
+
+        settings: dict[str, Any] = {
+            "roomSize": self.room_size,
+            "damping": self.damping,
+            "width": self.width,
+            "mix": self.mix,
+        }
+        if self.delays is not None and self.gains is not None:
+            settings["delays"] = list(self.delays)
+            settings["gains"] = list(self.gains)
+
+        self._build("reverb", settings)
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.Reverb tag={self.tag} room_size={self.room_size} damping={self.damping} "
+            f"width={self.width} mix={self.mix} custom={self.delays is not None}>"
+        )
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Reverb):
+            return False
+
+        return (
+            self.room_size == other.room_size
+            and self.damping == other.damping
+            and self.width == other.width
+            and self.mix == other.mix
+            and self.delays == other.delays
+            and self.gains == other.gains
+            and self.transition == other.transition
+        )
+
+
+class Flanger(Filter):
+    """Nodelink-exclusive filter which mixes the signal with a very short,
+    LFO-modulated delayed copy of itself, producing a sweeping, jet-like effect.
+
+    This filter is not part of the standard Lavalink filter set and requires
+    a Nodelink instance to work.
+    """
+
+    __slots__ = ("depth", "feedback", "rate")
+
+    nodelink_exclusive = True
+
+    def __init__(
+        self,
+        *,
+        tag: str,
+        rate: float = 0.5,
+        depth: float = 0.7,
+        feedback: float = 0.5,
+        transition: dict[str, Any] | None = None,
+    ):
+        super().__init__(tag=tag)
+
+        if rate < 0:
+            raise FilterInvalidArgument(
+                "Flanger rate must be 0 or greater (Hz).",
+            )
+        if depth < 0 or depth > 1:
+            raise FilterInvalidArgument(
+                "Flanger depth must be between 0 and 1.",
+            )
+        if feedback < 0 or feedback > 0.95:
+            raise FilterInvalidArgument(
+                "Flanger feedback must be between 0 and 0.95.",
+            )
+
+        self.rate: float = rate
+        self.depth: float = depth
+        self.feedback: float = feedback
+        self.transition = transition
+
+        self._build(
+            "flanger",
+            {"rate": self.rate, "depth": self.depth, "feedback": self.feedback},
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.Flanger tag={self.tag} rate={self.rate} depth={self.depth} "
+            f"feedback={self.feedback}>"
+        )
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Flanger):
+            return False
+
+        return (
+            self.rate == other.rate
+            and self.depth == other.depth
+            and self.feedback == other.feedback
+            and self.transition == other.transition
+        )
+
+
+class Phonograph(Filter):
+    """Nodelink-exclusive filter which emulates an old phonograph recording:
+    pitch wobble (wow) and flutter, surface crackle, room ambience, mic AGC
+    compression and mechanical saturation.
+
+    This filter is not part of the standard Lavalink filter set and requires
+    a Nodelink instance to work.
+    """
+
+    __slots__ = ("crackle", "depth", "drive", "flutter", "frequency", "mic_agc", "room")
+
+    nodelink_exclusive = True
+
+    def __init__(
+        self,
+        *,
+        tag: str,
+        frequency: float = 0.8,
+        depth: float = 0.25,
+        crackle: float = 0.18,
+        flutter: float = 0.18,
+        room: float = 0.22,
+        mic_agc: float = 0.25,
+        drive: float = 0.25,
+        transition: dict[str, Any] | None = None,
+    ):
+        super().__init__(tag=tag)
+
+        if frequency <= 0:
+            raise FilterInvalidArgument(
+                "Phonograph frequency must be greater than 0 (Hz).",
+            )
+        for name, value in (
+            ("depth", depth),
+            ("crackle", crackle),
+            ("flutter", flutter),
+            ("room", room),
+            ("mic_agc", mic_agc),
+            ("drive", drive),
+        ):
+            if value < 0 or value > 1:
+                raise FilterInvalidArgument(
+                    f"Phonograph {name} must be between 0 and 1.",
+                )
+
+        self.frequency: float = frequency
+        self.depth: float = depth
+        self.crackle: float = crackle
+        self.flutter: float = flutter
+        self.room: float = room
+        self.mic_agc: float = mic_agc
+        self.drive: float = drive
+        self.transition = transition
+
+        self._build(
+            "phonograph",
+            {
+                "frequency": self.frequency,
+                "depth": self.depth,
+                "crackle": self.crackle,
+                "flutter": self.flutter,
+                "room": self.room,
+                "micAgc": self.mic_agc,
+                "drive": self.drive,
+            },
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"<Lyra.Phonograph tag={self.tag} frequency={self.frequency} depth={self.depth} "
+            f"crackle={self.crackle} flutter={self.flutter} room={self.room} "
+            f"mic_agc={self.mic_agc} drive={self.drive}>"
+        )
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Phonograph):
+            return False
+
+        return (
+            self.frequency == other.frequency
+            and self.depth == other.depth
+            and self.crackle == other.crackle
+            and self.flutter == other.flutter
+            and self.room == other.room
+            and self.mic_agc == other.mic_agc
+            and self.drive == other.drive
+            and self.transition == other.transition
+        )
+
+
+class Tesseract(Filter):
+    """Nodelink-exclusive filter which rotates the audio through a simulated
+    4D space (a tesseract), a more complex variant of :class:`Rotation` that
+    drives three independent rotation axes at related rates.
+
+    This filter is not part of the standard Lavalink filter set and requires
+    a Nodelink instance to work. Nodelink only enables it when
+    ``rotation_hertz`` is greater than ``0.001``.
+    """
+
+    __slots__ = ("rotation_hertz",)
+
+    nodelink_exclusive = True
+
+    def __init__(
+        self,
+        *,
+        tag: str,
+        rotation_hertz: float = 0.2,
+        transition: dict[str, Any] | None = None,
+    ):
+        super().__init__(tag=tag)
+
+        if rotation_hertz < 0:
+            raise FilterInvalidArgument(
+                "Tesseract rotation_hertz must be 0 or greater.",
+            )
+
+        self.rotation_hertz: float = rotation_hertz
+        self.transition = transition
+
+        self._build("tesseract", {"rotationHz": self.rotation_hertz})
+
+    def __repr__(self) -> str:
+        return f"<Lyra.Tesseract tag={self.tag} rotation_hertz={self.rotation_hertz}>"
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Tesseract):
+            return False
+
+        return self.rotation_hertz == other.rotation_hertz and self.transition == other.transition

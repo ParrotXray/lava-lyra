@@ -76,7 +76,7 @@ This also determines which minimum version is required (Lavalink 4.2.0+ vs NodeL
 > Which features are NodeLink-only?
 
 The `gapless` parameter on `Player.play()`/`Player.stop()`, mix layers (`MixStartedEvent`/`MixEndedEvent`),
-the `Chorus`/`Compressor`/`Echo`/`Highpass`/`Phaser`/`Spatial` filters, and the
+the `Chorus`/`Compressor`/`Echo`/`Flanger`/`Highpass`/`Phaser`/`Phonograph`/`Reverb`/`Spatial`/`Tesseract` filters, and the
 `PlayerCreatedEvent`/`VolumeChangedEvent`/`PlayerConnectedEvent`/`FiltersChangedEvent`/`PauseEvent`/`SeekEvent`
 events are all NodeLink-only. Calling NodeLink-only filters or the `gapless` parameter against a
 plain Lavalink node raises `NodelinkExclusive` client-side before the request is even sent.

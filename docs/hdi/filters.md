@@ -78,6 +78,10 @@ instance and will raise `NodelinkExclusive` if applied against a plain Lavalink 
   - `lava_lyra.Echo()`
   - Creates delay-based repetitions of the audio with feedback control, producing an echo effect.
 
+* - Flanger
+  - `lava_lyra.Flanger()`
+  - Mixes the signal with a very short, modulated delayed copy of itself, producing a sweeping, jet-like effect.
+
 * - Highpass
   - `lava_lyra.Highpass()`
   - Attenuates low frequencies, letting higher frequencies pass through. Unlike `LowPass`, this uses a different payload key and is NodeLink-only.
@@ -86,9 +90,21 @@ instance and will raise `NodelinkExclusive` if applied against a plain Lavalink 
   - `lava_lyra.Phaser()`
   - Sweeps a series of all-pass filters across the frequency spectrum, producing a swirling effect.
 
+* - Phonograph
+  - `lava_lyra.Phonograph()`
+  - Emulates an old phonograph recording: pitch wobble and flutter, surface crackle, room ambience, mic compression and saturation.
+
+* - Reverb
+  - `lava_lyra.Reverb()`
+  - Simulates the acoustics of a room by adding dense, decaying reflections. Optionally accepts custom comb `delays` and `gains`.
+
 * - Spatial
   - `lava_lyra.Spatial()`
   - Creates a spatial audio effect using modulated cross-channel delays.
+
+* - Tesseract
+  - `lava_lyra.Tesseract()`
+  - Rotates the audio through a simulated 4D space, a more complex variant of `Rotation`.
 
 :::
 
@@ -187,12 +203,16 @@ The following NodeLink-exclusive filters have their own parameters and validatio
   - `depth` and `mix` between `0`-`1`; `delay` between `1`-`45` (ms); `feedback` between `0`-`0.95`.
 
 * - `Compressor`
-  - `threshold=-20`, `ratio=4`, `attack=10`, `release=100`, `gain=5`
-  - `ratio` must be `1.0` or greater; `attack` and `release` must be `0` or greater (ms).
+  - `threshold=-20`, `ratio=4`, `attack=10`, `release=100`, `makeup_gain=0`
+  - `ratio` must be `1.0` or greater; `attack` and `release` must be `0` or greater (ms). `makeup_gain` is in dB and is sent as `makeupGain`. The old `gain` keyword still works but is deprecated: it was previously sent as `gain`, which NodeLink ignores.
 
 * - `Echo`
   - `delay=500`, `feedback=0.3`, `mix=0.5`
   - `delay` between `0`-`5000` (ms) on Lavalink; NodeLink clamps `delay` to `2000` ms. `feedback` and `mix` between `0`-`1`.
+
+* - `Flanger`
+  - `rate=0.5`, `depth=0.7`, `feedback=0.5`
+  - `rate` must be `0` or greater (Hz); `depth` between `0`-`1`; `feedback` between `0`-`0.95`.
 
 * - `Highpass`
   - `smoothing=20`
@@ -202,9 +222,21 @@ The following NodeLink-exclusive filters have their own parameters and validatio
   - `stages=6`, `rate=0.5`, `depth=0.7`, `feedback=0.5`, `mix=0.5`, `min_frequency=200`, `max_frequency=2000`
   - `stages` between `2`-`12`; `depth`/`mix` between `0`-`1`; `feedback` between `0`-`0.9`; frequencies must be positive and `min_frequency < max_frequency`.
 
+* - `Phonograph`
+  - `frequency=0.8`, `depth=0.25`, `crackle=0.18`, `flutter=0.18`, `room=0.22`, `mic_agc=0.25`, `drive=0.25`
+  - `frequency` must be greater than `0` (Hz); every other parameter must be between `0` and `1`.
+
+* - `Reverb`
+  - `room_size=0.5`, `damping=0.5`, `width=1.0`, `mix=0.5`, `delays=None`, `gains=None`
+  - `room_size`, `damping`, `width` and `mix` between `0`-`1`. `delays` (seconds) and `gains` must be given together as non-empty lists of the same length to use a custom comb layout; `delays` must be greater than `0` and `gains` between `0`-`0.95`.
+
 * - `Spatial`
   - `depth=0.8`, `rate=0.3`
   - `depth` must be between `0` and `1`. `rate` is unvalidated.
+
+* - `Tesseract`
+  - `rotation_hertz=0.2`
+  - `rotation_hertz` must be `0` or greater. NodeLink only enables the filter above `0.001`.
 
 :::
 
