@@ -35,7 +35,7 @@ class _VersionInfo(NamedTuple):
     serial: int
 
 
-__version__ = "2.2.4"
+__version__ = "2.2.5"
 __version_info__ = _VersionInfo(2, 2, 4, "final", 0)
 
 version = __version__
